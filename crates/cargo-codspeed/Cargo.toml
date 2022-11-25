@@ -1,0 +1,31 @@
+[package]
+name = "cargo-codspeed"
+version = "0.1.0"
+edition = "2021"
+description = "Cargo extension to build & run your codspeed benchmarks"
+authors = ["Arthur Pastel <arthur@codspeed.io>"]
+documentation = "https://docs.codspeed.io"
+readme = "README.md"
+repository = "https://github.com/CodSpeedHQ/codspeed-rust"
+homepage = "https://codspeed.io"
+license = "Apache-2.0"
+categories = [
+    "development-tools",
+    "development-tools::cargo-plugins",
+    "development-tools::profiling",
+    "development-tools::testing",
+]
+keywords = ["codspeed", "benchmark", "rust"]
+
+[dependencies]
+cargo = "0.66.0"
+clap = { version = "4.0.29", features = ["derive"] }
+termcolor = "1.0"
+anyhow = "1.0.66"
+itertools = "0.10.5"
+
+[dev-dependencies]
+assert_cmd = "2.0.7"
+fs_extra = "1.2.0"
+predicates = "2.1.4"
+uuid = { version = "1.2.2", features = ["v4"] }

@@ -1,0 +1,21 @@
+[package]
+name = "simple"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+bencher = "0.1.5"
+codspeed = { path = "../../../codspeed" }
+codspeed-bencher-compat = { path = "../../../bencher_compat" }
+
+[workspace]
+
+
+[[bench]]
+name = "bencher_example"
+harness = false
+
+[[bench]]
+name = "another_bencher_example"
+harness = false

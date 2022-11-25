@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "crates/codspeed",
+    "crates/bencher_compat",
+    "crates/criterion_compat",
+    "crates/cargo-codspeed",
+]

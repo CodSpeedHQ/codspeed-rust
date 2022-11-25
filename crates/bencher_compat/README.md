@@ -1,0 +1,1 @@
+# codspeed-bencher-compat
