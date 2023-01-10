@@ -2,19 +2,19 @@
 name = "codspeed-bencher-compat"
 version = "0.1.1"
 edition = "2021"
-description = "bencher compatibility for CodSpeed"
+description = "Bencher compatibility layer for CodSpeed"
 authors = ["Arthur Pastel <arthur@codspeed.io>"]
 documentation = "https://docs.codspeed.io"
 readme = "README.md"
-repository = "https://github.com/CodSpeedHQ/codspeed-rust"
+repository = "https://github.com/CodSpeedHQ/codspeed-rust/crates/bencher_compat"
 homepage = "https://codspeed.io"
 license = "Apache-2.0"
 categories = [
     "development-tools",
-    "development-tools::cargo-plugins",
     "development-tools::profiling",
     "development-tools::testing",
 ]
+keywords = ["codspeed", "benchmark", "bencher"]
 
 [dependencies]
 bencher = "0.1.5"
