@@ -2,7 +2,7 @@
 <h1>codspeed-bencher-compat</h1>
 
 [![CI](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml)
-![Crates.io](https://img.shields.io/crates/v/codspeed-bencher-compat)
+[![Crates.io](https://img.shields.io/crates/v/codspeed-bencher-compat)](https://crates.io/crates/codspeed-bencher-compat)
 
 Bencher compatibility layer for CodSpeed
 

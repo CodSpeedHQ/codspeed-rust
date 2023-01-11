@@ -2,7 +2,7 @@
 <h1>codspeed-rust</h1>
 
 [![CI](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml)
-![Crates.io](https://img.shields.io/crates/v/cargo-codspeed)
+[![Crates.io](https://img.shields.io/crates/v/cargo-codspeed)](https://crates.io/keywords/codspeed)
 
 </div>
 

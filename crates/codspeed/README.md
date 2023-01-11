@@ -2,7 +2,7 @@
 <h1>codspeed</h1>
 
 [![CI](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml)
-![Crates.io](https://img.shields.io/crates/v/codspeed)
+[![Crates.io](https://img.shields.io/crates/v/codspeed)](https://crates.io/crates/codspeed)
 
 The core library used to integrate with Codspeed runners
 

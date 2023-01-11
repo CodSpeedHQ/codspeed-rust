@@ -2,7 +2,7 @@
 <h1>codspeed-criterion-compat</h1>
 
 [![CI](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml)
-![Crates.io](https://img.shields.io/crates/v/codspeed-criterion-compat)
+[![Crates.io](https://img.shields.io/crates/v/codspeed-criterion-compat)](https://crates.io/crates/codspeed-criterion-compat)
 
 Criterion.rs compatibility layer for CodSpeed
 
