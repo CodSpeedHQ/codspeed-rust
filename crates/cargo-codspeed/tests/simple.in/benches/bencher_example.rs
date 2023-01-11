@@ -1,5 +1,3 @@
-
-
 use codspeed::codspeed::black_box;
 use codspeed_bencher_compat::{benchmark_group, benchmark_main, Bencher};
 

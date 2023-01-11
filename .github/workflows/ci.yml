@@ -10,17 +10,6 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  format:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2
-      - uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          components: rustfmt
-      - run: cargo fmt --all -- --check
-
   lint:
     runs-on: ubuntu-latest
     steps:
@@ -30,8 +19,9 @@ jobs:
         with:
           toolchain: stable
           components: clippy
-      - run: cargo clippy --all-targets -- -D warnings
-      - run: cargo clippy --all-targets -- -D warnings --cfg codspeed
+      - uses: pre-commit/action@v2.0.0
+        with:
+          extra_args: --all-files
 
   tests:
     runs-on: ubuntu-latest
