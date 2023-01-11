@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-bencher-compat"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2021"
 description = "Bencher compatibility layer for CodSpeed"
 authors = ["Arthur Pastel <arthur@codspeed.io>"]
