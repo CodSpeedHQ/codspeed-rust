@@ -1,1 +1,14 @@
-# codspeed
+<div align="center">
+<h1>codspeed</h1>
+
+[![CI](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml)
+![Crates.io](https://img.shields.io/crates/v/codspeed)
+
+The core library used to integrate with Codspeed runners
+
+</div>
+
+For now, this crate should not be used directly. Instead, use one of the integration crates:
+
+- `codspeed-bencher-compat`
+- `codspeed-criterion-compat`

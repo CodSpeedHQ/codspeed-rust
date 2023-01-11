@@ -1,4 +1,10 @@
-# codspeed-rust
+<div align="center">
+<h1>codspeed-rust</h1>
+
+[![CI](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml)
+![Crates.io](https://img.shields.io/crates/v/cargo-codspeed)
+
+</div>
 
 This mono-repo contains the integration crates for using CodSpeed in Rust:
 
