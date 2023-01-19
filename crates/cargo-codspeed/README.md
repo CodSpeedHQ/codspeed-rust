@@ -3,6 +3,7 @@
 
 [![CI](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/cargo-codspeed)](https://crates.io/crates/cargo-codspeed)
+[![Discord](https://img.shields.io/badge/chat%20on-discord-7289da.svg)](https://discord.com/invite/MxpaCfKSqF)
 
 A cargo subcommand for running CodSpeed on your project
 
