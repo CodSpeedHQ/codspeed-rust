@@ -1,0 +1,27 @@
+name: 'Setup cargo-codspeed'
+description: 'Install cargo-codspeed using cache if possible'
+inputs:
+  version:
+    description: "Version to install"
+    required: true
+    default: '1.1.0'
+
+outputs:
+  cache-hit:
+    description: "Was the cache hit"
+    value: ${{ steps.cache.outputs.cache-hit }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Cache cargo-codspeed
+      id: cache
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cargo/bin/cargo-codspeed
+        key: cargo-codspeed-${{ inputs.version }}
+    - name: Install cargo-codspeed specific version
+      if: steps.cache.outputs.cache-hit != 'true'
+      run: cargo install cargo-codspeed --version ${{ inputs.version }}
+      shell: bash
