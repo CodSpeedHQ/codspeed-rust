@@ -25,6 +25,9 @@ enum Commands {
         /// Package to build benchmarks for (if using a workspace)
         #[arg(short, long)]
         package: Option<String>,
+        /// Space or comma separated list of features to activate
+        #[arg(short = 'F', long)]
+        features: Option<String>,
     },
     /// Run the previously built benchmarks
     Run {
@@ -50,7 +53,18 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
     let workspace = Workspace::new(&manifest_path, &cargo_config)?;
 
     let res = match cli.command {
-        Commands::Build { benches, package } => build_benches(&workspace, benches, package),
+        Commands::Build {
+            benches,
+            package,
+            features,
+        } => {
+            let features = features.map(|f| {
+                f.split(|c| c == ' ' || c == ',')
+                    .map(|s| s.to_string())
+                    .collect_vec()
+            });
+            build_benches(&workspace, benches, package, features)
+        }
         Commands::Run { benches, package } => run_benches(&workspace, benches, package),
     };
 

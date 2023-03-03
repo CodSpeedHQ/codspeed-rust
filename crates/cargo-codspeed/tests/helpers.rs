@@ -18,6 +18,7 @@ fn replace_in_file(path: &str, from: &str, to: &str) {
 #[allow(dead_code)]
 pub enum Project {
     Simple,
+    Features,
     Workspace,
 }
 
@@ -35,7 +36,7 @@ pub fn setup(dir: &str, project: Project) -> String {
     let package_root = PathBuf::from_str(env!("CARGO_MANIFEST_DIR")).unwrap();
     let workspace_root = package_root.parent().unwrap().parent().unwrap();
     match project {
-        Project::Simple => {
+        Project::Simple | Project::Features => {
             replace_in_file(
                 tmp_dir.join("Cargo.toml").to_str().unwrap(),
                 "../../..",
