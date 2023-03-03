@@ -3,19 +3,32 @@ use crate::{
     prelude::*,
 };
 
-use std::fs::create_dir_all;
+use std::{collections::BTreeSet, fs::create_dir_all, rc::Rc};
 
 use cargo::{
-    core::{Package, Workspace},
+    core::{FeatureValue, Package, Workspace},
     ops::{CompileFilter, CompileOptions, Packages},
-    util::command_prelude::CompileMode,
+    util::{command_prelude::CompileMode, interning::InternedString},
     Config,
 };
 use termcolor::Color;
 
-fn get_compile_options(config: &Config, package: &Package, bench: &str) -> Result<CompileOptions> {
+fn get_compile_options(
+    config: &Config,
+    features: &Option<Vec<String>>,
+    package: &Package,
+    bench: &str,
+) -> Result<CompileOptions> {
     let mut compile_opts = CompileOptions::new(config, CompileMode::Build)?;
     compile_opts.spec = Packages::Packages(vec![package.name().to_string()]);
+    if let Some(features) = features {
+        compile_opts.cli_features.features = Rc::new(
+            features
+                .iter()
+                .map(|s| FeatureValue::Feature(InternedString::new(s.as_str())))
+                .collect::<BTreeSet<FeatureValue>>(),
+        );
+    }
     compile_opts.build_config.requested_profile = "release".into();
     compile_opts.filter = CompileFilter::from_raw_arguments(
         false,
@@ -36,6 +49,7 @@ pub fn build_benches(
     ws: &Workspace,
     selected_benches: Option<Vec<String>>,
     package_name: Option<String>,
+    features: Option<Vec<String>>,
 ) -> Result<()> {
     let package = match package_name.as_ref() {
         Some(package_name) => ws
@@ -82,7 +96,7 @@ pub fn build_benches(
         ws.config()
             .shell()
             .status_with_color("Building", bench.name(), Color::Yellow)?;
-        let compile_opts = get_compile_options(config, package, bench.name())?;
+        let compile_opts = get_compile_options(config, &features, package, bench.name())?;
         let result = cargo::ops::compile(ws, &compile_opts)?;
         let built_targets = result
             .tests

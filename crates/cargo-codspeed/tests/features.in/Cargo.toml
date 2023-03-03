@@ -1,0 +1,20 @@
+[package]
+name = "features"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+bencher = "0.1.5"
+codspeed = { path = "../../../codspeed" }
+codspeed-bencher-compat = { path = "../../../bencher_compat" }
+
+[features]
+sample_feature = []
+
+[workspace]
+
+
+[[bench]]
+name = "bench"
+harness = false
