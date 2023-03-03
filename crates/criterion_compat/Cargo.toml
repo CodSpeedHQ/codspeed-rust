@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-criterion-compat"
-version = "1.0.1"
+version = "1.1.0"
 edition = "2021"
 description = "Criterion.rs compatibility layer for CodSpeed"
 authors = ["Arthur Pastel <arthur@codspeed.io>"]
