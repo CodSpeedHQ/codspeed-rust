@@ -52,4 +52,3 @@ jobs:
         with:
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
-          upload_url: https://api.staging.preview.codspeed.io/upload
