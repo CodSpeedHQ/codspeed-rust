@@ -1,0 +1,38 @@
+name: Check setup-cargo-codspeed action
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.ref }}-check-action
+  cancel-in-progress: true
+
+jobs:
+  setup-cargo-codspeed-action-cache-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: ./.github/actions/setup-cargo-codspeed
+
+  test-setup-cargo-codspeed-action-cache-hit:
+    needs: setup-cargo-codspeed-action-cache-build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+      - uses: ./.github/actions/setup-cargo-codspeed
+        id: setup-cargo-codspeed-again
+      - name: Check that the second install hit the cache
+        run: |
+          echo "Cache hit: ${{ steps.setup-cargo-codspeed-again.outputs.cache-hit }}"
+          if [ "${{ steps.setup-cargo-codspeed-again.outputs.cache-hit }}" != "true" ]; then
+            echo "Cache was not hit"
+            exit 1
+          fi
