@@ -41,7 +41,7 @@ enum Commands {
 
 pub fn get_cargo_config() -> Result<Config> {
     let mut rustflags = std::env::var("RUSTFLAGS").unwrap_or_else(|_| "".into());
-    rustflags.push_str(" --cfg codspeed");
+    rustflags.push_str(" -g --cfg codspeed");
     std::env::set_var("RUSTFLAGS", &rustflags);
     Config::default()
 }
