@@ -1,4 +1,4 @@
-use codspeed::codspeed::{black_box, CodSpeed};
+use codspeed::codspeed::{black_box, CodSpeed, WARMUP_RUNS};
 
 pub struct Bencher {
     pub bytes: u64,
@@ -24,6 +24,9 @@ impl Bencher {
         F: FnMut() -> T,
     {
         let uri = self.current_uri.as_str();
+        for _ in 0..WARMUP_RUNS {
+            black_box(inner());
+        }
         self.codspeed.start_benchmark(uri);
         black_box(inner());
         self.codspeed.end_benchmark();

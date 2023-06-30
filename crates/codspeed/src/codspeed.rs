@@ -4,6 +4,8 @@ use colored::Colorize;
 
 use crate::measurement;
 
+pub const WARMUP_RUNS: u32 = 5;
+
 //TODO: use std::hint::black_box when it's stable
 pub fn black_box<T>(dummy: T) -> T {
     unsafe {
