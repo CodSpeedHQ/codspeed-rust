@@ -7,10 +7,9 @@ if [ $# -ne 1 ]; then
   exit 1
 fi
 
+# Fail if not on main branch
+git branch --show-current | grep -q '^main$'
 # Fail if there are any unstaged changes left
 git diff --exit-code
 
-cargo workspaces version $1
-NEW_VERSION=$(cargo workspaces ls --json | jq -r '.[] | select(.name == "codspeed") | .version')
-cargo workspaces publish --from-git
-gh release create v$NEW_VERSION --title "v$NEW_VERSION" --generate-notes -d
+cargo workspaces version --no-individual-tags $1
