@@ -16,8 +16,10 @@ repos:
       - id: cargo-check
         args: [--all-targets]
       - id: cargo-check
-        args: [--all-targets, --config, codspeed=true]
+        name: cargo-check[codspeed, all-features]
+        args: [--all-targets, --all-features, --config, codspeed=true]
       - id: clippy
         args: [--all-targets, --, -D, warnings]
       - id: clippy
-        args: [--all-targets, --, -D, warnings, --cfg, codspeed]
+        name: clippy[codspeed, all-features]
+        args: [--all-targets, --all-features, --, -D, warnings, --cfg, codspeed]

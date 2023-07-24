@@ -74,6 +74,7 @@ Checked: benches/bencher_example.rs::fib_20 (group: benches)
     Finished running 1 benchmark suite(s)
 ```
 
-### Not supported yet:
+### Not supported:
 
-- AsyncBencher
+- `iter_custom`
+- `with_filter`

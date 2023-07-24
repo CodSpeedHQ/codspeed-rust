@@ -45,7 +45,7 @@ jobs:
 
       - run: cargo codspeed build -p codspeed
       - run: cargo codspeed build -p codspeed-bencher-compat
-      - run: cargo codspeed build -p codspeed-criterion-compat
+      - run: cargo codspeed build --features async_futures -p codspeed-criterion-compat
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@feat/bundled-upload
