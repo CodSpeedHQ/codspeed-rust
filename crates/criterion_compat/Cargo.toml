@@ -10,13 +10,13 @@ repository = "https://github.com/CodSpeedHQ/codspeed-rust/tree/main/crates/crite
 homepage = "https://codspeed.io"
 license = "MIT OR Apache-2.0"
 categories = [
-    "development-tools",
-    "development-tools::profiling",
-    "development-tools::testing",
+  "development-tools",
+  "development-tools::profiling",
+  "development-tools::testing",
 ]
 keywords = ["codspeed", "benchmark", "criterion"]
 [dependencies]
-criterion = "0.4"
+criterion = "0.5.1"
 codspeed = { path = "../codspeed", version = "1.0.0" }
 colored = "2.0.0"
 
@@ -31,9 +31,9 @@ async-std = { version = "1.9", optional = true }
 async = ["futures", "criterion/async"]
 
 async_futures = ["criterion/async_futures", "futures/executor", "async"]
-async_smol    = ["criterion/async_smol", "smol", "async"]
-async_tokio   = ["criterion/async_tokio", "tokio", "async"]
-async_std     = ["criterion/async_std", "async-std", "async"]
+async_smol = ["criterion/async_smol", "smol", "async"]
+async_tokio = ["criterion/async_tokio", "tokio", "async"]
+async_std = ["criterion/async_std", "async-std", "async"]
 
 
 [[bench]]
