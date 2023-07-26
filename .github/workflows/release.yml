@@ -21,10 +21,10 @@ jobs:
           bins: cargo-workspaces
       - name: Build
         run: cargo build --release
-      # - name: Publish package
-      #   run: cargo workspaces publish --from-git
-      #   env:
-      #     CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+      - name: Publish package
+        run: cargo workspaces publish --from-git
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
       - name: Create a draft release
         id: create_release
         run: |
