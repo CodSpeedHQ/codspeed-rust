@@ -12,4 +12,5 @@ git branch --show-current | grep -q '^main$'
 # Fail if there are any unstaged changes left
 git diff --exit-code
 
-cargo workspaces version --no-individual-tags --exact $1
+cargo workspaces version --no-individual-tags --exact --no-git-push $1
+git push --follow-tags
