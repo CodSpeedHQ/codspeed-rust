@@ -11,10 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: moonrepo/setup-rust@v0
         with:
-          toolchain: stable
+          channel: stable
           components: clippy
       - uses: pre-commit/action@v2.0.0
         with:
@@ -24,20 +23,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: Swatinem/rust-cache@v2
-      - uses: actions-rs/toolchain@v1
+      - uses: moonrepo/setup-rust@v0
         with:
-          toolchain: stable
+          channel: stable
       - run: cargo test --all
 
   compat-integration-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: actions-rs/toolchain@v1
+      - uses: moonrepo/setup-rust@v0
         with:
-          toolchain: stable
-      - uses: Swatinem/rust-cache@v2
+          channel: stable
+          cache-target: release
+
       - run: cargo install --path crates/cargo-codspeed
 
       - run: cargo codspeed build -p codspeed
