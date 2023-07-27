@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc, time::Duration};
 
-use codspeed::codspeed::CodSpeed;
+use codspeed::{codspeed::CodSpeed, utils::get_git_relative_path};
 use criterion::{measurement::Measurement, SamplingMode, Throughput};
 
 use crate::{Bencher, Criterion};
@@ -53,9 +53,12 @@ impl BenchmarkGroup {
         F: FnMut(&mut Bencher, &I),
         I: ?Sized,
     {
+        let git_relative_file_path = get_git_relative_path(&self.current_file);
         let mut uri = format!(
             "{}::{}::{}",
-            self.current_file, self.macro_group, self.group_name,
+            git_relative_file_path.to_string_lossy(),
+            self.macro_group,
+            self.group_name,
         );
         if let Some(function_name) = id.function_name {
             uri = format!("{}::{}", uri, function_name);

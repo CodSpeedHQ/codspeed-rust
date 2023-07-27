@@ -1,4 +1,13 @@
 #[macro_export]
+macro_rules! abs_file {
+    () => {
+        std::path::PathBuf::from(std::env::var("CODSPEED_CARGO_WORKSPACE_ROOT").unwrap())
+            .join(file!())
+            .to_string_lossy()
+    };
+}
+
+#[macro_export]
 macro_rules! codspeed_uri {
     ( $name:ident ) => {
         format!("{}::{}", file!(), stringify!($name))

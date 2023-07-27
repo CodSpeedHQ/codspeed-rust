@@ -12,5 +12,20 @@ pub fn b(bench: &mut Bencher) {
     bench.bytes = N as u64;
 }
 
-benchmark_group!(benches, a, b);
+mod c {
+    use super::*;
+
+    pub fn a(bench: &mut Bencher) {
+        bench.iter(|| (0..100).fold(0, |x, y| black_box(x + y)))
+    }
+
+    pub fn b(bench: &mut Bencher) {
+        const N: usize = 1024;
+        bench.iter(|| vec![0u8; N]);
+
+        bench.bytes = N as u64;
+    }
+}
+
+benchmark_group!(benches, a, b, c::a, c::b);
 benchmark_main!(benches);

@@ -67,10 +67,14 @@ pub fn run_benches(
     )?;
     for bench in to_run.iter() {
         let bench_name = bench.file_name().unwrap().to_str().unwrap();
+        // workspace_root is needed since file! returns the path relatively to the workspace root
+        // while CARGO_MANIFEST_DIR returns the path to the sub package
+        let workspace_root = ws.root().to_string_lossy();
         ws.config()
             .shell()
             .status_with_color("Running", bench_name, Color::Yellow)?;
         std::process::Command::new(bench)
+            .env("CODSPEED_CARGO_WORKSPACE_ROOT", workspace_root.as_ref())
             .status()
             .map_err(|_| anyhow!("failed to execute the benchmark process"))?;
         ws.config().shell().status_with_color(

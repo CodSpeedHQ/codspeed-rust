@@ -19,7 +19,11 @@ keywords = ["codspeed", "benchmark"]
 [dependencies]
 colored = "2.0.0"
 libc = "^0.2"
+serde_json = "1.0.104"
 
 [[bench]]
 name = "native"
 harness = false
+
+[dev-dependencies]
+tempfile = "3.7.0"

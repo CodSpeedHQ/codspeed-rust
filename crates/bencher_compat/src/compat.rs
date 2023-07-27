@@ -1,14 +1,22 @@
-use codspeed::codspeed::{black_box, CodSpeed, WARMUP_RUNS};
+use codspeed::{
+    codspeed::{black_box, CodSpeed, WARMUP_RUNS},
+    utils::{get_formated_function_path, get_git_relative_path},
+};
 
 pub struct Bencher {
     pub bytes: u64,
     codspeed: CodSpeed,
-    current_uri: String,
+    current_file: String,
+    current_bench_path: String,
 }
 
 impl Bencher {
-    pub fn set_current_uri(&mut self, uri: String) {
-        self.current_uri = uri;
+    pub fn set_current_file(&mut self, file: impl Into<String>) {
+        self.current_file = file.into();
+    }
+
+    pub fn set_current_bench_path(&mut self, bench: impl Into<String>) {
+        self.current_bench_path = bench.into();
     }
 
     pub fn push_group(&mut self, group: &str) {
@@ -23,11 +31,13 @@ impl Bencher {
     where
         F: FnMut() -> T,
     {
-        let uri = self.current_uri.as_str();
+        let file = get_git_relative_path(self.current_file.as_str());
+        let bench_path = get_formated_function_path(self.current_bench_path.as_str());
+        let uri = format!("{}::{}", file.to_string_lossy(), bench_path);
         for _ in 0..WARMUP_RUNS {
             black_box(inner());
         }
-        self.codspeed.start_benchmark(uri);
+        self.codspeed.start_benchmark(uri.as_str());
         black_box(inner());
         self.codspeed.end_benchmark();
     }
@@ -42,18 +52,20 @@ impl Default for Bencher {
         Bencher {
             bytes: 0,
             codspeed: CodSpeed::new(),
-            current_uri: String::new(),
+            current_file: String::new(),
+            current_bench_path: String::new(),
         }
     }
 }
 
 #[macro_export]
 macro_rules! benchmark_group {
-    ($group_name:ident, $($function:path),+) => {
+    ($group_name:ident, $( $function:path ),+ $(,)*) => {
         pub fn $group_name(bencher: &mut $crate::Bencher) {
             bencher.push_group(stringify!($group_name));
             $(
-                bencher.set_current_uri($crate::codspeed_uri!($function));
+                bencher.set_current_file(codspeed::abs_file!());
+                bencher.set_current_bench_path(stringify!($function));
                 $function(bencher);
             )+
             bencher.pop_group();

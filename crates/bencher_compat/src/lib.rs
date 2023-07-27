@@ -1,5 +1,3 @@
-pub use codspeed::codspeed_uri;
-
 #[cfg(not(codspeed))]
 mod compat_bencher {
     pub use bencher::*;
