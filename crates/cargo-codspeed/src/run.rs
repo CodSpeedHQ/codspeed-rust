@@ -76,7 +76,17 @@ pub fn run_benches(
         std::process::Command::new(bench)
             .env("CODSPEED_CARGO_WORKSPACE_ROOT", workspace_root.as_ref())
             .status()
-            .map_err(|_| anyhow!("failed to execute the benchmark process"))?;
+            .map_err(|_| anyhow!("failed to execute the benchmark process"))
+            .and_then(|status| {
+                if status.success() {
+                    Ok(())
+                } else {
+                    Err(anyhow!(
+                        "failed to execute the benchmark process, exit code: {}",
+                        status.code().unwrap_or(1)
+                    ))
+                }
+            })?;
         ws.config().shell().status_with_color(
             "Done",
             format!("running {}", bench_name),

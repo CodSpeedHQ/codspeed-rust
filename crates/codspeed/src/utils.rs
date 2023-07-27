@@ -1,6 +1,5 @@
 use std::io;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
 fn get_parent_git_repo_path(abs_path: &Path) -> io::Result<PathBuf> {
     if abs_path.join(".git").exists() {
@@ -26,32 +25,6 @@ where
         Ok(repo_path) => abs_path.strip_prefix(repo_path).unwrap().to_path_buf(),
         Err(_) => abs_path.to_path_buf(),
     }
-}
-
-/// Returns the path to the root of the cargo workspace.
-/// This is needed since file! returns the path relatively to the workspace root
-/// while CARGO_MANIFEST_DIR returns the path to the sub package
-pub fn get_cargo_workspace_root() -> PathBuf {
-    let output = Command::new("cargo")
-        .args([
-            "metadata",
-            "--format-version",
-            "1",
-            "--no-deps",
-            "--quiet",
-            "--offline",
-        ])
-        .current_dir(env!("CARGO_MANIFEST_DIR"))
-        .output()
-        .expect("Failed to execute `cargo metadata`");
-
-    let metadata: serde_json::Value =
-        serde_json::from_slice(&output.stdout).expect("Failed to parse `cargo metadata` output");
-
-    let workspace_root = metadata["workspace_root"]
-        .as_str()
-        .expect("`workspace_root` field is missing or not a string");
-    PathBuf::from(workspace_root)
 }
 
 /// Fixes spaces around `::` created by stringify!($function).

@@ -1,9 +1,12 @@
 #[macro_export]
 macro_rules! abs_file {
     () => {
-        std::path::PathBuf::from(std::env::var("CODSPEED_CARGO_WORKSPACE_ROOT").unwrap())
-            .join(file!())
-            .to_string_lossy()
+        std::path::PathBuf::from(
+            std::env::var("CODSPEED_CARGO_WORKSPACE_ROOT")
+            .expect("Could not find CODSPEED_CARGO_WORKSPACE_ROOT env variable, make sure you are using the latest version of cargo-codspeed")
+        )
+        .join(file!())
+        .to_string_lossy()
     };
 }
 

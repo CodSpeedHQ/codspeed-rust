@@ -6,6 +6,8 @@ mod compat_bencher {
 #[cfg(codspeed)]
 #[path = "."]
 mod compat_bencher {
+    pub use codspeed::abs_file;
+
     mod compat;
     pub use compat::*;
 }

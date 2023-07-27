@@ -64,7 +64,7 @@ macro_rules! benchmark_group {
         pub fn $group_name(bencher: &mut $crate::Bencher) {
             bencher.push_group(stringify!($group_name));
             $(
-                bencher.set_current_file(codspeed::abs_file!());
+                bencher.set_current_file($crate::abs_file!());
                 bencher.set_current_bench_path(stringify!($function));
                 $function(bencher);
             )+

@@ -4,7 +4,7 @@ macro_rules! criterion_group {
         pub fn $name(criterion: &mut $crate::Criterion) {
             let mut criterion = &mut criterion.with_patched_measurement($config);
             $(
-                criterion.set_current_file(codspeed::abs_file!());
+                criterion.set_current_file($crate::abs_file!());
                 criterion.set_macro_group(format!("{}::{}", stringify!($name), stringify!($target)));
                 $target(criterion);
             )+

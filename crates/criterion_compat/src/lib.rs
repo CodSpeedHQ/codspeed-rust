@@ -8,6 +8,8 @@ mod compat_criterion {
 #[cfg(codspeed)]
 #[path = "."]
 mod compat_criterion {
+    pub use codspeed::abs_file;
+
     mod compat;
     pub use compat::*;
 
