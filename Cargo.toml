@@ -5,3 +5,4 @@ members = [
     "crates/criterion_compat",
     "crates/cargo-codspeed",
 ]
+resolver = "2"

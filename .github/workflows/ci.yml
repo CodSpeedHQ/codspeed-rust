@@ -11,10 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: moonrepo/setup-rust@v0
+      - uses: moonrepo/setup-rust@v1
         with:
-          channel: stable
-          components: clippy
+          components: rustfmt, clippy
       - uses: pre-commit/action@v2.0.0
         with:
           extra_args: --all-files
@@ -23,18 +22,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: moonrepo/setup-rust@v0
-        with:
-          channel: stable
+      - uses: moonrepo/setup-rust@v1
       - run: cargo test --all
 
   compat-integration-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - uses: moonrepo/setup-rust@v0
+      - uses: moonrepo/setup-rust@v1
         with:
-          channel: stable
           cache-target: release
 
       - run: cargo install --path crates/cargo-codspeed

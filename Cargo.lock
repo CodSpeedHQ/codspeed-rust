@@ -666,6 +666,7 @@ dependencies = [
  "ciborium",
  "clap 4.0.29",
  "criterion-plot",
+ "csv",
  "futures",
  "is-terminal",
  "itertools",
@@ -747,6 +748,27 @@ dependencies = [
  "hex 0.3.2",
  "openssl",
  "winapi",
+]
+
+[[package]]
+name = "csv"
+version = "1.2.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "626ae34994d3d8d668f4269922248239db4ae42d538b14c398b74a52208e8086"
+dependencies = [
+ "csv-core",
+ "itoa",
+ "ryu",
+ "serde",
+]
+
+[[package]]
+name = "csv-core"
+version = "0.1.10"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2b2466559f260f48ad25fe6317b3c8dac77b5bdb5763ac7d9d6103530663bc90"
+dependencies = [
+ "memchr",
 ]
 
 [[package]]
