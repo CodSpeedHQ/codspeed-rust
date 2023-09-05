@@ -16,7 +16,7 @@ categories = [
 ]
 keywords = ["codspeed", "benchmark", "criterion"]
 [dependencies]
-criterion = "0.5.1"
+criterion = { version = "0.5.1", default-features = false }
 codspeed = { path = "../codspeed", version = "=2.1.0" }
 colored = "2.0.0"
 
@@ -28,13 +28,19 @@ tokio = { version = "1.0", default-features = false, features = [
 async-std = { version = "1.9", optional = true }
 
 [features]
+default = ["rayon", "plotters", "cargo_bench_support"]
+# Criterion.rs features
 async = ["futures", "criterion/async"]
-
 async_futures = ["criterion/async_futures", "futures/executor", "async"]
 async_smol = ["criterion/async_smol", "smol", "async"]
 async_tokio = ["criterion/async_tokio", "tokio", "async"]
 async_std = ["criterion/async_std", "async-std", "async"]
 
+html_reports = ["criterion/html_reports"]
+cargo_bench_support = ["criterion/cargo_bench_support"]
+csv_output = ["criterion/csv_output"]
+rayon = ["criterion/rayon"]
+plotters = ["criterion/plotters"]
 
 [[bench]]
 name = "criterion_example"
