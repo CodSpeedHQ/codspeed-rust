@@ -15,6 +15,8 @@ A cargo subcommand for running CodSpeed on your project
 cargo install cargo-codspeed
 ```
 
+Feature `vendored-openssl` can be used to statically link with openssl with `cargo install cargo-codspeed --features vendored-openssl`.
+
 ## Usage
 
 ```

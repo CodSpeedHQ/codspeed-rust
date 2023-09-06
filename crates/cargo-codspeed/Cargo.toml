@@ -29,3 +29,6 @@ assert_cmd = "2.0.7"
 fs_extra = "1.2.0"
 predicates = "2.1.4"
 uuid = { version = "1.2.2", features = ["v4"] }
+
+[features]
+vendored-openssl = ["cargo/vendored-openssl"]
