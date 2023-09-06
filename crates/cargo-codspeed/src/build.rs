@@ -6,7 +6,7 @@ use crate::{
 use std::{collections::BTreeSet, fs::create_dir_all, rc::Rc};
 
 use cargo::{
-    core::{FeatureValue, Package, Workspace},
+    core::{FeatureValue, Package, Verbosity, Workspace},
     ops::{CompileFilter, CompileOptions, Packages},
     util::{command_prelude::CompileMode, interning::InternedString},
     Config,
@@ -76,6 +76,7 @@ pub fn build_benches(
         all_benches
     };
 
+    ws.config().shell().set_verbosity(Verbosity::Normal);
     ws.config().shell().status_with_color(
         "Collected",
         format!(
