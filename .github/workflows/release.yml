@@ -58,7 +58,7 @@ jobs:
       #   if: ${{ matrix.setup }}
       #   run: ${{ matrix.setup }}
 
-      - run: cargo build --release --bin cargo-codspeed --target ${{ matrix.target }}
+      - run: cargo build --release --features vendored-openssl --bin cargo-codspeed -- --target ${{ matrix.target }}
 
       - name: Upload Release Asset
         id: upload-release-asset
