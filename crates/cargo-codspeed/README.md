@@ -11,11 +11,27 @@ A cargo subcommand for running CodSpeed on your project
 
 ## Installation
 
+### With `cargo-binstall`(recommended)
+
+[`cargo-binstall`](https://github.com/cargo-bins/cargo-binstall) enables you to install binaries directly without having to build from the source(with `cargo install`) every time.
+
+If you don't have installed yet, you can install it with:
+
+```bash
+cargo install cargo-binstall
+```
+
+You can then install `cargo-codspeed` with:
+
+```bash
+cargo binstall cargo-codspeed
+```
+
+### With `cargo`
+
 ```bash
 cargo install cargo-codspeed
 ```
-
-Feature `vendored-openssl` can be used to statically link with openssl with `cargo install cargo-codspeed --features vendored-openssl`.
 
 ## Usage
 
@@ -30,3 +46,7 @@ Options:
   -h, --help     Print help information
   -V, --version  Print version information
 ```
+
+## Advanced Usage
+
+The `vendored-openssl` feature can be used to statically link with openssl with `cargo install cargo-codspeed --features vendored-openssl`.
