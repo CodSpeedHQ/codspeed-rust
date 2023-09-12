@@ -40,7 +40,7 @@ jobs:
       - run: cargo codspeed build --features async_futures -p codspeed-criterion-compat
 
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@feat/bundled-upload
+        uses: CodSpeedHQ/action@main
         with:
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
