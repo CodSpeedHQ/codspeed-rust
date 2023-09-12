@@ -29,6 +29,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Dump context
+        uses: crazy-max/ghaction-dump-context@v2
       - uses: moonrepo/setup-rust@v1
         with:
           cache-target: release
