@@ -1,6 +1,6 @@
 [package]
 name = "cargo-codspeed"
-version = "2.2.0"
+version = "2.3.0"
 edition = "2021"
 description = "Cargo extension to build & run your codspeed benchmarks"
 authors = ["Arthur Pastel <arthur@codspeed.io>"]
