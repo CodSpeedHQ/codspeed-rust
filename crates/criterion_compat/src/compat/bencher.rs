@@ -9,14 +9,19 @@ use criterion::async_executor::AsyncExecutor;
 #[cfg(feature = "async")]
 use std::future::Future;
 
-pub struct Bencher {
+pub struct Bencher<'a> {
     codspeed: Rc<RefCell<CodSpeed>>,
     uri: String,
+    _marker: std::marker::PhantomData<&'a ()>,
 }
 
-impl Bencher {
+impl<'a> Bencher<'a> {
     pub fn new(codspeed: Rc<RefCell<CodSpeed>>, uri: String) -> Self {
-        Bencher { codspeed, uri }
+        Bencher {
+            codspeed,
+            uri,
+            _marker: std::marker::PhantomData,
+        }
     }
 
     #[inline(never)]
@@ -120,19 +125,19 @@ impl Bencher {
     }
 
     #[cfg(feature = "async")]
-    pub fn to_async<A: AsyncExecutor>(&mut self, runner: A) -> AsyncBencher<A> {
+    pub fn to_async<'b, A: AsyncExecutor>(&'b mut self, runner: A) -> AsyncBencher<'a, 'b, A> {
         AsyncBencher { b: self, runner }
     }
 }
 
 #[cfg(feature = "async")]
-pub struct AsyncBencher<'b, A: AsyncExecutor> {
-    b: &'b mut Bencher,
+pub struct AsyncBencher<'a, 'b, A: AsyncExecutor> {
+    b: &'b mut Bencher<'a>,
     runner: A,
 }
 
 #[cfg(feature = "async")]
-impl<'b, A: AsyncExecutor> AsyncBencher<'b, A> {
+impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
     #[allow(clippy::await_holding_refcell_ref)]
     #[inline(never)]
     pub fn iter<O, R, F>(&mut self, mut routine: R)
