@@ -1,20 +1,22 @@
+use std::marker::PhantomData;
 use std::{cell::RefCell, rc::Rc, time::Duration};
 
 use codspeed::{codspeed::CodSpeed, utils::get_git_relative_path};
-use criterion::{measurement::Measurement, SamplingMode, Throughput};
+use criterion::{measurement::Measurement, PlotConfiguration, SamplingMode, Throughput};
 
 use crate::{Bencher, Criterion};
 
-pub struct BenchmarkGroup {
+pub struct BenchmarkGroup<M: Measurement> {
     codspeed: Rc<RefCell<CodSpeed>>,
     current_file: String,
     macro_group: String,
     group_name: String,
+    phantom: PhantomData<*const M>,
 }
 
-impl BenchmarkGroup {
-    pub fn new<M: Measurement>(criterion: &mut Criterion<M>, group_name: String) -> BenchmarkGroup {
-        BenchmarkGroup {
+impl<M: Measurement> BenchmarkGroup<M> {
+    pub fn new(criterion: &mut Criterion<M>, group_name: String) -> BenchmarkGroup<M> {
+        BenchmarkGroup::<M> {
             codspeed: criterion
                 .codspeed
                 .as_ref()
@@ -23,6 +25,7 @@ impl BenchmarkGroup {
             current_file: criterion.current_file.clone(),
             macro_group: criterion.macro_group.clone(),
             group_name,
+            phantom: PhantomData,
         }
     }
 
@@ -73,7 +76,7 @@ impl BenchmarkGroup {
 
 // Dummy methods
 #[allow(unused_variables)]
-impl BenchmarkGroup {
+impl<M: Measurement> BenchmarkGroup<M> {
     pub fn sample_size(&mut self, n: usize) -> &mut Self {
         self
     }
@@ -99,6 +102,9 @@ impl BenchmarkGroup {
         self
     }
     pub fn sampling_mode(&mut self, new_mode: SamplingMode) -> &mut Self {
+        self
+    }
+    pub fn plot_config(&mut self, new_config: PlotConfiguration) -> &mut Self {
         self
     }
     pub fn finish(self) {}

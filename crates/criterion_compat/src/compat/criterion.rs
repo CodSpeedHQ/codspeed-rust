@@ -78,8 +78,8 @@ impl<M: Measurement> Criterion<M> {
         self
     }
 
-    pub fn benchmark_group<S: Into<String>>(&mut self, group_name: S) -> BenchmarkGroup {
-        BenchmarkGroup::new(self, group_name.into())
+    pub fn benchmark_group<S: Into<String>>(&mut self, group_name: S) -> BenchmarkGroup<M> {
+        BenchmarkGroup::<M>::new(self, group_name.into())
     }
 }
 
