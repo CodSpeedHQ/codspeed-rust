@@ -4,6 +4,7 @@
 [![CI](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/CodSpeedHQ/codspeed-rust/actions/workflows/ci.yml)
 [![Crates.io](https://img.shields.io/crates/v/codspeed-bencher-compat)](https://crates.io/crates/codspeed-bencher-compat)
 [![Discord](https://img.shields.io/badge/chat%20on-discord-7289da.svg)](https://discord.com/invite/MxpaCfKSqF)
+[![CodSpeed Badge](https://img.shields.io/endpoint?url=https://codspeed.io/badge.json)](https://codspeed.io/CodSpeedHQ/codspeed-rust)
 
 Bencher compatibility layer for CodSpeed
 
