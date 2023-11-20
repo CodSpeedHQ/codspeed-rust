@@ -9,15 +9,15 @@ use crate::{Bencher, Criterion};
 
 /// Deprecated: using the default measurement will be removed in the next major version.
 /// Defaulting to WallTime differs from the original BenchmarkGroup implementation but avoids creating a breaking change
-pub struct BenchmarkGroup<M: Measurement = WallTime> {
+pub struct BenchmarkGroup<'a, M: Measurement = WallTime> {
     codspeed: Rc<RefCell<CodSpeed>>,
     current_file: String,
     macro_group: String,
     group_name: String,
-    _marker: PhantomData<*const M>,
+    _marker: PhantomData<&'a M>,
 }
 
-impl<M: Measurement> BenchmarkGroup<M> {
+impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
     pub fn new(criterion: &mut Criterion<M>, group_name: String) -> BenchmarkGroup<M> {
         BenchmarkGroup::<M> {
             codspeed: criterion
@@ -79,7 +79,7 @@ impl<M: Measurement> BenchmarkGroup<M> {
 
 // Dummy methods
 #[allow(unused_variables)]
-impl<M: Measurement> BenchmarkGroup<M> {
+impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
     pub fn sample_size(&mut self, n: usize) -> &mut Self {
         self
     }
