@@ -2,16 +2,19 @@ use std::marker::PhantomData;
 use std::{cell::RefCell, rc::Rc, time::Duration};
 
 use codspeed::{codspeed::CodSpeed, utils::get_git_relative_path};
+use criterion::measurement::WallTime;
 use criterion::{measurement::Measurement, PlotConfiguration, SamplingMode, Throughput};
 
 use crate::{Bencher, Criterion};
 
-pub struct BenchmarkGroup<M: Measurement> {
+/// Deprecated: using the default measurement will be removed in the next major version.
+/// Defaulting to WallTime differs from the original BenchmarkGroup implementation but avoids creating a breaking change
+pub struct BenchmarkGroup<M: Measurement = WallTime> {
     codspeed: Rc<RefCell<CodSpeed>>,
     current_file: String,
     macro_group: String,
     group_name: String,
-    phantom: PhantomData<*const M>,
+    _marker: PhantomData<*const M>,
 }
 
 impl<M: Measurement> BenchmarkGroup<M> {
@@ -25,7 +28,7 @@ impl<M: Measurement> BenchmarkGroup<M> {
             current_file: criterion.current_file.clone(),
             macro_group: criterion.macro_group.clone(),
             group_name,
-            phantom: PhantomData,
+            _marker: PhantomData,
         }
     }
 
