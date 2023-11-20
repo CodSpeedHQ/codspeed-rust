@@ -1,5 +1,5 @@
+use anstyle::{AnsiColor, Style};
 use anyhow::anyhow;
-use termcolor::Color;
 
 use crate::{
     helpers::{get_codspeed_dir, read_dir_recursive},
@@ -63,16 +63,18 @@ pub fn run_benches(
     ws.config().shell().status_with_color(
         "Collected",
         format!("{} benchmark suite(s) to run", to_run.len()),
-        Color::White,
+        &Style::new().fg_color(Some(AnsiColor::White.into())),
     )?;
     for bench in to_run.iter() {
         let bench_name = bench.file_name().unwrap().to_str().unwrap();
         // workspace_root is needed since file! returns the path relatively to the workspace root
         // while CARGO_MANIFEST_DIR returns the path to the sub package
         let workspace_root = ws.root().to_string_lossy();
-        ws.config()
-            .shell()
-            .status_with_color("Running", bench_name, Color::Yellow)?;
+        ws.config().shell().status_with_color(
+            "Running",
+            bench_name,
+            &Style::new().fg_color(Some(AnsiColor::Yellow.into())),
+        )?;
         std::process::Command::new(bench)
             .env("CODSPEED_CARGO_WORKSPACE_ROOT", workspace_root.as_ref())
             .status()
@@ -90,13 +92,13 @@ pub fn run_benches(
         ws.config().shell().status_with_color(
             "Done",
             format!("running {}", bench_name),
-            Color::Green,
+            &Style::new().fg_color(Some(AnsiColor::Green.into())),
         )?;
     }
     ws.config().shell().status_with_color(
         "Finished",
         format!("running {} benchmark suite(s)", to_run.len()),
-        Color::Green,
+        &Style::new().fg_color(Some(AnsiColor::Green.into())),
     )?;
     Ok(())
 }

@@ -5,13 +5,13 @@ use crate::{
 
 use std::{collections::BTreeSet, fs::create_dir_all, rc::Rc};
 
+use anstyle::{AnsiColor, Style};
 use cargo::{
     core::{FeatureValue, Package, Verbosity, Workspace},
     ops::{CompileFilter, CompileOptions, Packages},
     util::{command_prelude::CompileMode, interning::InternedString},
     Config,
 };
-use termcolor::Color;
 
 fn get_compile_options(
     config: &Config,
@@ -88,15 +88,17 @@ pub fn build_benches(
                 "".to_string()
             }
         ),
-        Color::White,
+        &Style::new().fg_color(Some(AnsiColor::White.into())),
     )?;
 
     let config = ws.config();
     let mut built_benches = vec![];
     for bench in benches {
-        ws.config()
-            .shell()
-            .status_with_color("Building", bench.name(), Color::Yellow)?;
+        ws.config().shell().status_with_color(
+            "Building",
+            bench.name(),
+            &Style::new().fg_color(Some(AnsiColor::Yellow.into())),
+        )?;
         let compile_opts = get_compile_options(config, &features, package, bench.name())?;
         let result = cargo::ops::compile(ws, &compile_opts)?;
         let built_targets = result
@@ -109,9 +111,11 @@ pub fn build_benches(
         } else {
             bail!("No benchmark target found.")
         }
-        ws.config()
-            .shell()
-            .status_with_color("Built", bench.name(), Color::Green)?;
+        ws.config().shell().status_with_color(
+            "Built",
+            bench.name(),
+            &Style::new().fg_color(Some(AnsiColor::Green.into())),
+        )?;
     }
 
     if built_benches.is_empty() {
@@ -137,7 +141,7 @@ pub fn build_benches(
     ws.config().shell().status_with_color(
         "Finished",
         format!("built {} benchmark suite(s)", built_benches.len()),
-        Color::Green,
+        &Style::new().fg_color(Some(AnsiColor::Green.into())),
     )?;
 
     Ok(())
