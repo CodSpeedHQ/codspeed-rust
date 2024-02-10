@@ -6,4 +6,3 @@ mod macros;
 pub use self::bencher::*;
 pub use self::criterion::*;
 pub use self::group::*;
-pub use self::macros::*;
