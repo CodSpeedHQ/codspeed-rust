@@ -17,14 +17,16 @@ pub fn get_git_relative_path<P>(abs_path: P) -> PathBuf
 where
     P: AsRef<Path>,
 {
-    let abs_path = abs_path.as_ref();
-    match abs_path
-        .canonicalize()
-        .and_then(|p| get_parent_git_repo_path(&p))
-    {
-        Ok(repo_path) => abs_path.strip_prefix(repo_path).unwrap().to_path_buf(),
-        Err(_) => abs_path.to_path_buf(),
+    if let Ok(abs_path) = abs_path.as_ref().canonicalize() {
+        if let Ok(repo_path) = get_parent_git_repo_path(&abs_path) {
+            return abs_path
+                .strip_prefix(repo_path)
+                .expect("Repository path is malformed.")
+                .to_path_buf();
+        }
     }
+
+    abs_path.as_ref().to_path_buf()
 }
 
 /// Fixes spaces around `::` created by stringify!($function).
