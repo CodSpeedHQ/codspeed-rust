@@ -17,16 +17,18 @@ pub fn get_git_relative_path<P>(abs_path: P) -> PathBuf
 where
     P: AsRef<Path>,
 {
-    if let Ok(abs_path) = abs_path.as_ref().canonicalize() {
-        if let Ok(repo_path) = get_parent_git_repo_path(&abs_path) {
-            return abs_path
+    if let Ok(canonicalized_abs_path) = abs_path.as_ref().canonicalize() {
+        if let Ok(repo_path) = get_parent_git_repo_path(&canonicalized_abs_path) {
+            canonicalized_abs_path
                 .strip_prefix(repo_path)
                 .expect("Repository path is malformed.")
-                .to_path_buf();
+                .to_path_buf()
+        } else {
+            canonicalized_abs_path
         }
+    } else {
+        abs_path.as_ref().to_path_buf()
     }
-
-    abs_path.as_ref().to_path_buf()
 }
 
 /// Fixes spaces around `::` created by stringify!($function).
@@ -62,6 +64,18 @@ mod tests {
 
         let relative_path = get_git_relative_path(&path_dir);
         assert_eq!(relative_path, path_dir.canonicalize().unwrap());
+    }
+
+    #[test]
+    fn test_get_git_relative_path_not_found_with_symlink() {
+        let dir = tempdir().unwrap();
+        let path_dir = dir.path().join("folder");
+        fs::create_dir_all(&path_dir).unwrap();
+        let symlink = dir.path().join("symlink");
+        std::os::unix::fs::symlink(&path_dir, &symlink).unwrap();
+
+        let relative_path = get_git_relative_path(&symlink);
+        assert_eq!(relative_path, symlink.canonicalize().unwrap());
     }
 
     #[test]
