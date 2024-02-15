@@ -17,7 +17,7 @@ fn get_compile_options(
     config: &Config,
     features: &Option<Vec<String>>,
     package: &Package,
-    bench: &str,
+    benches: Vec<&str>,
 ) -> Result<CompileOptions> {
     let mut compile_opts = CompileOptions::new(config, CompileMode::Build)?;
     compile_opts.spec = Packages::Packages(vec![package.name().to_string()]);
@@ -38,7 +38,7 @@ fn get_compile_options(
         false,
         vec![],
         false,
-        vec![bench.into()],
+        benches.iter().map(|s| s.to_string()).collect(),
         false,
         false,
     );
@@ -92,27 +92,20 @@ pub fn build_benches(
     )?;
 
     let config = ws.config();
-    let mut built_benches = vec![];
-    for bench in benches {
-        ws.config()
-            .shell()
-            .status_with_color("Building", bench.name(), Color::Yellow)?;
-        let compile_opts = get_compile_options(config, &features, package, bench.name())?;
-        let result = cargo::ops::compile(ws, &compile_opts)?;
-        let built_targets = result
-            .tests
-            .into_iter()
-            .filter(|u| u.unit.target.is_bench())
-            .collect_vec();
-        if let Some(built_bench) = built_targets.into_iter().next() {
-            built_benches.push(built_bench);
-        } else {
-            bail!("No benchmark target found.")
-        }
-        ws.config()
-            .shell()
-            .status_with_color("Built", bench.name(), Color::Green)?;
-    }
+
+    let benches_names = benches.iter().map(|t| t.name()).collect_vec();
+    let benches_names_str = benches_names.join(", ");
+
+    ws.config()
+        .shell()
+        .status_with_color("Building", benches_names_str.clone(), Color::Yellow)?;
+    let compile_opts = get_compile_options(config, &features, package, benches_names)?;
+    let result = cargo::ops::compile(ws, &compile_opts)?;
+    let built_benches = result
+        .tests
+        .into_iter()
+        .filter(|u| u.unit.target.is_bench())
+        .collect_vec();
 
     if built_benches.is_empty() {
         bail!(
@@ -120,6 +113,10 @@ pub fn build_benches(
             Please add a benchmark target to your Cargo.toml"
         );
     }
+
+    ws.config()
+        .shell()
+        .status_with_color("Built", benches_names_str, Color::Green)?;
 
     let mut codspeed_target_dir = get_codspeed_dir(ws);
     create_dir_all(&codspeed_target_dir)?;
@@ -129,14 +126,16 @@ pub fn build_benches(
     }
     clear_dir(&codspeed_target_dir)?;
 
-    for bench in built_benches.iter() {
-        let bench_dest = codspeed_target_dir.clone().join(bench.unit.target.name());
-        std::fs::copy(bench.path.clone(), bench_dest)?;
+    for built_bench in built_benches.iter() {
+        let bench_dest = codspeed_target_dir
+            .clone()
+            .join(built_bench.unit.target.name());
+        std::fs::copy(built_bench.path.clone(), bench_dest)?;
     }
 
     ws.config().shell().status_with_color(
         "Finished",
-        format!("built {} benchmark suite(s)", built_benches.len()),
+        format!("built {} benchmark suite(s)", benches.len()),
         Color::Green,
     )?;
 
