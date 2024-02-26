@@ -18,6 +18,7 @@ where
     P: AsRef<Path>,
 {
     if let Ok(canonicalized_abs_path) = abs_path.as_ref().canonicalize() {
+        // `repo_path` is still canonicalized as it is a subpath of `canonicalized_abs_path`
         if let Ok(repo_path) = get_parent_git_repo_path(&canonicalized_abs_path) {
             canonicalized_abs_path
                 .strip_prefix(repo_path)
