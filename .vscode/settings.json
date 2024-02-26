@@ -2,6 +2,8 @@
   "rust-analyzer.cargo.extraEnv": {
     "RUSTFLAGS": "--cfg codspeed"
   },
-  "rust-analyzer.cargo.allFeatures": true,
-  "rust-analyzer.checkOnSave.command": "clippy"
+  "rust-analyzer.cargo.features": "all",
+  "editor.formatOnSave": true,
+  "rust-analyzer.checkOnSave": true,
+  "rust-analyzer.check.command": "clippy"
 }
