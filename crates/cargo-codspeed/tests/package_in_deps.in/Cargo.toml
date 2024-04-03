@@ -1,0 +1,17 @@
+[package]
+name = "blit"
+version = "0.8.5"
+edition = "2021"
+publish = false
+
+[dependencies]
+bencher = "0.1.5"
+codspeed = { path = "../../../codspeed" }
+codspeed-bencher-compat = { path = "../../../bencher_compat" }
+
+[dev-dependencies]
+blit = "*"
+
+[[bench]]
+name = "bencher_example"
+harness = false

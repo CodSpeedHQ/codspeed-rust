@@ -18,9 +18,14 @@ fn get_compile_options(
     features: &Option<Vec<String>>,
     package: &Package,
     benches: Vec<&str>,
+    is_root_package: bool,
 ) -> Result<CompileOptions> {
     let mut compile_opts = CompileOptions::new(config, CompileMode::Build)?;
-    compile_opts.spec = Packages::Packages(vec![package.name().to_string()]);
+
+    // if the package is not the root package, we need to specify the package to build
+    if !is_root_package {
+        compile_opts.spec = Packages::Packages(vec![package.name().to_string()]);
+    }
     if let Some(features) = features {
         compile_opts.cli_features.features = Rc::new(
             features
@@ -51,14 +56,15 @@ pub fn build_benches(
     package_name: Option<String>,
     features: Option<Vec<String>>,
 ) -> Result<()> {
+    let is_root_package = package_name.is_none();
     let package = match package_name.as_ref() {
-        Some(package_name) => ws
-            .members()
-            .find(|p| p.name().to_string() == *package_name)
-            .ok_or_else(|| anyhow!("Package {} not found", package_name))?,
-        None => ws.current().map_err(|_| anyhow!("No package found. If working with a workspace please use the -p option to specify a member."))?,
-    };
+        Some(package_name) =>             ws.members()
+                .find(|p| p.name().to_string() == *package_name)
+                .ok_or_else(|| anyhow!("Package {} not found", package_name))?
 
+        ,
+        None => ws.current().map_err(|_| anyhow!("No package found. If working with a workspace please use the -p option to specify a member."))?
+    };
     let all_benches = package
         .targets()
         .iter()
@@ -99,7 +105,8 @@ pub fn build_benches(
     ws.config()
         .shell()
         .status_with_color("Building", benches_names_str.clone(), Color::Yellow)?;
-    let compile_opts = get_compile_options(config, &features, package, benches_names)?;
+    let compile_opts =
+        get_compile_options(config, &features, package, benches_names, is_root_package)?;
     let result = cargo::ops::compile(ws, &compile_opts)?;
     let built_benches = result
         .tests

@@ -20,6 +20,7 @@ pub enum Project {
     Simple,
     Features,
     Workspace,
+    PackageInDeps,
 }
 
 pub fn setup(dir: &str, project: Project) -> String {
@@ -52,6 +53,13 @@ pub fn setup(dir: &str, project: Project) -> String {
             replace_in_file(
                 tmp_dir.join("b").join("Cargo.toml").to_str().unwrap(),
                 "../../../..",
+                workspace_root.join("crates").to_str().unwrap(),
+            );
+        }
+        Project::PackageInDeps => {
+            replace_in_file(
+                tmp_dir.join("Cargo.toml").to_str().unwrap(),
+                "../../..",
                 workspace_root.join("crates").to_str().unwrap(),
             );
         }
