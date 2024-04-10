@@ -1,6 +1,6 @@
 [package]
 name = "codspeed"
-version = "2.4.0"
+version = "2.4.1"
 edition = "2021"
 description = "Core instrumentation library for CodSpeed"
 authors = ["Arthur Pastel <arthur@codspeed.io>"]
