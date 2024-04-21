@@ -30,7 +30,7 @@ fn test_simple_build() {
 #[test]
 fn test_simple_build_and_run() {
     let dir = setup(DIR, Project::Simple);
-    cargo_codspeed(&dir).arg("build").assert();
+    cargo_codspeed(&dir).arg("build").assert().success();
     cargo_codspeed(&dir)
         .arg("run")
         .assert()
@@ -58,7 +58,8 @@ fn test_simple_build_and_run_single() {
     cargo_codspeed(&dir)
         .arg("build")
         .arg("another_bencher_example")
-        .assert();
+        .assert()
+        .success();
     cargo_codspeed(&dir)
         .arg("run")
         .arg("another_bencher_example")

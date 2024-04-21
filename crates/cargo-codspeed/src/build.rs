@@ -1,5 +1,5 @@
 use crate::{
-    helpers::{clear_dir, get_codspeed_dir},
+    helpers::{clear_dir, get_codspeed_target_dir},
     prelude::*,
 };
 
@@ -125,7 +125,7 @@ pub fn build_benches(
         .shell()
         .status_with_color("Built", benches_names_str, Color::Green)?;
 
-    let mut codspeed_target_dir = get_codspeed_dir(ws);
+    let mut codspeed_target_dir = get_codspeed_target_dir(ws);
     create_dir_all(&codspeed_target_dir)?;
     if let Some(name) = package_name.as_ref() {
         codspeed_target_dir = codspeed_target_dir.join(name);

@@ -21,6 +21,7 @@ pub enum Project {
     Features,
     Workspace,
     PackageInDeps,
+    CratesWorkingDirectory,
 }
 
 pub fn setup(dir: &str, project: Project) -> String {
@@ -60,6 +61,17 @@ pub fn setup(dir: &str, project: Project) -> String {
             replace_in_file(
                 tmp_dir.join("Cargo.toml").to_str().unwrap(),
                 "../../..",
+                workspace_root.join("crates").to_str().unwrap(),
+            );
+        }
+        Project::CratesWorkingDirectory => {
+            replace_in_file(
+                tmp_dir
+                    .join("the_crate")
+                    .join("Cargo.toml")
+                    .to_str()
+                    .unwrap(),
+                "../../../..",
                 workspace_root.join("crates").to_str().unwrap(),
             );
         }
