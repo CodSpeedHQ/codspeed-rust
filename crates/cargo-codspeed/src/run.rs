@@ -3,7 +3,10 @@ use std::{io, path::PathBuf};
 use anyhow::anyhow;
 use termcolor::Color;
 
-use crate::{helpers::get_codspeed_target_dir, prelude::*};
+use crate::{
+    helpers::{get_codspeed_target_dir, get_target_packages},
+    prelude::*,
+};
 
 struct BenchToRun {
     bench_path: PathBuf,
@@ -18,28 +21,11 @@ pub fn run_benches(
     package: Option<String>,
 ) -> Result<()> {
     let codspeed_target_dir = get_codspeed_target_dir(ws);
-
-    let packages_to_run = if let Some(package) = package.as_ref() {
-        let p = ws
-            .members()
-            .find(|m| m.manifest().name().to_string().as_str() == package);
-        if let Some(p) = p {
-            vec![p]
-        } else {
-            bail!("Package {} not found", package);
-        }
-    } else {
-        ws.members().collect::<Vec<_>>()
-    };
+    let packages_to_run = get_target_packages(&package, ws)?;
     let mut benches: Vec<BenchToRun> = vec![];
     for p in packages_to_run {
         let package_name = p.manifest().name().to_string();
-        let is_root_package = p.root() == ws.root();
-        let package_target_dir = if is_root_package {
-            codspeed_target_dir.clone()
-        } else {
-            codspeed_target_dir.join(&package_name)
-        };
+        let package_target_dir = codspeed_target_dir.join(&package_name);
         let working_directory = p.root().to_path_buf();
         if let io::Result::Ok(read_dir) = std::fs::read_dir(&package_target_dir) {
             for entry in read_dir {

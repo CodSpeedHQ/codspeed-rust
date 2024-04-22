@@ -22,10 +22,13 @@ fn test_workspace_build_without_package_spec() {
     cargo_codspeed(&dir)
         .arg("build")
         .assert()
-        .failure()
-        .stderr(contains(
-            "Error No package found. If working with a workspace please use the -p option to specify a member.",
-        ));
+        .success()
+        .stderr(contains("Finished built 3 benchmark suite(s)"));
+    cargo_codspeed(&dir)
+        .arg("run")
+        .assert()
+        .success()
+        .stderr(contains("Finished running 3 benchmark suite(s)"));
     teardown(dir);
 }
 
@@ -91,12 +94,14 @@ fn test_workspace_build_both_and_run_all() {
     cargo_codspeed(&dir)
         .arg("build")
         .args(["--package", "package-a"])
-        .assert();
+        .assert()
+        .success();
 
     cargo_codspeed(&dir)
         .arg("build")
         .args(["--package", "package-b"])
-        .assert();
+        .assert()
+        .success();
 
     cargo_codspeed(&dir)
         .arg("run")
