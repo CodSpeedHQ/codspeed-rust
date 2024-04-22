@@ -29,7 +29,7 @@ pub fn run_benches(
             bail!("Package {} not found", package);
         }
     } else {
-        ws.default_members().collect::<Vec<_>>()
+        ws.members().collect::<Vec<_>>()
     };
     let mut benches: Vec<BenchToRun> = vec![];
     for p in packages_to_run {
