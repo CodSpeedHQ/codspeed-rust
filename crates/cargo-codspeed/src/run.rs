@@ -1,12 +1,10 @@
 use std::{io, path::PathBuf};
 
 use anyhow::anyhow;
+use cargo::ops::Packages;
 use termcolor::Color;
 
-use crate::{
-    helpers::{get_codspeed_target_dir, get_target_packages},
-    prelude::*,
-};
+use crate::{helpers::get_codspeed_target_dir, prelude::*};
 
 struct BenchToRun {
     bench_path: PathBuf,
@@ -18,10 +16,10 @@ struct BenchToRun {
 pub fn run_benches(
     ws: &Workspace,
     selected_bench_names: Option<Vec<String>>,
-    package: Option<String>,
+    packages: Packages,
 ) -> Result<()> {
     let codspeed_target_dir = get_codspeed_target_dir(ws);
-    let packages_to_run = get_target_packages(&package, ws)?;
+    let packages_to_run = packages.get_packages(ws)?;
     let mut benches: Vec<BenchToRun> = vec![];
     for p in packages_to_run {
         let package_name = p.manifest().name().to_string();
@@ -50,14 +48,7 @@ pub fn run_benches(
     }
 
     if benches.is_empty() {
-        if let Some(package) = package.as_ref() {
-            bail!(
-                "No benchmarks found. Run `cargo codspeed build -p {}` first.",
-                package
-            );
-        } else {
-            bail!("No benchmarks found. Run `cargo codspeed build` first.");
-        }
+        bail!("No benchmarks found. Run `cargo codspeed build` first.");
     }
 
     let mut to_run = vec![];

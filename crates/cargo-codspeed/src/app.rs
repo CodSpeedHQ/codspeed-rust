@@ -2,9 +2,9 @@ use std::{ffi::OsString, process::exit};
 
 use crate::{prelude::*, run::run_benches};
 
-use cargo::util::important_paths::find_root_manifest_for_wd;
 use cargo::Config;
-use clap::{Parser, Subcommand};
+use cargo::{ops::Packages, util::important_paths::find_root_manifest_for_wd};
+use clap::{Args, Parser, Subcommand};
 use termcolor::Color;
 
 use crate::build::build_benches;
@@ -16,15 +16,30 @@ struct Cli {
     command: Commands,
 }
 
+/// Package selection flags
+#[derive(Args)]
+struct PackageSelection {
+    /// Select all packages in the workspace
+    #[arg(long)]
+    workspace: bool,
+    /// Exclude packages
+    #[arg(long)]
+    exclude: Vec<String>,
+    /// Package to select
+    #[arg(short, long)]
+    package: Vec<String>,
+}
+
 #[derive(Subcommand)]
 enum Commands {
     /// Build the benchmarks
     Build {
         /// Optional list of benchmarks to build (builds all benchmarks by default)
         benches: Option<Vec<String>>,
-        /// Package to build benchmarks for (if using a workspace)
-        #[arg(short, long)]
-        package: Option<String>,
+
+        #[command(flatten)]
+        package_selection: PackageSelection,
+
         /// Space or comma separated list of features to activate
         #[arg(short = 'F', long)]
         features: Option<String>,
@@ -33,9 +48,9 @@ enum Commands {
     Run {
         /// Optional list of benchmarks to run (run all found benchmarks by default)
         benches: Option<Vec<String>>,
-        /// Package to build benchmarks for (if using a workspace)
-        #[arg(short, long)]
-        package: Option<String>,
+
+        #[command(flatten)]
+        package_selection: PackageSelection,
     },
 }
 
@@ -50,12 +65,12 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
     let cli = Cli::try_parse_from(args)?;
     let cargo_config = get_cargo_config()?;
     let manifest_path = find_root_manifest_for_wd(cargo_config.cwd())?;
-    let workspace = Workspace::new(&manifest_path, &cargo_config)?;
+    let ws = Workspace::new(&manifest_path, &cargo_config)?;
 
     let res = match cli.command {
         Commands::Build {
             benches,
-            package,
+            package_selection,
             features,
         } => {
             let features = features.map(|f| {
@@ -63,14 +78,28 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
                     .map(|s| s.to_string())
                     .collect_vec()
             });
-            build_benches(&workspace, benches, package, features)
+            let packages = Packages::from_flags(
+                package_selection.workspace,
+                package_selection.exclude,
+                package_selection.package,
+            )?;
+            build_benches(&ws, benches, packages, features)
         }
-        Commands::Run { benches, package } => run_benches(&workspace, benches, package),
+        Commands::Run {
+            benches,
+            package_selection,
+        } => {
+            let packages = Packages::from_flags(
+                package_selection.workspace,
+                package_selection.exclude,
+                package_selection.package,
+            )?;
+            run_benches(&ws, benches, packages)
+        }
     };
 
     if let Err(e) = res {
-        workspace
-            .config()
+        ws.config()
             .shell()
             .status_with_color("Error", e.to_string(), Color::Red)?;
         exit(1);

@@ -1,5 +1,5 @@
 use crate::{
-    helpers::{clear_dir, get_codspeed_target_dir, get_target_packages},
+    helpers::{clear_dir, get_codspeed_target_dir},
     prelude::*,
 };
 
@@ -58,10 +58,10 @@ struct BenchToBuild<'a> {
 pub fn build_benches(
     ws: &Workspace,
     selected_benches: Option<Vec<String>>,
-    package_name: Option<String>,
+    packages: Packages,
     features: Option<Vec<String>>,
 ) -> Result<()> {
-    let packages_to_build = get_target_packages(&package_name, ws)?;
+    let packages_to_build = packages.get_packages(ws)?;
     let mut benches_to_build = vec![];
     for package in packages_to_build.iter() {
         let benches = package

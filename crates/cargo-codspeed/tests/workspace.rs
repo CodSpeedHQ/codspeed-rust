@@ -110,3 +110,39 @@ fn test_workspace_build_both_and_run_all() {
         .stderr(contains("Finished running 3 benchmark suite(s)"));
     teardown(dir);
 }
+
+#[test]
+fn test_workspace_build_both_and_run_all_explicitely() {
+    let dir = setup(DIR, Project::Workspace);
+    cargo_codspeed(&dir)
+        .arg("build")
+        .args(["--package", "package-a"])
+        .args(["--package", "package-b"])
+        .assert()
+        .success();
+    cargo_codspeed(&dir)
+        .arg("run")
+        .args(["--package", "package-a"])
+        .args(["--package", "package-b"])
+        .assert()
+        .success()
+        .stderr(contains("Finished running 3 benchmark suite(s)"));
+    teardown(dir);
+}
+
+#[test]
+fn test_workspace_build_exclude() {
+    let dir = setup(DIR, Project::Workspace);
+    cargo_codspeed(&dir)
+        .arg("build")
+        .args(["--workspace", "--exclude", "package-b"])
+        .assert()
+        .success()
+        .stderr(contains("Finished built 1 benchmark suite(s)"));
+    cargo_codspeed(&dir)
+        .arg("run")
+        .assert()
+        .success()
+        .stderr(contains("Finished running 1 benchmark suite(s)"));
+    teardown(dir);
+}
