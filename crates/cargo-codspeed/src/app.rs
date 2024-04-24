@@ -1,11 +1,11 @@
 use std::{ffi::OsString, process::exit};
 
+use crate::helpers::style;
 use crate::{prelude::*, run::run_benches};
 
 use cargo::Config;
 use cargo::{ops::Packages, util::important_paths::find_root_manifest_for_wd};
 use clap::{Args, Parser, Subcommand};
-use termcolor::Color;
 
 use crate::build::build_benches;
 
@@ -101,7 +101,7 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
     if let Err(e) = res {
         ws.config()
             .shell()
-            .status_with_color("Error", e.to_string(), Color::Red)?;
+            .status_with_color("Error", e.to_string(), &style::ERROR)?;
         exit(1);
     }
 

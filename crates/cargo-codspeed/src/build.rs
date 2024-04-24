@@ -1,5 +1,5 @@
 use crate::{
-    helpers::{clear_dir, get_codspeed_target_dir},
+    helpers::{clear_dir, get_codspeed_target_dir, style},
     prelude::*,
 };
 
@@ -11,7 +11,6 @@ use cargo::{
     util::{command_prelude::CompileMode, interning::InternedString},
     Config,
 };
-use termcolor::Color;
 
 fn get_compile_options(
     config: &Config,
@@ -104,7 +103,7 @@ pub fn build_benches(
                 "".to_string()
             }
         ),
-        Color::White,
+        &style::TITLE,
     )?;
 
     let config = ws.config();
@@ -120,7 +119,7 @@ pub fn build_benches(
         ws.config().shell().status_with_color(
             "Building",
             format!("{} {}", bench.package.name(), bench.target.name()),
-            Color::Yellow,
+            &style::ACTIVE,
         )?;
         let is_root_package = ws.current_opt().map_or(false, |p| p == bench.package);
         let benches_names = vec![bench.target.name()];
@@ -159,7 +158,7 @@ pub fn build_benches(
     ws.config().shell().status_with_color(
         "Finished",
         format!("built {} benchmark suite(s)", built_benches),
-        Color::Green,
+        &style::SUCCESS,
     )?;
 
     Ok(())

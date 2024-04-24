@@ -23,3 +23,18 @@ where
     }
     Ok(())
 }
+
+pub mod style {
+    use anstyle::{AnsiColor, Color, Style};
+
+    pub const TITLE: Style = Style::new().bold();
+    pub const ERROR: Style = Style::new()
+        .fg_color(Some(Color::Ansi(AnsiColor::Red)))
+        .bold();
+    pub const SUCCESS: Style = Style::new()
+        .fg_color(Some(Color::Ansi(AnsiColor::Green)))
+        .bold();
+    pub const ACTIVE: Style = Style::new()
+        .fg_color(Some(Color::Ansi(AnsiColor::Yellow)))
+        .bold();
+}

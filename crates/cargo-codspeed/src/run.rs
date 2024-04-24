@@ -2,9 +2,11 @@ use std::{io, path::PathBuf};
 
 use anyhow::anyhow;
 use cargo::ops::Packages;
-use termcolor::Color;
 
-use crate::{helpers::get_codspeed_target_dir, prelude::*};
+use crate::{
+    helpers::{get_codspeed_target_dir, style},
+    prelude::*,
+};
 
 struct BenchToRun {
     bench_path: PathBuf,
@@ -77,7 +79,7 @@ pub fn run_benches(
     ws.config().shell().status_with_color(
         "Collected",
         format!("{} benchmark suite(s) to run", to_run.len()),
-        Color::White,
+        &style::TITLE,
     )?;
     for bench in to_run.iter() {
         let bench_name = &bench.bench_name;
@@ -87,7 +89,7 @@ pub fn run_benches(
         ws.config().shell().status_with_color(
             "Running",
             format!("{} {}", &bench.package_name, bench_name),
-            Color::Yellow,
+            &style::ACTIVE,
         )?;
         std::process::Command::new(&bench.bench_path)
             .env("CODSPEED_CARGO_WORKSPACE_ROOT", workspace_root.as_ref())
@@ -107,13 +109,13 @@ pub fn run_benches(
         ws.config().shell().status_with_color(
             "Done",
             format!("running {}", bench_name),
-            Color::Green,
+            &style::SUCCESS,
         )?;
     }
     ws.config().shell().status_with_color(
         "Finished",
         format!("running {} benchmark suite(s)", to_run.len()),
-        Color::Green,
+        &style::SUCCESS,
     )?;
     Ok(())
 }
