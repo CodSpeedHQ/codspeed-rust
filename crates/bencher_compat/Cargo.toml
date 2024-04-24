@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-bencher-compat"
-version = "2.5.1"
+version = "2.6.0"
 edition = "2021"
 description = "Bencher compatibility layer for CodSpeed"
 authors = ["Arthur Pastel <arthur@codspeed.io>"]
@@ -18,7 +18,7 @@ keywords = ["codspeed", "benchmark", "bencher"]
 
 [dependencies]
 bencher = "0.1.5"
-codspeed = { path = "../codspeed", version = "=2.5.1" }
+codspeed = { path = "../codspeed", version = "=2.6.0" }
 
 [[bench]]
 name = "bencher_example"
