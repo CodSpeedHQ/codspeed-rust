@@ -13,8 +13,16 @@ Criterion.rs compatibility layer for CodSpeed
 ## Installation
 
 ```sh
-cargo add --dev codspeed-criterion-compat
+cargo add --dev codspeed-criterion-compat --rename criterion
 ```
+
+> [!NOTE]
+> This will install the `codspeed-criterion-compat` crate and rename it to `criterion` in your `Cargo.toml`.
+> This way, you can keep your existing imports and the compatibility layer will take care of the rest.
+>
+> Using the compatibility layer won't change the behavior of your benchmark suite and Criterion.rs will still run it as usual.
+>
+> If you prefer, you can also install `codspeed-criterion-compat` as is and change your imports to use this new crate name.
 
 ## Usage
 
@@ -46,16 +54,6 @@ The last step in creating the Criterion benchmark is to add the new benchmark ta
 [[bench]]
 name = "my_benchmark"
 harness = false
-```
-
-### Plugging CodSpeed
-
-To allow CodSpeed to interact with this suite as well, you simply need to replace
-the imports from the `criterion` crate to the `codspeed-criterion-compat` crate:
-
-```diff
-- use criterion::{black_box, criterion_group, criterion_main, Criterion};
-+ use codspeed_criterion_compat::{black_box, criterion_group, criterion_main, Criterion};
 ```
 
 And that's it! You can now run your benchmark suite with `cargo-codspeed`:

@@ -13,8 +13,16 @@ Bencher compatibility layer for CodSpeed
 ## Installation
 
 ```sh
-cargo add --dev codspeed-bencher-compat
+cargo add --dev codspeed-bencher-compat --rename bencher
 ```
+
+> [!NOTE]
+> This will install the `codspeed-bencher-compat` crate and rename it to `bencher` in your `Cargo.toml`.
+> This way, you can keep your existing imports and the compatibility layer will take care of the rest.
+>
+> Using the compatibility layer won't change the behavior of your benchmark suite and Bencher will still run it as usual.
+>
+> If you prefer, you can also install `codspeed-bencher-compat` as is and change your imports to use this new crate name.
 
 ## Usage
 
@@ -49,16 +57,6 @@ The last step in creating the Bencher benchmark is to add the new benchmark targ
 [[bench]]
 name = "example"
 harness = false
-```
-
-### Plugging CodSpeed
-
-To allow CodSpeed to interact with this suite as well, you simply need to replace
-the imports from the `bencher` crate to the `codspeed-bencher-compat` crate:
-
-```diff
-- use bencher::{benchmark_group, benchmark_main, Bencher};
-+ use codspeed_bencher_compat::{benchmark_group, benchmark_main, Bencher};
 ```
 
 And that's it! You can now run your benchmark suite with CodSpeed:
