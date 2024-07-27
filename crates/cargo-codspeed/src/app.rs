@@ -3,7 +3,7 @@ use std::{ffi::OsString, process::exit};
 use crate::helpers::style;
 use crate::{prelude::*, run::run_benches};
 
-use cargo::Config;
+use cargo::GlobalContext;
 use cargo::{ops::Packages, util::important_paths::find_root_manifest_for_wd};
 use clap::{Args, Parser, Subcommand};
 
@@ -54,11 +54,11 @@ enum Commands {
     },
 }
 
-pub fn get_cargo_config() -> Result<Config> {
+pub fn get_cargo_config() -> Result<GlobalContext> {
     let mut rustflags = std::env::var("RUSTFLAGS").unwrap_or_else(|_| "".into());
     rustflags.push_str(" -g --cfg codspeed");
     std::env::set_var("RUSTFLAGS", &rustflags);
-    Config::default()
+    GlobalContext::default()
 }
 
 pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
@@ -99,7 +99,7 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
     };
 
     if let Err(e) = res {
-        ws.config()
+        ws.gctx()
             .shell()
             .status_with_color("Error", e.to_string(), &style::ERROR)?;
         exit(1);

@@ -76,7 +76,7 @@ pub fn run_benches(
     } else {
         to_run = benches.iter().collect();
     }
-    ws.config().shell().status_with_color(
+    ws.gctx().shell().status_with_color(
         "Collected",
         format!("{} benchmark suite(s) to run", to_run.len()),
         &style::TITLE,
@@ -86,7 +86,7 @@ pub fn run_benches(
         // workspace_root is needed since file! returns the path relatively to the workspace root
         // while CARGO_MANIFEST_DIR returns the path to the sub package
         let workspace_root = ws.root().to_string_lossy();
-        ws.config().shell().status_with_color(
+        ws.gctx().shell().status_with_color(
             "Running",
             format!("{} {}", &bench.package_name, bench_name),
             &style::ACTIVE,
@@ -106,13 +106,13 @@ pub fn run_benches(
                     ))
                 }
             })?;
-        ws.config().shell().status_with_color(
+        ws.gctx().shell().status_with_color(
             "Done",
             format!("running {}", bench_name),
             &style::SUCCESS,
         )?;
     }
-    ws.config().shell().status_with_color(
+    ws.gctx().shell().status_with_color(
         "Finished",
         format!("running {} benchmark suite(s)", to_run.len()),
         &style::SUCCESS,
