@@ -33,7 +33,7 @@ jobs:
         with:
           cache-target: release
 
-      - run: cargo install --path crates/cargo-codspeed
+      - run: cargo install --path crates/cargo-codspeed --locked
 
       - run: cargo codspeed build -p codspeed
       - run: cargo codspeed build -p codspeed-bencher-compat
