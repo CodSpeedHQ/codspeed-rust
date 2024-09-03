@@ -31,7 +31,7 @@ cargo binstall cargo-codspeed
 ### With `cargo`
 
 ```bash
-cargo install cargo-codspeed
+cargo install cargo-codspeed --locked
 ```
 
 ## Usage
