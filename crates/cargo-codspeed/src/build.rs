@@ -15,6 +15,7 @@ use cargo::{
 fn get_compile_options(
     config: &Config,
     features: &Option<Vec<String>>,
+    profile: &str,
     package: &Package,
     benches: Vec<&str>,
     is_root_package: bool,
@@ -33,7 +34,7 @@ fn get_compile_options(
                 .collect::<BTreeSet<FeatureValue>>(),
         );
     }
-    compile_opts.build_config.requested_profile = "release".into();
+    compile_opts.build_config.requested_profile = profile.into();
     compile_opts.filter = CompileFilter::from_raw_arguments(
         false,
         vec![],
@@ -59,6 +60,7 @@ pub fn build_benches(
     selected_benches: Option<Vec<String>>,
     packages: Packages,
     features: Option<Vec<String>>,
+    profile: String,
 ) -> Result<()> {
     let packages_to_build = packages.get_packages(ws)?;
     let mut benches_to_build = vec![];
@@ -126,6 +128,7 @@ pub fn build_benches(
         let compile_opts = get_compile_options(
             config,
             &features,
+            &profile,
             bench.package,
             benches_names,
             is_root_package,

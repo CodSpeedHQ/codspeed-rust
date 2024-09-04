@@ -51,3 +51,13 @@ Options:
 ## Advanced Usage
 
 The `vendored-openssl` feature can be used to statically link with openssl with `cargo install cargo-codspeed --features vendored-openssl`.
+
+## Development
+
+### Troubleshooting
+
+- Build error on MacOS: `ld: library 'git2' not found`
+
+  ```
+  brew install libgit2
+  ```

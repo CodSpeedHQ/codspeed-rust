@@ -43,6 +43,10 @@ enum Commands {
         /// Space or comma separated list of features to activate
         #[arg(short = 'F', long)]
         features: Option<String>,
+
+        /// Build the benchmarks with the specified profile
+        #[arg(long, default_value = "release")]
+        profile: String,
     },
     /// Run the previously built benchmarks
     Run {
@@ -72,6 +76,7 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
             benches,
             package_selection,
             features,
+            profile,
         } => {
             let features = features.map(|f| {
                 f.split(|c| c == ' ' || c == ',')
@@ -83,7 +88,7 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
                 package_selection.exclude,
                 package_selection.package,
             )?;
-            build_benches(&ws, benches, packages, features)
+            build_benches(&ws, benches, packages, features, profile)
         }
         Commands::Run {
             benches,
