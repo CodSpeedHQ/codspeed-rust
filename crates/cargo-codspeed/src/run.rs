@@ -95,7 +95,7 @@ pub fn run_benches(
             .env("CODSPEED_CARGO_WORKSPACE_ROOT", workspace_root.as_ref())
             .current_dir(&bench.working_directory)
             .status()
-            .map_err(|_| anyhow!("failed to execute the benchmark process"))
+            .map_err(|e| anyhow!("failed to execute the benchmark process: {}", e))
             .and_then(|status| {
                 if status.success() {
                     Ok(())
