@@ -9,11 +9,11 @@ use cargo::{
     core::{FeatureValue, Package, Target, Verbosity, Workspace},
     ops::{CompileFilter, CompileOptions, Packages},
     util::{command_prelude::CompileMode, interning::InternedString},
-    Config,
+    GlobalContext,
 };
 
 fn get_compile_options(
-    config: &Config,
+    config: &GlobalContext,
     features: &Option<Vec<String>>,
     profile: &str,
     package: &Package,
@@ -90,8 +90,8 @@ pub fn build_benches(
 
     let actual_benches_count = benches_to_build.len();
 
-    ws.config().shell().set_verbosity(Verbosity::Normal);
-    ws.config().shell().status_with_color(
+    ws.gctx().shell().set_verbosity(Verbosity::Normal);
+    ws.gctx().shell().status_with_color(
         "Collected",
         format!(
             "{} benchmark suite(s) to build{}",
@@ -108,7 +108,7 @@ pub fn build_benches(
         &style::TITLE,
     )?;
 
-    let config = ws.config();
+    let context = ws.gctx();
     let codspeed_root_target_dir = get_codspeed_target_dir(ws);
     // Create and clear packages target directories
     for package in packages_to_build.iter() {
@@ -118,7 +118,7 @@ pub fn build_benches(
     }
     let mut built_benches = 0;
     for bench in benches_to_build.iter() {
-        ws.config().shell().status_with_color(
+        ws.gctx().shell().status_with_color(
             "Building",
             format!("{} {}", bench.package.name(), bench.target.name()),
             &style::ACTIVE,
@@ -126,7 +126,7 @@ pub fn build_benches(
         let is_root_package = ws.current_opt().map_or(false, |p| p == bench.package);
         let benches_names = vec![bench.target.name()];
         let compile_opts = get_compile_options(
-            config,
+            context,
             &features,
             &profile,
             bench.package,
@@ -158,7 +158,7 @@ pub fn build_benches(
             Please add a benchmark target to your Cargo.toml"
         );
     }
-    ws.config().shell().status_with_color(
+    ws.gctx().shell().status_with_color(
         "Finished",
         format!("built {} benchmark suite(s)", built_benches),
         &style::SUCCESS,

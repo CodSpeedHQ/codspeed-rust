@@ -18,14 +18,14 @@ keywords = ["codspeed", "benchmark", "criterion"]
 [dependencies]
 criterion = { version = "0.5.1", default-features = false }
 codspeed = { path = "../codspeed", version = "=2.6.0" }
-colored = "2.0.0"
+colored = "2.1.0"
 
 futures = { version = "0.3", default_features = false, optional = true }
-smol = { version = "1.2", default-features = false, optional = true }
-tokio = { version = "1.0", default-features = false, features = [
+smol = { version = "2.0", default-features = false, optional = true }
+tokio = { version = "1.39", default-features = false, features = [
   "rt",
 ], optional = true }
-async-std = { version = "1.9", optional = true }
+async-std = { version = "1.12", optional = true }
 
 [features]
 default = ["rayon", "plotters", "cargo_bench_support"]
