@@ -1,6 +1,7 @@
 [package]
 name = "codspeed-bencher-compat"
 version = "2.7.0"
+rust-version = "1.74" # MSRV
 edition = "2021"
 description = "Bencher compatibility layer for CodSpeed"
 authors = ["Arthur Pastel <arthur@codspeed.io>"]

@@ -18,6 +18,20 @@ jobs:
         with:
           extra_args: --all-files
 
+  msrv-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: moonrepo/setup-rust@v1
+        with:
+          bins: cargo-msrv
+      - name: Check cospeed MSRV
+        run: cargo msrv --path crates/codspeed verify -- cargo check --all-features --config codspeed=true
+      - name: Check bencher_compat MSRV
+        run: cargo msrv --path crates/bencher_compat verify -- cargo check --all-features --config codspeed=true
+      - name: Check criterion_compat MSRV
+        run: cargo msrv --path crates/criterion_compat verify -- cargo check --all-features --config codspeed=true
+
   tests:
     runs-on: ubuntu-latest
     steps:

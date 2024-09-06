@@ -1,6 +1,7 @@
 [package]
 name = "codspeed-criterion-compat"
 version = "2.7.0"
+rust-version = "1.74" # MSRV
 edition = "2021"
 description = "Criterion.rs compatibility layer for CodSpeed"
 authors = ["Arthur Pastel <arthur@codspeed.io>"]
@@ -20,7 +21,7 @@ criterion = { version = "0.5.1", default-features = false }
 codspeed = { path = "../codspeed", version = "=2.7.0" }
 colored = "2.1.0"
 
-futures = { version = "0.3", default_features = false, optional = true }
+futures = { version = "0.3", default-features = false, optional = true }
 smol = { version = "2.0", default-features = false, optional = true }
 tokio = { version = "1.39", default-features = false, features = [
   "rt",

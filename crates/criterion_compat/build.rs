@@ -1,3 +1,3 @@
 fn main() {
-    println!("cargo::rustc-check-cfg=cfg(codspeed)");
+    println!("cargo:rustc-check-cfg=cfg(codspeed)");
 }
