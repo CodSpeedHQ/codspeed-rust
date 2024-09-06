@@ -44,6 +44,8 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-gnu
+          - target: aarch64-unknown-linux-gnu
+            cross: true
 
     runs-on: ubuntu-latest
     steps:
@@ -52,13 +54,9 @@ jobs:
         with:
           targets: ${{ matrix.target }}
           cache-target: ${{ matrix.target }}/release
+          bins: cross
 
-      # TODO: Reenable when we have a way to build for other targets
-      # - name: Setup environment for target
-      #   if: ${{ matrix.setup }}
-      #   run: ${{ matrix.setup }}
-
-      - run: cargo build --release --features vendored-openssl --bin cargo-codspeed --target ${{ matrix.target }}
+      - run: ${{ matrix.cross && 'cross' || 'cargo' }} build --locked --release --features vendored-openssl --bin cargo-codspeed --target ${{ matrix.target }}
 
       - name: Upload Release Asset
         id: upload-release-asset
