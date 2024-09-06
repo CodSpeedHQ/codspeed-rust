@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-criterion-compat"
-version = "2.7.0"
+version = "2.7.1"
 rust-version = "1.74" # MSRV
 edition = "2021"
 description = "Criterion.rs compatibility layer for CodSpeed"
@@ -18,7 +18,7 @@ categories = [
 keywords = ["codspeed", "benchmark", "criterion"]
 [dependencies]
 criterion = { version = "0.5.1", default-features = false }
-codspeed = { path = "../codspeed", version = "=2.7.0" }
+codspeed = { path = "../codspeed", version = "=2.7.1" }
 colored = "2.1.0"
 
 futures = { version = "0.3", default-features = false, optional = true }
