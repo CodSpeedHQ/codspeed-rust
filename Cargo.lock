@@ -581,7 +581,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-codspeed"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "anstyle",
  "anyhow",
@@ -787,7 +787,7 @@ checksum = "cbd0f76e066e64fdc5631e3bb46381254deab9ef1158292f27c8c57e3bf3fe59"
 
 [[package]]
 name = "codspeed"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "colored",
  "libc",
@@ -797,7 +797,7 @@ dependencies = [
 
 [[package]]
 name = "codspeed-bencher-compat"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "bencher",
  "codspeed",
@@ -805,7 +805,7 @@ dependencies = [
 
 [[package]]
 name = "codspeed-criterion-compat"
-version = "2.7.1"
+version = "2.7.2"
 dependencies = [
  "async-std",
  "codspeed",
