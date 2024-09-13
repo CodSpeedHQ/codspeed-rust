@@ -27,3 +27,12 @@ mod arch;
 #[cfg(target_arch = "aarch64")]
 #[path = "arch/aarch64.rs"]
 mod arch;
+
+#[cfg(not(any(
+    target_arch = "x86_64",
+    target_arch = "x86",
+    target_arch = "arm",
+    target_arch = "aarch64"
+)))]
+#[path = "arch/unsupported.rs"]
+mod arch;
