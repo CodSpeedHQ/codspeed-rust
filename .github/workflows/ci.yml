@@ -10,7 +10,7 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: moonrepo/setup-rust@v1
         with:
           components: rustfmt, clippy
@@ -21,7 +21,7 @@ jobs:
   msrv-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: moonrepo/setup-rust@v1
         with:
           bins: cargo-msrv
@@ -35,14 +35,14 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: moonrepo/setup-rust@v1
       - run: cargo test --all
 
   compat-integration-test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: moonrepo/setup-rust@v1
         with:
           cache-target: release
