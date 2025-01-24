@@ -12,7 +12,7 @@ fn test_workspace_run_without_build() {
         .arg("run")
         .assert()
         .failure()
-        .stderr(contains("Error No benchmarks found."));
+        .stderr(contains("Error: No benchmarks found."));
     teardown(dir);
 }
 
@@ -23,7 +23,7 @@ fn test_workspace_build_without_package_spec() {
         .arg("build")
         .assert()
         .success()
-        .stderr(contains("Finished built 3 benchmark suite(s)"));
+        .stderr(contains("Built 3 benchmark suite(s)"));
     cargo_codspeed(&dir)
         .arg("run")
         .assert()
@@ -40,7 +40,7 @@ fn test_workspace_build_subpackage_and_run_subpackage() {
         .args(["--package", "package-a"])
         .assert()
         .success()
-        .stderr(contains("Finished built 1 benchmark suite(s)"));
+        .stderr(contains("Built 1 benchmark suite(s)"));
     cargo_codspeed(&dir)
         .arg("run")
         .args(["--package", "package-a"])
@@ -62,7 +62,7 @@ fn test_workspace_build_subpackage_and_run_other() {
         .args(["--package", "package-b"])
         .assert()
         .failure()
-        .stderr(contains("Error No benchmarks found."));
+        .stderr(contains("Error: No benchmarks found."));
     teardown(dir);
 }
 
@@ -138,7 +138,7 @@ fn test_workspace_build_exclude() {
         .args(["--workspace", "--exclude", "package-b"])
         .assert()
         .success()
-        .stderr(contains("Finished built 1 benchmark suite(s)"));
+        .stderr(contains("Built 1 benchmark suite(s)"));
     cargo_codspeed(&dir)
         .arg("run")
         .assert()

@@ -12,6 +12,6 @@ fn test_package_in_deps_build() {
         .arg("build")
         .assert()
         .success()
-        .stderr(contains("Finished built 1 benchmark suite(s)"));
+        .stderr(contains("Built 1 benchmark suite(s)"));
     teardown(dir);
 }
