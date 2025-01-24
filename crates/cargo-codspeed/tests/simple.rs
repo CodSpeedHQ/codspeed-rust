@@ -12,7 +12,7 @@ fn test_simple_run_without_build() {
         .arg("run")
         .assert()
         .failure()
-        .stderr(contains("Error No benchmarks found."));
+        .stderr(contains("Error: No benchmarks found."));
     teardown(dir);
 }
 
@@ -23,7 +23,7 @@ fn test_simple_build() {
         .arg("build")
         .assert()
         .success()
-        .stderr(contains("Finished built 2 benchmark suite(s)"));
+        .stderr(contains("Built 2 benchmark suite(s)"));
     teardown(dir);
 }
 
@@ -47,7 +47,7 @@ fn test_simple_build_single() {
         .arg("another_bencher_example")
         .assert()
         .success()
-        .stderr(contains("Finished built 1 benchmark suite(s)"))
+        .stderr(contains("Built 1 benchmark suite(s)"))
         .stderr(contains("another_bencher_example"));
     teardown(dir);
 }

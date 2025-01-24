@@ -1,168 +1,186 @@
 use crate::{
-    helpers::{clear_dir, get_codspeed_target_dir, style},
+    app::{Filters, PackageFilters},
+    helpers::{clear_dir, get_codspeed_target_dir},
     prelude::*,
 };
+use cargo_metadata::{camino::Utf8PathBuf, Message, Metadata, TargetKind};
+use std::process::{exit, Command, Stdio};
 
-use std::{collections::BTreeSet, fs::create_dir_all, rc::Rc};
-
-use cargo::{
-    core::{FeatureValue, Package, Target, Verbosity, Workspace},
-    ops::{CompileFilter, CompileOptions, Packages},
-    util::{command_prelude::CompileMode, interning::InternedString},
-    GlobalContext,
-};
-
-fn get_compile_options(
-    config: &GlobalContext,
-    features: &Option<Vec<String>>,
-    profile: &str,
-    package: &Package,
-    benches: Vec<&str>,
-    is_root_package: bool,
-) -> Result<CompileOptions> {
-    let mut compile_opts = CompileOptions::new(config, CompileMode::Build)?;
-
-    // if the package is not the root package, we need to specify the package to build
-    if !is_root_package {
-        compile_opts.spec = Packages::Packages(vec![package.name().to_string()]);
-    }
-    if let Some(features) = features {
-        compile_opts.cli_features.features = Rc::new(
-            features
-                .iter()
-                .map(|s| FeatureValue::Feature(InternedString::new(s.as_str())))
-                .collect::<BTreeSet<FeatureValue>>(),
-        );
-    }
-    compile_opts.build_config.requested_profile = profile.into();
-    compile_opts.filter = CompileFilter::from_raw_arguments(
-        false,
-        vec![],
-        false,
-        vec![],
-        false,
-        vec![],
-        false,
-        benches.iter().map(|s| s.to_string()).collect(),
-        false,
-        false,
-    );
-    Ok(compile_opts)
+struct BuildOptions<'a> {
+    filters: Filters,
+    features: &'a Option<Vec<String>>,
+    profile: &'a str,
 }
 
-struct BenchToBuild<'a> {
-    package: &'a Package,
-    target: &'a Target,
+struct BuiltBench {
+    package: String,
+    bench: String,
+    executable_path: Utf8PathBuf,
+}
+
+impl BuildOptions<'_> {
+    /// Builds the benchmarks by invoking cargo
+    /// Returns a list of built benchmarks, with path to associated executables
+    fn build(&self, metadata: &Metadata, quiet: bool) -> Result<Vec<BuiltBench>> {
+        let workspace_packages = metadata.workspace_packages();
+
+        let mut cargo = self.build_command();
+        if quiet {
+            cargo.arg("--quiet");
+        }
+        cargo.args(["--message-format", "json"]);
+
+        let mut cargo = cargo
+            .stdout(Stdio::piped())
+            .spawn()
+            .expect("Failed to spawn cargo command");
+        let reader = std::io::BufReader::new(
+            cargo
+                .stdout
+                .take()
+                .expect("Unable to get stdout for child process"),
+        );
+
+        let mut built_benches = Vec::new();
+        for message in Message::parse_stream(reader) {
+            if let Message::CompilerArtifact(artifact) =
+                message.expect("Failed to parse compiler message")
+            {
+                if artifact.target.is_kind(TargetKind::Bench) {
+                    let package = workspace_packages
+                        .iter()
+                        .find(|p| p.id == artifact.package_id)
+                        .expect("Could not find package");
+
+                    let bench_name = artifact.target.name;
+
+                    let add_bench_to_codspeed_dir = match &self.filters.bench {
+                        Some(allowed_bench_names) => allowed_bench_names
+                            .iter()
+                            .any(|allowed_bench_name| bench_name.contains(allowed_bench_name)),
+                        None => true,
+                    };
+
+                    if add_bench_to_codspeed_dir {
+                        built_benches.push(BuiltBench {
+                            package: package.name.clone(),
+                            bench: bench_name,
+                            executable_path: artifact
+                                .executable
+                                .expect("Unexpected missing executable path"),
+                        });
+                    }
+                }
+            }
+        }
+
+        let status = cargo.wait().expect("Could not get cargo's exist status");
+
+        if !status.success() {
+            exit(status.code().expect("Could not get exit code"));
+        }
+
+        for built_bench in &built_benches {
+            eprintln!(
+                "Built benchmark `{}` in package `{}`",
+                built_bench.bench, built_bench.package
+            );
+        }
+
+        Ok(built_benches)
+    }
+
+    /// Generates a subcommand to build the benchmarks by invoking cargo and forwarding the filters
+    /// This command explicitely ignores the `self.benches`: all benches are built
+    fn build_command(&self) -> Command {
+        let mut cargo = Command::new("cargo");
+        cargo.args(["build", "--benches"]);
+
+        cargo.env(
+            "RUSTFLAGS",
+            format!(
+                "{} -g --cfg codspeed",
+                std::env::var("RUSTFLAGS").unwrap_or_else(|_| "".into())
+            ),
+        );
+
+        if let Some(features) = self.features {
+            cargo.arg("--features").arg(features.join(","));
+        }
+
+        cargo.arg("--profile").arg(self.profile);
+
+        self.filters.package.add_cargo_args(&mut cargo);
+
+        cargo
+    }
+}
+
+impl PackageFilters {
+    fn add_cargo_args(&self, cargo: &mut Command) {
+        if self.workspace {
+            cargo.arg("--workspace");
+        }
+
+        if !self.package.is_empty() {
+            self.package.iter().for_each(|p| {
+                cargo.arg("--package").arg(p);
+            });
+        }
+
+        if !self.exclude.is_empty() {
+            self.exclude.iter().for_each(|p| {
+                cargo.arg("--exclude").arg(p);
+            });
+        }
+    }
 }
 
 pub fn build_benches(
-    ws: &Workspace,
-    selected_benches: Option<Vec<String>>,
-    packages: Packages,
+    metadata: &Metadata,
+    filters: Filters,
     features: Option<Vec<String>>,
     profile: String,
+    quiet: bool,
 ) -> Result<()> {
-    let packages_to_build = packages.get_packages(ws)?;
-    let mut benches_to_build = vec![];
-    for package in packages_to_build.iter() {
-        let benches = package
-            .targets()
-            .iter()
-            .filter(|t| t.is_bench())
-            .collect_vec();
-        benches_to_build.extend(
-            benches
-                .into_iter()
-                .map(|t| BenchToBuild { package, target: t }),
-        );
+    let built_benches = BuildOptions {
+        filters,
+        features: &features,
+        profile: &profile,
     }
+    .build(metadata, quiet)?;
 
-    let all_benches_count = benches_to_build.len();
-
-    let benches_to_build = if let Some(selected_benches) = selected_benches {
-        benches_to_build
-            .into_iter()
-            .filter(|t| selected_benches.contains(&t.target.name().to_string()))
-            .collect_vec()
-    } else {
-        benches_to_build
-    };
-
-    let actual_benches_count = benches_to_build.len();
-
-    ws.gctx().shell().set_verbosity(Verbosity::Normal);
-    ws.gctx().shell().status_with_color(
-        "Collected",
-        format!(
-            "{} benchmark suite(s) to build{}",
-            benches_to_build.len(),
-            if all_benches_count > actual_benches_count {
-                format!(
-                    " ({} filtered out)",
-                    all_benches_count - actual_benches_count
-                )
-            } else {
-                "".to_string()
-            }
-        ),
-        &style::TITLE,
-    )?;
-
-    let context = ws.gctx();
-    let codspeed_root_target_dir = get_codspeed_target_dir(ws);
-    // Create and clear packages target directories
-    for package in packages_to_build.iter() {
-        let package_target_dir = codspeed_root_target_dir.join(package.name());
-        create_dir_all(&package_target_dir)?;
-        clear_dir(&package_target_dir)?;
-    }
-    let mut built_benches = 0;
-    for bench in benches_to_build.iter() {
-        ws.gctx().shell().status_with_color(
-            "Building",
-            format!("{} {}", bench.package.name(), bench.target.name()),
-            &style::ACTIVE,
-        )?;
-        let is_root_package = ws.current_opt().map_or(false, |p| p == bench.package);
-        let benches_names = vec![bench.target.name()];
-        let compile_opts = get_compile_options(
-            context,
-            &features,
-            &profile,
-            bench.package,
-            benches_names,
-            is_root_package,
-        )?;
-        let result = cargo::ops::compile(ws, &compile_opts)?;
-        let built_units = result
-            .tests
-            .into_iter()
-            .filter(|u| u.unit.target.is_bench())
-            .collect_vec();
-        if built_units.is_empty() {
-            continue;
-        }
-        built_benches += 1;
-        let codspeed_target_dir = codspeed_root_target_dir.join(bench.package.name());
-        for built_unit in built_units.iter() {
-            let bench_dest = codspeed_target_dir
-                .clone()
-                .join(built_unit.unit.target.name());
-            std::fs::copy(built_unit.path.clone(), bench_dest)?;
-        }
-    }
-
-    if built_benches == 0 {
+    if built_benches.is_empty() {
         bail!(
             "No benchmark target found. \
             Please add a benchmark target to your Cargo.toml"
         );
     }
-    ws.gctx().shell().status_with_color(
-        "Finished",
-        format!("built {} benchmark suite(s)", built_benches),
-        &style::SUCCESS,
-    )?;
+
+    let codspeed_target_dir = get_codspeed_target_dir(metadata);
+    let built_bench_count = built_benches.len();
+
+    // Create and clear packages codspeed target directories
+    let target_dir_to_clear = built_benches
+        .iter()
+        .unique_by(|bench| &bench.package)
+        .map(|bench| codspeed_target_dir.clone().join(&bench.package));
+    for target_dir in target_dir_to_clear {
+        std::fs::create_dir_all(&target_dir)?;
+        clear_dir(&target_dir)?;
+    }
+
+    // Copy built artifacts to codspeed target directory
+    for built_bench in built_benches {
+        let codspeed_target_package_dir = codspeed_target_dir.clone().join(&built_bench.package);
+
+        std::fs::copy(
+            built_bench.executable_path,
+            codspeed_target_package_dir.join(built_bench.bench),
+        )?;
+    }
+
+    eprintln!("Built {built_bench_count} benchmark suite(s)");
 
     Ok(())
 }

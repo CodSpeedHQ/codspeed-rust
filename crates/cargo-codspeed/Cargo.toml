@@ -18,7 +18,7 @@ categories = [
 keywords = ["codspeed", "benchmark", "cargo"]
 
 [dependencies]
-cargo = "0.81.0"
+cargo_metadata = "0.19.1"
 clap = { version = "=4.5.17", features = ["derive"] }
 termcolor = "1.4"
 anyhow = "1.0.86"
@@ -32,4 +32,4 @@ predicates = "3.1.2"
 uuid = { version = "1.10.0", features = ["v4"] }
 
 [features]
-vendored-openssl = ["cargo/vendored-openssl"]
+vendored-openssl = []

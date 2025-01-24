@@ -10,7 +10,6 @@ use std::{env::args_os, process::exit};
 fn main() {
     let mut args_vec = args_os().collect_vec();
 
-    // let mut args_iter = args_os().into_iter();
     if args_vec.len() >= 2 && args_vec[1] == "codspeed" {
         args_vec[1] = "cargo codspeed".into();
         args_vec = args_vec.into_iter().skip(1).collect_vec();
