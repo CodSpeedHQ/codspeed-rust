@@ -1,11 +1,9 @@
 use crate::prelude::*;
+use cargo_metadata::Metadata;
 use std::path::{Path, PathBuf};
 
-pub fn get_codspeed_target_dir(ws: &Workspace) -> PathBuf {
-    ws.target_dir()
-        .as_path_unlocked()
-        .to_path_buf()
-        .join("codspeed")
+pub fn get_codspeed_target_dir(metadata: &Metadata) -> PathBuf {
+    metadata.target_directory.join("codspeed").into()
 }
 
 pub fn clear_dir<P>(dir: P) -> Result<()>
@@ -22,19 +20,4 @@ where
         }
     }
     Ok(())
-}
-
-pub mod style {
-    use anstyle::{AnsiColor, Color, Style};
-
-    pub const TITLE: Style = Style::new().bold();
-    pub const ERROR: Style = Style::new()
-        .fg_color(Some(Color::Ansi(AnsiColor::Red)))
-        .bold();
-    pub const SUCCESS: Style = Style::new()
-        .fg_color(Some(Color::Ansi(AnsiColor::Green)))
-        .bold();
-    pub const ACTIVE: Style = Style::new()
-        .fg_color(Some(Color::Ansi(AnsiColor::Yellow)))
-        .bold();
 }

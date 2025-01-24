@@ -1,3 +1,4 @@
+//! This is a mirror of https://github.com/bheisler/criterion.rs/blob/master/benches/benchmarks/external_process.rs
 use codspeed_criterion_compat::{criterion_group, Criterion};
 use std::{
     io::{BufRead, BufReader, Write},
