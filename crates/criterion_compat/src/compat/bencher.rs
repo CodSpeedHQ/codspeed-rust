@@ -15,6 +15,7 @@ pub struct Bencher<'a> {
     _marker: std::marker::PhantomData<&'a ()>,
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a> Bencher<'a> {
     pub fn new(codspeed: Rc<RefCell<CodSpeed>>, uri: String) -> Self {
         Bencher {
@@ -137,6 +138,7 @@ pub struct AsyncBencher<'a, 'b, A: AsyncExecutor> {
 }
 
 #[cfg(feature = "async")]
+#[allow(clippy::needless_lifetimes)]
 impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
     #[allow(clippy::await_holding_refcell_ref)]
     #[inline(never)]
