@@ -17,6 +17,7 @@ pub struct BenchmarkGroup<'a, M: Measurement = WallTime> {
     _marker: PhantomData<&'a M>,
 }
 
+#[allow(clippy::needless_lifetimes)]
 impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
     pub fn new(criterion: &mut Criterion<M>, group_name: String) -> BenchmarkGroup<M> {
         BenchmarkGroup::<M> {
@@ -78,7 +79,7 @@ impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
 }
 
 // Dummy methods
-#[allow(unused_variables)]
+#[allow(unused_variables, clippy::needless_lifetimes)]
 impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
     pub fn sample_size(&mut self, n: usize) -> &mut Self {
         self
