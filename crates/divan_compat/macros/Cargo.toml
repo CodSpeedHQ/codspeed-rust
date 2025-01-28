@@ -1,0 +1,28 @@
+[package]
+name = "codspeed-divan-compat-macros"
+version = "2.7.2"
+rust-version = "1.74" # MSRV TODO: Check versioning
+edition = "2021"
+description = "Bencher compatibility layer for CodSpeed"
+authors = ["Arthur Pastel <arthur@codspeed.io>"]
+documentation = "https://docs.codspeed.io"
+readme = "../README.md"
+repository = "https://github.com/CodSpeedHQ/codspeed-rust"
+homepage = "https://codspeed.io"
+license = "MIT OR Apache-2.0"
+categories = [
+    "development-tools",
+    "development-tools::profiling",
+    "development-tools::testing",
+]
+keywords = ["codspeed", "benchmark", "divan"]
+
+[lib]
+proc-macro = true
+
+[dependencies]
+divan-macros = { version = "=0.1.17" }
+proc-macro2 = "1"
+quote = { version = "1", default-features = false }
+# Versions prior to *.18 fail to parse empty attribute metadata.
+syn = { version = "^2.0.18", default-features = false, features = ["full", "clone-impls", "parsing", "printing", "proc-macro"] }

@@ -4,5 +4,7 @@ members = [
     "crates/bencher_compat",
     "crates/criterion_compat",
     "crates/cargo-codspeed",
+    "crates/divan_compat",
+    "crates/divan_compat/macros",
 ]
 resolver = "2"
