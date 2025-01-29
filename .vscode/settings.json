@@ -1,4 +1,7 @@
 {
+  "rust-analyzer.cargo.extraEnv": {
+    "RUSTFLAGS": "--cfg codspeed"
+  },
   "rust-analyzer.cargo.features": "all",
   "editor.formatOnSave": true,
   "rust-analyzer.checkOnSave": true,

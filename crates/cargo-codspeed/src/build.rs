@@ -1,6 +1,7 @@
 use crate::{
     app::{Filters, PackageFilters},
     helpers::{clear_dir, get_codspeed_target_dir},
+    measurement_mode::MeasurementMode,
     prelude::*,
 };
 use cargo_metadata::{camino::Utf8PathBuf, Message, Metadata, TargetKind};
@@ -21,10 +22,15 @@ struct BuiltBench {
 impl BuildOptions<'_> {
     /// Builds the benchmarks by invoking cargo
     /// Returns a list of built benchmarks, with path to associated executables
-    fn build(&self, metadata: &Metadata, quiet: bool) -> Result<Vec<BuiltBench>> {
+    fn build(
+        &self,
+        metadata: &Metadata,
+        quiet: bool,
+        measurement_mode: MeasurementMode,
+    ) -> Result<Vec<BuiltBench>> {
         let workspace_packages = metadata.workspace_packages();
 
-        let mut cargo = self.build_command();
+        let mut cargo = self.build_command(measurement_mode);
         if quiet {
             cargo.arg("--quiet");
         }
@@ -91,18 +97,20 @@ impl BuildOptions<'_> {
     }
 
     /// Generates a subcommand to build the benchmarks by invoking cargo and forwarding the filters
-    /// This command explicitely ignores the `self.benches`: all benches are built
-    fn build_command(&self) -> Command {
+    /// This command explicitly ignores the `self.benches`: all benches are built
+    fn build_command(&self, measurement_mode: MeasurementMode) -> Command {
         let mut cargo = Command::new("cargo");
         cargo.args(["build", "--benches"]);
 
-        cargo.env(
-            "RUSTFLAGS",
-            format!(
-                "{} -g --cfg codspeed",
-                std::env::var("RUSTFLAGS").unwrap_or_else(|_| "".into())
-            ),
+        let mut rust_flags = format!(
+            "{} -g",
+            std::env::var("RUSTFLAGS").unwrap_or_else(|_| "".into())
         );
+        // Add the codspeed cfg flag if instrumentation mode is enabled
+        if measurement_mode == MeasurementMode::Instrumentation {
+            rust_flags.push_str(" --cfg codspeed");
+        }
+        cargo.env("RUSTFLAGS", rust_flags);
 
         if let Some(features) = self.features {
             cargo.arg("--features").arg(features.join(","));
@@ -142,13 +150,14 @@ pub fn build_benches(
     features: Option<Vec<String>>,
     profile: String,
     quiet: bool,
+    measurement_mode: MeasurementMode,
 ) -> Result<()> {
     let built_benches = BuildOptions {
         filters,
         features: &features,
         profile: &profile,
     }
-    .build(metadata, quiet)?;
+    .build(metadata, quiet, measurement_mode)?;
 
     if built_benches.is_empty() {
         bail!(

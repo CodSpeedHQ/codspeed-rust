@@ -1,8 +1,11 @@
 mod app;
+mod benchmark_metadata;
 mod build;
 mod helpers;
+mod measurement_mode;
 mod prelude;
 mod run;
+mod walltime;
 
 use crate::prelude::*;
 use std::{env::args_os, process::exit};

@@ -1,9 +1,13 @@
 use crate::{
     app::{Filters, PackageFilters},
     helpers::get_codspeed_target_dir,
+    measurement_mode::MeasurementMode,
     prelude::*,
+    walltime::{parse_sample_json, Results, WalltimeBenchmark},
 };
+use anyhow::Context;
 use cargo_metadata::{Metadata, Package};
+use glob::glob;
 use std::{io, path::PathBuf};
 
 struct BenchToRun {
@@ -86,7 +90,11 @@ impl PackageFilters {
     }
 }
 
-pub fn run_benches(metadata: &Metadata, filters: Filters) -> Result<()> {
+pub fn run_benches(
+    metadata: &Metadata,
+    filters: Filters,
+    measurement_mode: MeasurementMode,
+) -> Result<()> {
     let codspeed_target_dir = get_codspeed_target_dir(metadata);
     let benches = filters.benches_to_run(codspeed_target_dir, metadata)?;
     if benches.is_empty() {
@@ -119,6 +127,15 @@ pub fn run_benches(metadata: &Metadata, filters: Filters) -> Result<()> {
         to_run = benches.iter().collect();
     }
     eprintln!("Collected {} benchmark suite(s) to run", to_run.len());
+    match measurement_mode {
+        MeasurementMode::Instrumentation => run_instrumentation_benches(metadata, &to_run)?,
+        MeasurementMode::Walltime => run_walltime_benches(metadata, &to_run)?,
+    }
+    eprintln!("Finished running {} benchmark suite(s)", to_run.len());
+    Ok(())
+}
+
+fn run_instrumentation_benches(metadata: &Metadata, to_run: &[&BenchToRun]) -> Result<()> {
     for bench in to_run.iter() {
         let bench_name = &bench.bench_name;
         // workspace_root is needed since file! returns the path relatively to the workspace root
@@ -142,6 +159,83 @@ pub fn run_benches(metadata: &Metadata, filters: Filters) -> Result<()> {
             })?;
         eprintln!("Done running {}", bench_name);
     }
-    eprintln!("Finished running {} benchmark suite(s)", to_run.len());
+    Ok(())
+}
+
+fn run_walltime_benches(metadata: &Metadata, to_run: &[&BenchToRun]) -> Result<()> {
+    let workspace_root = metadata.workspace_root.clone();
+    let criterion_output_directory_base = workspace_root.join("target/codspeed/criterion");
+    // clean the directory before running the benchmarks
+    std::fs::remove_dir_all(&criterion_output_directory_base).ok();
+
+    for bench in to_run.iter() {
+        let bench_name = &bench.bench_name;
+        eprintln!("Running {} {}", &bench.package_name, bench_name);
+
+        let output_directory = criterion_output_directory_base.join(bench_name);
+
+        // TODO: run the executable by simply adding --bench
+        std::process::Command::new("cargo")
+            .args(["bench", "--bench"])
+            .arg(bench_name)
+            .current_dir(workspace_root.clone())
+            // TODO: do some magic for the output, for now we only have stderr that is forwarded
+            // .stdout(Stdio::piped())
+            // .stderr(Stdio::piped())
+            .env("CRITERION_HOME", output_directory)
+            .status()
+            .map_err(|e| anyhow!("failed to execute the benchmark process: {}", e))
+            .and_then(|status| {
+                if status.success() {
+                    Ok(())
+                } else {
+                    Err(anyhow!(
+                        "failed to execute the benchmark process, exit code: {}",
+                        status.code().unwrap_or(1)
+                    ))
+                }
+            })?;
+    }
+
+    let mut walltime_benchmarks = vec![];
+
+    // retrieve data from `workspace_root/target/criterion/{sub_bench_name}/sample.json
+    for sample in glob(
+        criterion_output_directory_base
+            .join("*/*/new/sample.json")
+            .as_ref(),
+    )? {
+        let sample = sample?;
+        let sample_path = sample.display().to_string();
+        let benchmark_name = sample
+            .parent()
+            .unwrap()
+            .parent()
+            .unwrap()
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap();
+        eprintln!("Found sample: {}, name: {}", sample_path, benchmark_name);
+
+        let walltime_benchmark =
+            WalltimeBenchmark::from((benchmark_name.to_string(), parse_sample_json(&sample)?));
+        walltime_benchmarks.push(walltime_benchmark);
+    }
+
+    // TODO: move this in the app module?
+    let profile_folder = std::env::var("CODSPEED_PROFILE_FOLDER")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| workspace_root.join("target/codspeed/profiles").into());
+
+    let results = Results::new(walltime_benchmarks);
+
+    let results_folder = profile_folder.join("results");
+    std::fs::create_dir_all(&results_folder).context("Failed to create results folder")?;
+    let results_path = results_folder.join(format!("{}.json", std::process::id()));
+    let results_file =
+        std::fs::File::create(&results_path).context("Failed to create results file")?;
+    serde_json::to_writer(results_file, &results)?;
+
     Ok(())
 }
