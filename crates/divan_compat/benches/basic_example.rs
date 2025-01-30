@@ -24,6 +24,5 @@ fn fibo_100() -> i32 {
 }
 
 fn main() {
-    // Run `add` benchmark:
     divan::main();
 }
