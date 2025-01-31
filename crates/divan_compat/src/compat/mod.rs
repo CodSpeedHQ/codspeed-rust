@@ -6,6 +6,8 @@ pub mod __private;
 mod bench;
 mod entry;
 
+pub use bench::*;
+
 pub fn main() {
     // 1. Get registered entries
     // TODO: Manage bench groups
