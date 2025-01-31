@@ -1,6 +1,9 @@
 #[global_allocator]
 static ALLOC: AllocProfiler = AllocProfiler::system();
 
+use divan as foo;
+use foo::bench as bar;
+
 fn main() {
     divan::main();
 }
@@ -27,14 +30,14 @@ mod gen {
 mod random {
     use super::*;
 
-    #[divan::bench]
+    #[foo::bench]
     fn sort(bencher: Bencher) {
         bencher
             .with_inputs(gen::rand_int_vec_generator())
             .bench_local_refs(|v| v.sort());
     }
 
-    #[divan::bench]
+    #[bar]
     fn sort_unstable(bencher: Bencher) {
         bencher
             .with_inputs(gen::rand_int_vec_generator())
