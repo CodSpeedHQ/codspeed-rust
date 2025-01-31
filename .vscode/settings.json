@@ -1,7 +1,10 @@
 {
-  "rust-analyzer.cargo.extraEnv": {
-    "RUSTFLAGS": "--cfg codspeed"
-  },
+  // for some reasons, rust-analyzer does not pick the cfg from RUSTFLAGS
+  // so we have to specify it here
+  // "rust-analyzer.cargo.cfgs": ["debug_assertions", "miri", "codspeed"],
+  // "rust-analyzer.cargo.extraEnv": {
+  //   "RUSTFLAGS": "--cfg codspeed"
+  // },
   "rust-analyzer.cargo.features": "all",
   "editor.formatOnSave": true,
   "rust-analyzer.checkOnSave": true,

@@ -1,0 +1,9 @@
+sum_fold                time:   [147.05 ns 147.33 ns 147.67 ns]
+Found 13 outliers among 100 measurements (13.00%)
+  10 (10.00%) high mild
+  3 (3.00%) high severe
+
+build_vec               time:   [28.183 ns 28.272 ns 28.418 ns]
+Found 6 outliers among 100 measurements (6.00%)
+  1 (1.00%) high mild
+  5 (5.00%) high severe

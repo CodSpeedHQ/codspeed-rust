@@ -1,8 +1,13 @@
 pub use codspeed::codspeed_uri;
 
 #[cfg(not(codspeed))]
+#[path = "."]
 mod compat_criterion {
+    pub use codspeed::abs_file;
+
     pub use criterion::*;
+
+    mod default_compat;
 }
 
 #[cfg(codspeed)]

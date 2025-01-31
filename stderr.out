@@ -1,0 +1,19 @@
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.33s
+     Running `target/debug/cargo-codspeed run criterion_example`
+Measurement mode: Walltime
+Collected 1 benchmark suite(s) to run
+Running codspeed-criterion-compat criterion_example
+Gnuplot not found, using plotters backend
+file: /Users/adrien/projects/CodSpeedHQ/codspeed-rust/crates/criterion_compat/benches/criterion_example.rs, name: benches, target: a
+Benchmarking sum_fold
+Benchmarking sum_fold: Warming up for 3.0000 s
+Benchmarking sum_fold: Collecting 100 samples in estimated 5.0004 s (34M iterations)
+Benchmarking sum_fold: Analyzing
+file: /Users/adrien/projects/CodSpeedHQ/codspeed-rust/crates/criterion_compat/benches/criterion_example.rs, name: benches, target: b
+Benchmarking build_vec
+Benchmarking build_vec: Warming up for 3.0000 s
+Benchmarking build_vec: Collecting 100 samples in estimated 5.0001 s (176M iterations)
+Benchmarking build_vec: Analyzing
+Found sample: /Users/adrien/projects/CodSpeedHQ/codspeed-rust/target/codspeed/criterion/criterion_example/build_vec/new/sample.json, name: build_vec
+Found sample: /Users/adrien/projects/CodSpeedHQ/codspeed-rust/target/codspeed/criterion/criterion_example/sum_fold/new/sample.json, name: sum_fold
+Finished running 1 benchmark suite(s)

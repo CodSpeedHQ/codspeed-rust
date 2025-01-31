@@ -8,7 +8,11 @@ use crate::{
 use anyhow::Context;
 use cargo_metadata::{Metadata, Package};
 use glob::glob;
-use std::{io, path::PathBuf};
+use std::{
+    io::{self, Read},
+    path::PathBuf,
+    process::Stdio,
+};
 
 struct BenchToRun {
     bench_path: PathBuf,
@@ -174,27 +178,74 @@ fn run_walltime_benches(metadata: &Metadata, to_run: &[&BenchToRun]) -> Result<(
 
         let output_directory = criterion_output_directory_base.join(bench_name);
 
-        // TODO: run the executable by simply adding --bench
-        std::process::Command::new("cargo")
-            .args(["bench", "--bench"])
-            .arg(bench_name)
+        let mut bench_process = std::process::Command::new(&bench.bench_path)
+            .env("CODSPEED_CARGO_WORKSPACE_ROOT", &workspace_root)
+            .arg("--bench")
+            .current_dir(&bench.working_directory)
             .current_dir(workspace_root.clone())
-            // TODO: do some magic for the output, for now we only have stderr that is forwarded
             // .stdout(Stdio::piped())
-            // .stderr(Stdio::piped())
+            .stderr(Stdio::piped())
             .env("CRITERION_HOME", output_directory)
-            .status()
-            .map_err(|e| anyhow!("failed to execute the benchmark process: {}", e))
-            .and_then(|status| {
-                if status.success() {
-                    Ok(())
+            .spawn()
+            .context("Failed to spawn benchmark process")?;
+
+        // let mut stdout = bench_process
+        //     .stdout
+        //     .take()
+        //     .context("Failed to take stdout")?;
+        // let mut stdout_buffer = [0; 1024];
+        // let mut stdout_string = String::new();
+        // loop {
+        //     let bytes_read = stdout
+        //         .read(&mut stdout_buffer)
+        //         .context("Failed to read stdout")?;
+
+        //     let read_string = String::from_utf8_lossy(&stdout_buffer[..bytes_read]);
+        //     eprint!("stdout: {}", read_string);
+        //     stdout_string.push_str(&read_string);
+
+        //     if let io::Result::Ok(Some(exit_status)) = bench_process.try_wait() {
+        //         if exit_status.success() {
+        //             break;
+        //         } else {
+        //             bail!(
+        //                 "Failed to execute the benchmark process, exit code: {}",
+        //                 exit_status.code().unwrap_or(1)
+        //             );
+        //         }
+        //     }
+        // }
+        // eprintln!("stdout str: {}\nend of stdout", stdout_string);
+
+        let mut stderr = bench_process
+            .stderr
+            .take()
+            .context("Failed to take stderr")?;
+        let mut stderr_buffer = [0; 1024];
+        let mut stderr_string = String::new();
+        loop {
+            let bytes_read = stderr
+                .read(&mut stderr_buffer)
+                .context("Failed to read stderr")?;
+
+            let read_string = String::from_utf8_lossy(&stderr_buffer[..bytes_read]);
+            // eprintln!("stderr: {}. done", read_string);
+            dbg!(&read_string);
+            stderr_string.push_str(&read_string);
+
+            if let io::Result::Ok(Some(exit_status)) = bench_process.try_wait() {
+                if exit_status.success() {
+                    break;
                 } else {
-                    Err(anyhow!(
-                        "failed to execute the benchmark process, exit code: {}",
-                        status.code().unwrap_or(1)
-                    ))
+                    bail!(
+                        "Failed to execute the benchmark process, exit code: {}",
+                        exit_status.code().unwrap_or(1)
+                    );
                 }
-            })?;
+            }
+        }
+        dbg!(&stderr_string);
+        eprintln!("stderr str: {}\nend of stderr", stderr_string);
     }
 
     let mut walltime_benchmarks = vec![];
