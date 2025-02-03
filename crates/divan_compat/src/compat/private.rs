@@ -1,5 +1,5 @@
 pub use super::{
-    bench::BenchArgs,
+    bench::{BenchArgs, BenchOptions},
     entry::{BenchEntry, BenchEntryRunner, EntryList, EntryLocation, EntryMeta, BENCH_ENTRIES},
 };
 

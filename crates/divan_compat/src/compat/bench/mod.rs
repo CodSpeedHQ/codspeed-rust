@@ -1,4 +1,4 @@
-//! Handpicked stubs from [divan::entry](https://github.com/nvzqz/divan/blob/main/src/entry/mod.rs)
+//! Handpicked stubs from [divan::bench](https://github.com/nvzqz/divan/blob/main/src/bench/mod.rs)
 //! Minimally reimplemented in an API compatible way to run the benches using codspeed intrumentation
 #![allow(clippy::needless_lifetimes)] // We keep explicit lifetime to be as close to original API as possible
 

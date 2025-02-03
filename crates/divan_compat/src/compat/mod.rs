@@ -5,6 +5,7 @@ pub mod __private;
 
 mod bench;
 mod entry;
+mod util;
 
 pub use bench::*;
 

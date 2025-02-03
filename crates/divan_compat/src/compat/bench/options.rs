@@ -5,5 +5,11 @@
 /// for `#[divan::bench]` and `#[divan::bench_group]`.
 #[derive(Default)]
 pub struct BenchOptions<'a> {
+    /// Whether the benchmark should be ignored.
+    ///
+    /// This may be set within the attribute or with a separate
+    /// [`#[ignore]`](https://doc.rust-lang.org/reference/attributes/testing.html#the-ignore-attribute).
+    pub ignore: Option<bool>,
+
     pub(crate) _marker: std::marker::PhantomData<&'a ()>,
 }
