@@ -33,8 +33,8 @@ pub fn main() {
                     entry.meta.display_name
                 )));
             }
-            entry::BenchEntryRunner::Args(bench_fn) => {
-                todo!()
+            entry::BenchEntryRunner::Args(bench_runner) => {
+                let bench_runner = bench_runner();
             }
         }
     }
