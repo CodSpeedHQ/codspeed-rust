@@ -53,7 +53,7 @@ pub struct EntryMeta {
     /// Where the entry was defined.
     pub location: EntryLocation,
     /// Configures the benchmarker via attribute options.
-    pub bench_options: Option<LazyLock<BenchOptions<'static>>>,
+    pub bench_options: Option<LazyLock<BenchOptions>>,
 }
 
 /// Where an entry is located.

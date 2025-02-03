@@ -34,6 +34,12 @@ struct ErasedArgsSlice {
     arg_type: TypeId,
 }
 
+// SAFETY: Raw pointers in `ErasedArgsSlice` are used in a thread-safe way, and
+// the argument type is required to be `Send + Sync` when initialized from the
+// iterator in `BenchArgs::runner`.
+unsafe impl Send for ErasedArgsSlice {}
+unsafe impl Sync for ErasedArgsSlice {}
+
 /// The result of making `BenchArgs` runnable from instantiating the arguments
 /// list and providing a typed benchmarking implementation.
 #[derive(Clone, Copy)]
