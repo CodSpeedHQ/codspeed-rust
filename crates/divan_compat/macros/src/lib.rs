@@ -2,7 +2,12 @@ use proc_macro::TokenStream;
 use proc_macro_crate::{crate_name, FoundCrate};
 use quote::{format_ident, quote};
 use syn::{
-    parse::Parse, parse_macro_input, punctuated::Punctuated, ItemFn, Meta, MetaNameValue, Token,
+    parse::Parse,
+    parse_macro_input,
+    punctuated::Punctuated,
+    ItemFn,
+    Meta::{self, NameValue},
+    MetaNameValue, Token,
 };
 
 struct MyBenchArgs {
@@ -26,11 +31,26 @@ pub fn bench_compat(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     for arg in parsed_args.args {
         match &arg {
-            Meta::NameValue(MetaNameValue { path, .. }) if path.is_ident("crate") => {
+            NameValue(MetaNameValue { path, .. }) if path.is_ident("crate") => {
                 return quote! {
-                    compile_error!("crate argument is not supported with codspeed_divan_compat");
+                    compile_error!("`crate` argument is not supported with codspeed_divan_compat");
                 }
                 .into();
+            }
+            NameValue(MetaNameValue { path, .. }) if path.is_ident("type") => {
+                return quote! {
+                    compile_error!("`type` argument is not yet supported with codspeed_divan_compat");
+                }
+                .into();
+            }
+            NameValue(MetaNameValue { path, .. })
+                if path.is_ident("min_time")
+                    || path.is_ident("max_time")
+                    || path.is_ident("sample_size")
+                    || path.is_ident("sample_count")
+                    || path.is_ident("skip_ext_time") =>
+            {
+                // These arguments are ignored in instrumented mode
             }
             _ => filtered_args.push(arg),
         }

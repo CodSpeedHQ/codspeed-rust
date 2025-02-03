@@ -32,6 +32,9 @@ pub fn main() {
                     entry.meta.display_name
                 )));
             }
+            entry::BenchEntryRunner::Args(bench_fn) => {
+                todo!()
+            }
         }
     }
 }

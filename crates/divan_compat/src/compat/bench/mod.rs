@@ -1,19 +1,17 @@
 //! Handpicked stubs from [divan::entry](https://github.com/nvzqz/divan/blob/main/src/entry/mod.rs)
 //! Minimally reimplemented in an API compatible way to run the benches using codspeed intrumentation
-
 #![allow(clippy::needless_lifetimes)] // We keep explicit lifetime to be as close to original API as possible
+
+mod args;
+mod options;
+
+pub use self::{
+    args::{BenchArgs, BenchArgsRunner},
+    options::BenchOptions,
+};
+
 use codspeed::codspeed::CodSpeed;
 use std::{cell::RefCell, rc::Rc};
-
-/// Benchmarking options set directly by the user in `#[divan::bench]` and
-/// `#[divan::bench_group]`.
-///
-/// Changes to fields must be reflected in the "Options" sections of the docs
-/// for `#[divan::bench]` and `#[divan::bench_group]`.
-#[derive(Default)]
-pub struct BenchOptions<'a> {
-    pub(crate) _marker: std::marker::PhantomData<&'a ()>,
-}
 
 /// Using this in place of `()` for `GenI` prevents `Bencher::with_inputs` from
 /// working with `()` unintentionally.
