@@ -39,7 +39,7 @@ jobs:
       - uses: moonrepo/setup-rust@v1
       - run: cargo test --all
 
-  compat-integration-test:
+  compat-integration-test-instrumentation:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -52,6 +52,24 @@ jobs:
       - run: cargo codspeed build -p codspeed
       - run: cargo codspeed build -p codspeed-bencher-compat
       - run: cargo codspeed build --features async_futures -p codspeed-criterion-compat
+
+      - name: Run the benchmarks
+        uses: CodSpeedHQ/action@main
+        with:
+          run: cargo codspeed run
+          token: ${{ secrets.CODSPEED_TOKEN }}
+
+  compat-integration-test-walltime:
+    runs-on: codspeed-macro
+    steps:
+      - uses: actions/checkout@v4
+      - uses: moonrepo/setup-rust@v1
+        with:
+          cache-target: release
+
+      - run: cargo install --path crates/cargo-codspeed --locked
+
+      - run: cargo codspeed build -p codspeed-divan-compat
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@main
