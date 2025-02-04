@@ -559,8 +559,10 @@ version = "2.7.2"
 dependencies = [
  "colored",
  "libc",
+ "serde",
  "serde_json",
  "tempfile",
+ "uuid",
 ]
 
 [[package]]
@@ -597,7 +599,7 @@ dependencies = [
 name = "codspeed-divan-compat-macros"
 version = "2.7.2"
 dependencies = [
- "divan-macros",
+ "divan-macros 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
  "proc-macro2",
  "quote",
  "syn",
@@ -736,13 +738,13 @@ checksum = "6184e33543162437515c2e2b48714794e37845ec9851711914eec9d308f6ebe8"
 [[package]]
 name = "divan"
 version = "0.1.17"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0583193020b29b03682d8d33bb53a5b0f50df6daacece12ca99b904cfdcb8c4"
+source = "git+https://github.com/CodSpeedHQ/divan#40275a6b28ee9b21fd2d77172c739cf36edf08f8"
 dependencies = [
  "cfg-if",
  "clap",
+ "codspeed 2.7.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "condtype",
- "divan-macros",
+ "divan-macros 0.1.17 (git+https://github.com/CodSpeedHQ/divan)",
  "libc",
  "regex-lite",
 ]
@@ -752,6 +754,16 @@ name = "divan-macros"
 version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8dc51d98e636f5e3b0759a39257458b22619cac7e96d932da6eeb052891bb67c"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "divan-macros"
+version = "0.1.17"
+source = "git+https://github.com/CodSpeedHQ/divan#40275a6b28ee9b21fd2d77172c739cf36edf08f8"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1423,18 +1435,18 @@ dependencies = [
 
 [[package]]
 name = "serde"
-version = "1.0.204"
+version = "1.0.217"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc76f558e0cbb2a839d37354c575f1dc3fdc6546b5be373ba43d95f231bf7c12"
+checksum = "02fc4265df13d6fa1d00ecff087228cc0a2b5f3c0e87e258d8b94a156e984c70"
 dependencies = [
  "serde_derive",
 ]
 
 [[package]]
 name = "serde_derive"
-version = "1.0.204"
+version = "1.0.217"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e0cd7e117be63d3c3678776753929474f3b04a43a080c744d6b0ae2a8c28e222"
+checksum = "5a9bf7cf98d04a2b28aead066b7496853d4779c9cc183c440dbac457641e19a0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1443,9 +1455,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.137"
+version = "1.0.138"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "930cfb6e6abf99298aaad7d29abbef7a9999a9a8806a40088f55f0dcec03146b"
+checksum = "d434192e7da787e94a6ea7e9670b26a036d0ca41e0b7efb2676dd32bae872949"
 dependencies = [
  "itoa",
  "memchr",
@@ -1639,9 +1651,9 @@ checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
 
 [[package]]
 name = "uuid"
-version = "1.10.0"
+version = "1.12.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "81dfa00651efa65069b0b6b651f4aaa31ba9e3c3ce0137aaad053604ee7e0314"
+checksum = "b3758f5e68192bb96cc8f9b7e2c2cfdabb435499a28499a42f8f984092adad4b"
 dependencies = [
  "getrandom",
 ]

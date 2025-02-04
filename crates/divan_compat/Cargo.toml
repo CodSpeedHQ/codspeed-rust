@@ -19,7 +19,7 @@ keywords = ["codspeed", "benchmark", "divan"]
 
 [dependencies]
 codspeed = { path = "../codspeed", version = "=2.7.2" }
-divan = "0.1.17"
+divan = { git = "https://github.com/CodSpeedHQ/divan" }
 codspeed-divan-compat-macros = { version = "=2.7.2", path = './macros' }
 
 [[bench]]

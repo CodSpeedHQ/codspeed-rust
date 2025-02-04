@@ -20,7 +20,9 @@ keywords = ["codspeed", "benchmark"]
 [dependencies]
 colored = "2.0.0"
 libc = "^0.2"
-serde_json = "1.0.120"
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { version = "1.12.1", features = ["v4"] }
 
 [[bench]]
 name = "native"
