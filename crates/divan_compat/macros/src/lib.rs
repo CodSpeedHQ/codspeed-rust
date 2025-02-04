@@ -37,7 +37,7 @@ pub fn bench_compat(attr: TokenStream, item: TokenStream) -> TokenStream {
                 }
                 .into();
             }
-            NameValue(MetaNameValue { path, .. }) if path.is_ident("type") => {
+            NameValue(MetaNameValue { path, .. }) if path.is_ident("types") => {
                 return quote! {
                     compile_error!("`type` argument is not yet supported with codspeed_divan_compat");
                 }
