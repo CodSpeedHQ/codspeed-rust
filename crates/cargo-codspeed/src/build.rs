@@ -43,10 +43,17 @@ impl BuildOptions<'_> {
 
         let mut built_benches = Vec::new();
         for message in Message::parse_stream(reader) {
-            if let Message::CompilerArtifact(artifact) =
-                message.expect("Failed to parse compiler message")
-            {
-                if artifact.target.is_kind(TargetKind::Bench) {
+            match message.expect("Failed to parse message") {
+                // Those messages will include build errors and warnings even if stderr also contain some of them
+                Message::CompilerMessage(msg) => {
+                    println!("{}", &msg.message);
+                }
+                Message::TextLine(line) => {
+                    println!("{}", line);
+                }
+                Message::CompilerArtifact(artifact)
+                    if artifact.target.is_kind(TargetKind::Bench) =>
+                {
                     let package = workspace_packages
                         .iter()
                         .find(|p| p.id == artifact.package_id)
@@ -71,6 +78,7 @@ impl BuildOptions<'_> {
                         });
                     }
                 }
+                _ => {}
             }
         }
 
