@@ -1,4 +1,4 @@
-use crate::{prelude::*, run::run_benches};
+use crate::{measurement_mode::MeasurementMode, prelude::*, run::run_benches};
 use cargo_metadata::MetadataCommand;
 use clap::{Args, Parser, Subcommand};
 use std::{ffi::OsString, process::exit};
@@ -11,6 +11,11 @@ struct Cli {
     /// Do not print cargo log messages
     #[arg(short, long, global = true)]
     quiet: bool,
+
+    /// The measurement tool to use for measuring performance
+    /// Automatically set to `walltime` on macro runners
+    #[arg(short, long, global = true, env = "CODSPEED_RUNNER_MODE")]
+    measurement_mode: Option<MeasurementMode>,
 
     #[command(subcommand)]
     command: Commands,
@@ -63,6 +68,9 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
     let metadata = MetadataCommand::new().exec()?;
     let cli = Cli::try_parse_from(args)?;
 
+    let measurement_mode = cli.measurement_mode.unwrap_or_default();
+    eprintln!("[cargo-codspeed] Measurement mode: {measurement_mode:?}\n");
+
     let res = match cli.command {
         Commands::Build {
             filters,
@@ -71,9 +79,16 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
         } => {
             let features =
                 features.map(|f| f.split([' ', ',']).map(|s| s.to_string()).collect_vec());
-            build_benches(&metadata, filters, features, profile, cli.quiet)
+            build_benches(
+                &metadata,
+                filters,
+                features,
+                profile,
+                cli.quiet,
+                measurement_mode,
+            )
         }
-        Commands::Run { filters } => run_benches(&metadata, filters),
+        Commands::Run { filters } => run_benches(&metadata, filters, measurement_mode),
     };
 
     if let Err(e) = res {
