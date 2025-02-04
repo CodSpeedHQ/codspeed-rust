@@ -8,7 +8,7 @@ mod compat_divan {
 #[cfg(codspeed)]
 #[path = "."]
 mod compat_divan {
-    pub use divan::black_box;
+    pub use divan::{black_box, black_box_drop, AllocProfiler};
 
     pub use codspeed_divan_compat_macros::bench_compat as bench;
     // Important: Keep in sync with the name used in the compat macro

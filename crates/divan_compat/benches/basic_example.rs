@@ -1,5 +1,3 @@
-use codspeed_divan_compat as divan;
-
 fn fibo(n: i32) -> i32 {
     let mut a = 0;
     let mut b = 1;
@@ -13,17 +11,16 @@ fn fibo(n: i32) -> i32 {
     a
 }
 
-#[divan::bench]
+#[codspeed_divan_compat::bench]
 fn fibo_500() -> i32 {
-    divan::black_box(fibo(500))
+    codspeed_divan_compat::black_box(fibo(500))
 }
 
-#[divan::bench]
-fn fibo_100() -> i32 {
-    divan::black_box(fibo(10))
+#[codspeed_divan_compat::bench]
+fn fibo_10() -> i32 {
+    codspeed_divan_compat::black_box(fibo(10))
 }
 
 fn main() {
-    // Run `add` benchmark:
-    divan::main();
+    codspeed_divan_compat::main();
 }

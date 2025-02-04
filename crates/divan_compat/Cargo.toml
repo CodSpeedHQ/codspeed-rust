@@ -11,9 +11,9 @@ repository = "https://github.com/CodSpeedHQ/codspeed-rust"
 homepage = "https://codspeed.io"
 license = "MIT OR Apache-2.0"
 categories = [
-    "development-tools",
-    "development-tools::profiling",
-    "development-tools::testing",
+  "development-tools",
+  "development-tools::profiling",
+  "development-tools::testing",
 ]
 keywords = ["codspeed", "benchmark", "divan"]
 

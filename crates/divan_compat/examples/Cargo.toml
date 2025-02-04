@@ -1,0 +1,23 @@
+[package]
+name = "codspeed-divan-compat-examples"
+version = "0.0.0"
+edition = "2021"
+description = "Examples for Divan, a comfy benchmarking framework."
+publish = false
+license = "MIT OR Apache-2.0"
+
+[dependencies]
+fastrand = "2.3.0"
+divan = { package = "codspeed-divan-compat", path = ".." }
+
+[[bench]]
+name = "math"
+harness = false
+
+[[bench]]
+name = "sort"
+harness = false
+
+[[bench]]
+name = "time"
+harness = false

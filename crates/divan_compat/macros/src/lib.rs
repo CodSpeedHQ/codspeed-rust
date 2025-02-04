@@ -1,7 +1,13 @@
 use proc_macro::TokenStream;
-use quote::quote;
+use proc_macro_crate::{crate_name, FoundCrate};
+use quote::{format_ident, quote};
 use syn::{
-    parse::Parse, parse_macro_input, punctuated::Punctuated, ItemFn, Meta, MetaNameValue, Token,
+    parse::Parse,
+    parse_macro_input,
+    punctuated::Punctuated,
+    ItemFn,
+    Meta::{self, NameValue},
+    MetaNameValue, Token,
 };
 
 struct MyBenchArgs {
@@ -25,21 +31,51 @@ pub fn bench_compat(attr: TokenStream, item: TokenStream) -> TokenStream {
 
     for arg in parsed_args.args {
         match &arg {
-            Meta::NameValue(MetaNameValue { path, .. }) if path.is_ident("crate") => {
-                return quote! {
-                    compile_error!("crate argument is not supported with codspeed_divan_compat");
+            NameValue(MetaNameValue { path, .. }) => {
+                if path.is_ident("crate") {
+                    return quote! {
+                        compile_error!("`crate` argument is not supported with codspeed_divan_compat");
+                    }.
+                    into();
                 }
-                .into();
+
+                if path.is_ident("types") {
+                    return quote! {
+                        compile_error!("`type` argument is not yet supported with codspeed_divan_compat");
+                    }
+                    .into();
+                }
+
+                if path.is_ident("min_time")
+                    || path.is_ident("max_time")
+                    || path.is_ident("sample_size")
+                    || path.is_ident("sample_count")
+                    || path.is_ident("skip_ext_time")
+                {
+                    // These arguments are ignored in instrumented mode
+                    continue;
+                }
+
+                filtered_args.push(arg);
             }
             _ => filtered_args.push(arg),
         }
     }
 
-    filtered_args.push(syn::parse_quote!(crate = ::codspeed_divan_compat));
+    let codspeed_divan_crate_ident = format_ident!(
+        "{}",
+        crate_name("codspeed-divan-compat")
+            .map(|found_crate| match found_crate {
+                FoundCrate::Itself => "crate".to_string(),
+                FoundCrate::Name(name) => name,
+            })
+            .unwrap_or("codspeed_divan_compat".to_string())
+    );
 
+    filtered_args.push(syn::parse_quote!(crate = ::#codspeed_divan_crate_ident));
     // Important: keep macro name in sync with re-exported macro name in divan-compat lib
     let expanded = quote! {
-        #[::codspeed_divan_compat::bench_original(#(#filtered_args),*)]
+        #[::#codspeed_divan_crate_ident::bench_original(#(#filtered_args),*)]
         #input
     };
 

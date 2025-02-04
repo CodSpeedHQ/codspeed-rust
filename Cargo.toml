@@ -1,12 +1,14 @@
 [workspace]
 members = [
-    "crates/codspeed",
-    "crates/bencher_compat",
-    "crates/criterion_compat",
-    "crates/cargo-codspeed",
-    "crates/divan_compat",
-    "crates/divan_compat/macros",
-    "crates/divan_compat/divan_fork",
+  "crates/codspeed",
+  "crates/bencher_compat",
+  "crates/criterion_compat",
+  "crates/cargo-codspeed",
+
+  "crates/divan_compat",
+  "crates/divan_compat/macros",
+  "crates/divan_compat/divan_fork",
+  "crates/divan_compat/examples",
 ]
 resolver = "2"
 
