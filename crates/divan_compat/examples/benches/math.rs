@@ -1,11 +1,5 @@
-//! Run with:
-//!
-//! ```sh
-//! cargo bench -q -p examples --bench math
-//! ```
-
 use divan::black_box;
-// use std::collections::{BTreeMap, HashMap};
+use std::collections::{BTreeMap, HashMap};
 
 fn main() {
     divan::main();
@@ -39,7 +33,7 @@ fn rem() -> i32 {
 
 // 1, 1, 2, 3, 5, ...
 mod fibonacci {
-    // use super::*;
+    use super::*;
 
     const VALUES: &[u64] = &[0, 5, 10, 20, 30, 40];
 
@@ -58,41 +52,42 @@ mod fibonacci {
         current
     }
 
-    // // O(2^n)
-    // #[divan::bench(args = VALUES, max_time = 1)]
-    // fn recursive(n: u64) -> u64 {
-    //     if n <= 1 {
-    //         1
-    //     } else {
-    //         recursive(n - 2) + recursive(n - 1)
-    //     }
-    // }
-    //
-    // trait Map: Default {
-    //     fn get(&self, key: u64) -> Option<u64>;
-    //     fn set(&mut self, key: u64, value: u64);
-    // }
-    //
-    // impl Map for HashMap<u64, u64> {
-    //     fn get(&self, key: u64) -> Option<u64> {
-    //         self.get(&key).copied()
-    //     }
-    //
-    //     fn set(&mut self, key: u64, value: u64) {
-    //         self.insert(key, value);
-    //     }
-    // }
-    //
-    // impl Map for BTreeMap<u64, u64> {
-    //     fn get(&self, key: u64) -> Option<u64> {
-    //         self.get(&key).copied()
-    //     }
-    //
-    //     fn set(&mut self, key: u64, value: u64) {
-    //         self.insert(key, value);
-    //     }
-    // }
-    //
+    // O(2^n)
+    #[divan::bench(args = VALUES, max_time = 1)]
+    fn recursive(n: u64) -> u64 {
+        if n <= 1 {
+            1
+        } else {
+            recursive(n - 2) + recursive(n - 1)
+        }
+    }
+
+    #[allow(dead_code)]
+    trait Map: Default {
+        fn get(&self, key: u64) -> Option<u64>;
+        fn set(&mut self, key: u64, value: u64);
+    }
+
+    impl Map for HashMap<u64, u64> {
+        fn get(&self, key: u64) -> Option<u64> {
+            self.get(&key).copied()
+        }
+
+        fn set(&mut self, key: u64, value: u64) {
+            self.insert(key, value);
+        }
+    }
+
+    impl Map for BTreeMap<u64, u64> {
+        fn get(&self, key: u64) -> Option<u64> {
+            self.get(&key).copied()
+        }
+
+        fn set(&mut self, key: u64, value: u64) {
+            self.insert(key, value);
+        }
+    }
+
     // // O(n)
     // #[divan::bench(
     //     types = [BTreeMap<u64, u64>, HashMap<u64, u64>],

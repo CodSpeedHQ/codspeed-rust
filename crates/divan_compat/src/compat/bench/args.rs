@@ -154,6 +154,18 @@ impl Default for BenchArgs {
     }
 }
 
+impl BenchArgsRunner {
+    #[inline]
+    pub(crate) fn bench(&self, bencher: Bencher, index: usize) {
+        (self.bench)(bencher, self.args, index)
+    }
+
+    #[inline]
+    pub(crate) fn arg_names(&self) -> &'static [&'static str] {
+        self.args.names()
+    }
+}
+
 impl ErasedArgsSlice {
     /// Retrieves a slice of arguments if the type is `T`.
     #[inline]

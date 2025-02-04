@@ -30,11 +30,24 @@ pub fn main() {
                     entry.meta.location.file,
                     entry.meta.location.line,
                     entry.meta.module_path,
-                    entry.meta.display_name
+                    entry.meta.display_name,
                 )));
             }
             entry::BenchEntryRunner::Args(bench_runner) => {
                 let bench_runner = bench_runner();
+
+                for (arg_index, arg_name) in bench_runner.arg_names().iter().enumerate() {
+                    let bencher = bench::Bencher::new(format!(
+                        "{}:{}::{}::{}::{}",
+                        entry.meta.location.file,
+                        entry.meta.location.line,
+                        entry.meta.module_path,
+                        entry.meta.display_name,
+                        arg_name,
+                    ));
+
+                    bench_runner.bench(bencher, arg_index);
+                }
             }
         }
     }
