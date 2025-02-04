@@ -9,6 +9,10 @@ mod entry;
 pub fn main() {
     // 1. Get registered entries
     // TODO: Manage bench groups
+
+    // TODO: remove when releasing divan with instrumentation mode
+    todo!("Instrumentation mode with divan is not yet available.");
+    #[allow(unreachable_code)]
     let bench_entries = &entry::BENCH_ENTRIES;
 
     // 2. Build an execution tree
@@ -19,6 +23,7 @@ pub fn main() {
 
     // 4. Scan the tree and execute benchmarks
     // TODO:
+
     for entry in bench_entries.iter() {
         match entry.bench {
             entry::BenchEntryRunner::Plain(bench_fn) => {
