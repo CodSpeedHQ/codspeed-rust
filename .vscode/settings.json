@@ -1,6 +1,6 @@
 {
-  "rust-analyzer.cargo.features": "all",
-  "editor.formatOnSave": true,
   "rust-analyzer.checkOnSave": true,
-  "rust-analyzer.check.command": "clippy"
+  "rust-analyzer.check.command": "clippy",
+  "rust-analyzer.cargo.features": "all",
+  "rust-analyzer.cargo.cfgs": ["debug_assertions", "miri", "codspeed"]
 }
