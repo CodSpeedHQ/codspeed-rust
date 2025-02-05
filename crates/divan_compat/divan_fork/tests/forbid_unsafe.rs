@@ -2,6 +2,7 @@
 
 #![forbid(unsafe_code)]
 
+extern crate codspeed_divan_compat_walltime as divan;
 use divan::Bencher;
 
 const CONST_VALUES: [usize; 3] = [1, 5, 10];

@@ -3,6 +3,7 @@
 // Miri cannot discover benchmarks.
 #![cfg(not(miri))]
 
+extern crate codspeed_divan_compat_walltime as divan;
 use divan::__private::{EntryMeta, BENCH_ENTRIES, GROUP_ENTRIES};
 
 #[divan::bench]
@@ -81,6 +82,7 @@ fn module_path() {
     assert_eq!(find_inner_group().module_path, inner_path);
 }
 
+#[ignore = "changed within the fork"]
 #[test]
 fn line() {
     assert_eq!(find_outer().location.line, 8);

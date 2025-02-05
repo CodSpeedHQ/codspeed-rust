@@ -5,6 +5,7 @@
 
 use std::sync::atomic::{AtomicUsize, Ordering::SeqCst};
 
+extern crate codspeed_divan_compat_walltime as divan;
 use divan::Divan;
 
 static CHILD1_ITERS: AtomicUsize = AtomicUsize::new(0);

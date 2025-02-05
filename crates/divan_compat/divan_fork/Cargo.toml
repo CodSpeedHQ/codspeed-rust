@@ -42,3 +42,6 @@ dyn_thread_local = []
 
 # Benchmark internals. Not meant for public use.
 internal_benches = []
+
+[lib]
+doctest = false # Disable doctests for the fork

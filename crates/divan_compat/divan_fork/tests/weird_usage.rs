@@ -5,6 +5,7 @@
 
 use std::time::Duration;
 
+extern crate codspeed_divan_compat_walltime as divan;
 use divan::{Divan, __private::BENCH_ENTRIES};
 
 #[divan::bench(bytes_count = 0u8, chars_count = 0u16, cycles_count = 0u32, items_count = 0u64)]

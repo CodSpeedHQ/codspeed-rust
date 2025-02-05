@@ -637,7 +637,6 @@ version = "0.1.17"
 dependencies = [
  "cfg-if",
  "clap",
- "codspeed",
  "condtype",
  "divan-macros",
  "libc",
