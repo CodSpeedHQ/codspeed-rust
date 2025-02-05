@@ -310,6 +310,36 @@ impl Divan {
 
                 if should_compute_stats {
                     let stats = bench_context.compute_stats();
+                    {
+                        let name = bench_entry.display_name().to_string();
+                        let file = bench_entry.meta().location.file;
+                        let mut module_path = bench_entry
+                            .meta()
+                            .module_path_components()
+                            .skip(1)
+                            .collect::<Vec<_>>()
+                            .join("::");
+                        if !module_path.is_empty() {
+                            module_path.push_str("::");
+                        }
+                        let uri = format!("{file}::{module_path}{name}");
+                        let iter_per_round = bench_context.samples.sample_size;
+                        let times_ns: Vec<_> = bench_context
+                            .samples
+                            .time_samples
+                            .iter()
+                            .map(|s| s.duration.picos / 1_000)
+                            .collect();
+                        let max_time_ns = options.max_time.map(|t| t.as_nanos());
+                        ::codspeed::walltime::collect_raw_walltime_results(
+                            "divan",
+                            name,
+                            uri,
+                            iter_per_round,
+                            max_time_ns,
+                            times_ns,
+                        );
+                    };
                     tree_painter.borrow_mut().finish_leaf(
                         is_last_thread_count,
                         &stats,

@@ -529,7 +529,7 @@ pub(crate) struct BenchContext<'a> {
     pub thread_count: NonZeroUsize,
 
     /// Recorded samples.
-    samples: SampleCollection,
+    pub samples: SampleCollection,
 
     /// Per-iteration counters grouped by sample.
     counters: CounterCollection,
