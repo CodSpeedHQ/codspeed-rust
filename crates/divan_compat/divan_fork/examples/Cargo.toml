@@ -1,0 +1,109 @@
+[package]
+name = "examples"
+version = "0.0.0"
+edition = "2021"
+authors = ["Nikolai Vazquez"]
+license = "MIT OR Apache-2.0"
+description = "Examples for Divan, a comfy benchmarking framework."
+readme = "../README.md"
+publish = false
+
+[dependencies]
+divan = { workspace = true }
+fastrand = "2"
+image = { version = "0.24", optional = true }
+libc = "0.2.147"
+rayon = "1"
+
+# Search
+ordsearch = "0.2.5"
+wyhash = "0.5"
+
+# Hash
+blake3 = { version = "1.4", optional = true, features = ["rayon"] }
+digest = { version = "*", optional = true }
+fnv = { version = "1", optional = true }
+highway = { version = "1.1", optional = true }
+metrohash = { version = "1", optional = true }
+seahash = { version = "4.1", optional = true }
+sha1 = { version = "0.10", optional = true }
+sha2 = { version = "0.10", optional = true }
+sha3 = { version = "0.10", optional = true }
+twox-hash = { version = "1.6", optional = true }
+
+[target.'cfg(unix)'.dependencies]
+libc = { workspace = true }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+mach2 = "0.4"
+
+[target.'cfg(any(windows, target_os = "linux", target_os = "android"))'.dependencies]
+winapi = { version = "0.3.9", features = ["processthreadsapi"] }
+
+[features]
+hash = [
+    "blake3",
+    "digest",
+    "fnv",
+    "highway",
+    "metrohash",
+    "seahash",
+    "sha1",
+    "sha2",
+    "sha3",
+    "twox-hash",
+]
+
+[[bench]]
+name = "atomic"
+harness = false
+
+[[bench]]
+name = "collections"
+harness = false
+
+[[bench]]
+name = "hash"
+harness = false
+required-features = ["hash"]
+
+[[bench]]
+name = "image"
+harness = false
+required-features = ["image"]
+
+[[bench]]
+name = "math"
+harness = false
+
+[[bench]]
+name = "memcpy"
+harness = false
+
+[[bench]]
+name = "panic"
+harness = false
+
+[[bench]]
+name = "scratch"
+harness = false
+
+[[bench]]
+name = "search"
+harness = false
+
+[[bench]]
+name = "sort"
+harness = false
+
+[[bench]]
+name = "string"
+harness = false
+
+[[bench]]
+name = "threads"
+harness = false
+
+[[bench]]
+name = "time"
+harness = false

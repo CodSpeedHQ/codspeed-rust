@@ -1,0 +1,191 @@
+on: [push, pull_request]
+
+name: CI
+
+env:
+  CARGO_HOME: ${{ github.workspace }}/.cargo
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings -A unused-imports
+  RUSTDOCFLAGS: -D warnings
+  RUST_BACKTRACE: full
+
+jobs:
+  # Check formatting.
+  rustfmt:
+    name: Rustfmt
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup update stable --no-self-update
+      - run: rustc -Vv
+      - run: cargo fmt --all -- --check
+
+  # Build documentation.
+  rustdoc:
+    name: Rustdoc
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3.3.2
+        with:
+          path: |
+            ${{ env.CARGO_HOME }}
+            target
+          key: rustdoc-${{ runner.os }}
+      - run: rustup update stable --no-self-update
+      - run: rustc -Vv
+      - run: cargo rustdoc --all-features -- --document-private-items
+
+  # Run linter.
+  clippy:
+    name: Clippy
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3.3.2
+        with:
+          path: |
+            ${{ env.CARGO_HOME }}
+            target
+          key: clippy-${{ runner.os }}
+      - run: rustup update stable --no-self-update
+      - run: rustc -Vv
+      - run: cargo clippy --all --all-targets --all-features
+
+  # Run tests in `src/` and `tests/`.
+  unit-test:
+    name: Unit Test
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        rust:
+          - stable
+          - nightly
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3.3.2
+        with:
+          path: |
+            ${{ env.CARGO_HOME }}
+            target
+          key: unit-test-${{ runner.os }}-${{ matrix.rust }}
+      - run: rustup default ${{ matrix.rust }}
+      - run: rustup update ${{ matrix.rust }} --no-self-update
+      - run: rustc -Vv
+      - run: cargo test -p divan -p divan-macros
+
+  # Run tests in `src/` and `tests/` using Miri.
+  unit-test-miri:
+    name: Unit Test (Miri)
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3.3.2
+        with:
+          path: |
+            ${{ env.CARGO_HOME }}
+            target
+          key: miri-${{ runner.os }}
+      - run: rustup default nightly
+      - run: rustup update nightly --no-self-update
+      - run: rustup component add miri
+      - run: rustc -Vv
+      - run: cargo miri test -p divan -p divan-macros
+
+  # Run `examples/` directory as tests.
+  examples-test:
+    name: Examples Test
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+        rust:
+          - stable
+          - nightly
+    env:
+      DIVAN_ITEMS_COUNT: 0
+      DIVAN_BYTES_COUNT: 1
+      DIVAN_CHARS_COUNT: 2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3.3.2
+        with:
+          path: |
+            ${{ env.CARGO_HOME }}
+            target
+          key: examples-test-${{ runner.os }}-${{ matrix.rust }}
+      - run: rustup default ${{ matrix.rust }}
+      - run: rustup update ${{ matrix.rust }} --no-self-update
+      - run: rustc -Vv
+      - run: cargo test -p examples --all-features --benches
+
+  # Run `examples/` directory as benchmarks.
+  examples-bench:
+    name: Examples Bench
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ${{ matrix.os }}
+    env:
+      # Run each benchmark within 2 seconds.
+      DIVAN_MAX_TIME: 2
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3.3.2
+        with:
+          path: |
+            ${{ env.CARGO_HOME }}
+            target
+          key: examples-bench-${{ runner.os }}
+      - run: rustup update stable --no-self-update
+      - run: rustc -Vv
+      - run: cargo bench -p examples --all-features
+
+  # Run `internal_benches/` directory as benchmarks.
+  internals-bench:
+    name: Internals Bench
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
+    runs-on: ${{ matrix.os }}
+    env:
+      # Run each benchmark within 2 seconds.
+      DIVAN_MAX_TIME: 2
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v3.3.2
+        with:
+          path: |
+            ${{ env.CARGO_HOME }}
+            target
+          key: internals-bench-${{ runner.os }}
+      - run: rustup update stable --no-self-update
+      - run: rustc -Vv
+      - run: cargo bench -p internal_benches --all-features
