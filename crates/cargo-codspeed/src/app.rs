@@ -14,8 +14,6 @@ struct Cli {
 
     /// The measurement tool to use for measuring performance.
     /// Automatically set to `walltime` on macro runners
-    // This is an Option even if MeasurementMode has a default because
-    // the default is dynamic and this would mislead the user
     #[arg(short, long, global = true, env = "CODSPEED_RUNNER_MODE")]
     measurement_mode: Option<MeasurementMode>,
 
