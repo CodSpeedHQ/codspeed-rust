@@ -65,6 +65,8 @@ pub fn collect_raw_walltime_results(
     data.dump_to_results(&workspace_root, scope);
 }
 
+// FIXME: This assumes that the cargo target dir is `target`, and duplicates information with
+// `cargo-codspeed::helpers::get_codspeed_target_dir`
 pub fn get_raw_result_dir_from_workspace_root(workspace_root: &Path) -> PathBuf {
     workspace_root
         .join("target")

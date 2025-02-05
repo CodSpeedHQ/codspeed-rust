@@ -99,7 +99,7 @@ pub fn run_benches(
     filters: Filters,
     measurement_mode: MeasurementMode,
 ) -> Result<()> {
-    let codspeed_target_dir = get_codspeed_target_dir(metadata);
+    let codspeed_target_dir = get_codspeed_target_dir(metadata, measurement_mode);
     let workspace_root = metadata.workspace_root.as_std_path();
     if measurement_mode == MeasurementMode::Walltime {
         clear_raw_walltime_data(workspace_root)?;

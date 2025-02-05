@@ -174,7 +174,7 @@ pub fn build_benches(
         );
     }
 
-    let codspeed_target_dir = get_codspeed_target_dir(metadata);
+    let codspeed_target_dir = get_codspeed_target_dir(metadata, measurement_mode);
     let built_bench_count = built_benches.len();
 
     // Create and clear packages codspeed target directories
