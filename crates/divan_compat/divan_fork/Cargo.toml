@@ -1,11 +1,11 @@
 [package]
-name = "divan"
+name = "codspeed-divan-compat-walltime"
 version = "0.1.17"
 rust-version = "1.80.0"
 edition = "2021"
 authors = ["Nikolai Vazquez"]
 license = "MIT OR Apache-2.0"
-description = "Statistically-comfy benchmarking library."
+description = "A temporary compatibility layer for CodSpeed to use Divan's walltime entrypoint."
 repository = "https://github.com/nvzqz/divan"
 homepage = "https://github.com/nvzqz/divan"
 documentation = "https://docs.rs/divan"
@@ -14,7 +14,7 @@ keywords = ["benchmark", "criterion", "instrument", "measure", "performance"]
 readme = "README.md"
 
 [dependencies]
-divan-macros = { version = "=0.1.17", path = "macros" }
+divan-macros = { version = "=0.1.17" }
 
 cfg-if = "1"
 clap = { version = "4", default-features = false, features = ["std", "env"] }
@@ -22,7 +22,8 @@ condtype = "1.3"
 regex = { package = "regex-lite", version = "0.1", default-features = false, features = ["std", "string"] }
 
 [target.'cfg(unix)'.dependencies]
-libc = { workspace = true }
+libc = "0.2.148"
+
 
 [dev-dependencies]
 mimalloc = "0.1"
@@ -41,10 +42,3 @@ dyn_thread_local = []
 
 # Benchmark internals. Not meant for public use.
 internal_benches = []
-
-[workspace]
-members = ["macros", "examples", "internal_benches"]
-
-[workspace.dependencies]
-divan = { path = "." }
-libc = "0.2.148"

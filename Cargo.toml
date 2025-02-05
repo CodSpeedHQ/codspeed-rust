@@ -6,6 +6,7 @@ members = [
     "crates/cargo-codspeed",
     "crates/divan_compat",
     "crates/divan_compat/macros",
+    "crates/divan_compat/divan_fork",
 ]
 resolver = "2"
 

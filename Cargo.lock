@@ -458,7 +458,7 @@ dependencies = [
  "assert_cmd",
  "cargo_metadata",
  "clap",
- "codspeed 2.8.0-alpha.0",
+ "codspeed",
  "fs_extra",
  "glob",
  "itertools 0.13.0",
@@ -581,18 +581,6 @@ checksum = "1462739cb27611015575c0c11df5df7601141071f07518d56fcc1be504cbec97"
 
 [[package]]
 name = "codspeed"
-version = "2.7.2"
-source = "git+https://github.com/CodSpeedHQ/codspeed-rust?branch=cod-526-build-and-find-walltime-entrypoint-with-divan#209374e1bc7e49221879f3348a364365992ae065"
-dependencies = [
- "colored",
- "libc",
- "serde",
- "serde_json",
- "uuid",
-]
-
-[[package]]
-name = "codspeed"
 version = "2.8.0-alpha.0"
 dependencies = [
  "colored",
@@ -608,7 +596,7 @@ name = "codspeed-bencher-compat"
 version = "2.8.0-alpha.0"
 dependencies = [
  "bencher",
- "codspeed 2.8.0-alpha.0",
+ "codspeed",
 ]
 
 [[package]]
@@ -616,7 +604,7 @@ name = "codspeed-criterion-compat"
 version = "2.8.0-alpha.0"
 dependencies = [
  "async-std",
- "codspeed 2.8.0-alpha.0",
+ "codspeed",
  "colored",
  "criterion",
  "futures",
@@ -628,19 +616,33 @@ dependencies = [
 name = "codspeed-divan-compat"
 version = "2.8.0-alpha.0"
 dependencies = [
- "codspeed 2.8.0-alpha.0",
+ "codspeed",
  "codspeed-divan-compat-macros",
- "divan",
+ "codspeed-divan-compat-walltime",
 ]
 
 [[package]]
 name = "codspeed-divan-compat-macros"
 version = "2.8.0-alpha.0"
 dependencies = [
- "divan-macros 0.1.17 (registry+https://github.com/rust-lang/crates.io-index)",
+ "divan-macros",
  "proc-macro2",
  "quote",
  "syn",
+]
+
+[[package]]
+name = "codspeed-divan-compat-walltime"
+version = "0.1.17"
+dependencies = [
+ "cfg-if",
+ "clap",
+ "codspeed",
+ "condtype",
+ "divan-macros",
+ "libc",
+ "mimalloc",
+ "regex-lite",
 ]
 
 [[package]]
@@ -774,34 +776,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6184e33543162437515c2e2b48714794e37845ec9851711914eec9d308f6ebe8"
 
 [[package]]
-name = "divan"
-version = "0.1.17"
-source = "git+https://github.com/CodSpeedHQ/divan#e605bf0c971aeb08bc55867abecc56bafbbdc3a0"
-dependencies = [
- "cfg-if",
- "clap",
- "codspeed 2.7.2",
- "condtype",
- "divan-macros 0.1.17 (git+https://github.com/CodSpeedHQ/divan)",
- "libc",
- "regex-lite",
-]
-
-[[package]]
 name = "divan-macros"
 version = "0.1.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8dc51d98e636f5e3b0759a39257458b22619cac7e96d932da6eeb052891bb67c"
-dependencies = [
- "proc-macro2",
- "quote",
- "syn",
-]
-
-[[package]]
-name = "divan-macros"
-version = "0.1.17"
-source = "git+https://github.com/CodSpeedHQ/divan#e605bf0c971aeb08bc55867abecc56bafbbdc3a0"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -1164,6 +1142,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8355be11b20d696c8f18f6cc018c4e372165b1fa8126cef092399c9951984ffa"
 
 [[package]]
+name = "libmimalloc-sys"
+version = "0.1.39"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "23aa6811d3bd4deb8a84dde645f943476d13b248d818edcf8ce0b2f37f036b44"
+dependencies = [
+ "cc",
+ "libc",
+]
+
+[[package]]
 name = "linux-raw-sys"
 version = "0.3.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1199,6 +1187,15 @@ name = "memchr"
 version = "2.7.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "78ca9ab1a0babb1e7d5695e3530886289c18cf2f87ec19a575a0abdce112e3a3"
+
+[[package]]
+name = "mimalloc"
+version = "0.1.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "68914350ae34959d83f732418d51e2427a794055d0b9529f48259ac07af65633"
+dependencies = [
+ "libmimalloc-sys",
+]
 
 [[package]]
 name = "miniz_oxide"
