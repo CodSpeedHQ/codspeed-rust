@@ -14,7 +14,10 @@ mod entry;
 mod uri;
 mod util;
 
+use std::{cell::RefCell, rc::Rc};
+
 pub use bench::*;
+use codspeed::codspeed::CodSpeed;
 
 pub fn main() {
     // Outlined steps of original divan::main and their equivalent in codspeed instrumented mode
@@ -31,6 +34,7 @@ pub fn main() {
     // filtering is managed by the `cargo-codspeed` wrappers before we reach this point.
 
     // 4. Scan the tree and execute benchmarks
+    let codspeed = Rc::new(RefCell::new(CodSpeed::new()));
     for entry in bench_entries.iter() {
         let entry_uri = uri::generate(entry.meta.display_name, &entry.meta);
 
@@ -42,14 +46,14 @@ pub fn main() {
         }
         match entry.bench {
             entry::BenchEntryRunner::Plain(bench_fn) => {
-                bench_fn(bench::Bencher::new(entry_uri));
+                bench_fn(bench::Bencher::new(&codspeed, entry_uri));
             }
             entry::BenchEntryRunner::Args(bench_runner) => {
                 let bench_runner = bench_runner();
 
                 for (arg_index, arg_name) in bench_runner.arg_names().iter().enumerate() {
                     let entry_name_with_arg = format!("{}::{}", entry_uri, arg_name);
-                    let bencher = bench::Bencher::new(entry_name_with_arg);
+                    let bencher = bench::Bencher::new(&codspeed, entry_name_with_arg);
 
                     bench_runner.bench(bencher, arg_index);
                 }
