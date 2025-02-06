@@ -71,5 +71,6 @@ pub fn get_raw_result_dir_from_workspace_root(workspace_root: &Path) -> PathBuf 
     workspace_root
         .join("target")
         .join("codspeed")
+        .join("walltime")
         .join("raw_results")
 }
