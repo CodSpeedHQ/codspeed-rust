@@ -16,6 +16,7 @@ categories = [
     "development-tools::testing",
 ]
 keywords = ["codspeed", "benchmark", "divan"]
+publish = false # TODO: change when publishing instrumentation support
 
 [lib]
 proc-macro = true
