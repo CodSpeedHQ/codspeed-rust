@@ -48,6 +48,8 @@ impl RawWallTimeData {
 }
 
 /// Entry point called in patched integration to harvest raw walltime data
+///
+/// `CODSPEED_CARGO_WORKSPACE_ROOT` is expected to be set for this to work
 pub fn collect_raw_walltime_results(
     scope: &str,
     name: String,
