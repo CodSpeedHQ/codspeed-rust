@@ -58,6 +58,9 @@ pub fn collect_raw_walltime_results(
     max_time_ns: Option<u128>,
     times_ns: Vec<u128>,
 ) {
+    if std::env::var("CODSPEED_ENV").is_err() {
+        return;
+    }
     let workspace_root = std::env::var("CODSPEED_CARGO_WORKSPACE_ROOT").map(PathBuf::from);
     let Ok(workspace_root) = workspace_root else {
         eprintln!("codspeed failed to get workspace root. skipping");
