@@ -52,6 +52,9 @@ jobs:
       - run: cargo codspeed build -p codspeed-bencher-compat
       - run: cargo codspeed build --features async_futures -p codspeed-criterion-compat
 
+      - run: cargo codspeed build -p codspeed-divan-compat
+      - run: cargo codspeed build -p codspeed-divan-compat-examples
+
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@main
         with:
@@ -69,6 +72,7 @@ jobs:
       - run: cargo install --path crates/cargo-codspeed --locked
 
       - run: cargo codspeed build -p codspeed-divan-compat
+      - run: cargo codspeed build -p codspeed-divan-compat-examples
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@main
