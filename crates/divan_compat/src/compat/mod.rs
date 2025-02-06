@@ -11,6 +11,7 @@ pub mod __private {
 
 mod bench;
 mod entry;
+mod uri;
 mod util;
 
 pub use bench::*;
@@ -31,13 +32,7 @@ pub fn main() {
 
     // 4. Scan the tree and execute benchmarks
     for entry in bench_entries.iter() {
-        let entry_uri = format!(
-            "{}:{}::{}::{}",
-            entry.meta.location.file,
-            entry.meta.location.line,
-            entry.meta.module_path,
-            entry.meta.display_name,
-        );
+        let entry_uri = uri::generate(entry.meta.display_name, &entry.meta);
 
         if let Some(options) = &entry.meta.bench_options.as_ref() {
             if let Some(true) = options.ignore {

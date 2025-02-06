@@ -56,6 +56,13 @@ pub struct EntryMeta {
     pub bench_options: Option<LazyLock<BenchOptions>>,
 }
 
+impl EntryMeta {
+    #[inline]
+    pub(crate) fn module_path_components<'a>(&self) -> impl Iterator<Item = &'a str> {
+        self.module_path.split("::")
+    }
+}
+
 /// Where an entry is located.
 #[derive(Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord)]
 #[allow(missing_docs)]

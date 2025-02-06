@@ -311,6 +311,9 @@ impl Divan {
                 if should_compute_stats {
                     let stats = bench_context.compute_stats();
                     {
+                        // WARNING: Keep in sync with `codspeed-divan-compat::uri::generate`
+                        // Not worth doing the work of actually using the same code since this fork
+                        // is temporary
                         let name = bench_entry.display_name().to_string();
                         let file = bench_entry.meta().location.file;
                         let mut module_path = bench_entry
