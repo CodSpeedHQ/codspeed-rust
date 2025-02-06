@@ -26,4 +26,10 @@ divan-macros = { version = "=0.1.17" }
 proc-macro2 = "1"
 quote = { version = "1", default-features = false }
 # Versions prior to *.18 fail to parse empty attribute metadata.
-syn = { version = "^2.0.18", default-features = false, features = ["full", "clone-impls", "parsing", "printing", "proc-macro"] }
+syn = { version = "^2.0.18", default-features = false, features = [
+    "full",
+    "clone-impls",
+    "parsing",
+    "printing",
+    "proc-macro",
+] }

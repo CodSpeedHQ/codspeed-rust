@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-divan-compat"
-version = "2.8.0-alpha.0"
+version = "2.8.0-alpha.1"
 rust-version = "1.74" # MSRV TODO: Check versioning
 edition = "2021"
 description = "Divan compatibility layer for CodSpeed"
@@ -18,7 +18,7 @@ categories = [
 keywords = ["codspeed", "benchmark", "divan"]
 
 [dependencies]
-codspeed = { path = "../codspeed", version = "=2.8.0-alpha.0" }
+codspeed = { path = "../codspeed", version = "=2.8.0-alpha.1" }
 divan = { package = "codspeed-divan-compat-walltime", path = "./divan_fork", version = "=0.1.17" }
 codspeed-divan-compat-macros = { version = "=2.8.0-alpha.0", path = './macros' }
 
