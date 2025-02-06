@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-divan-compat-macros"
-version = "2.8.0-alpha.0"
+version = "2.8.0-alpha.2"
 rust-version = "1.74" # MSRV TODO: Check versioning
 edition = "2021"
 description = "Macros for the Divan compatibility layer for CodSpeed"
@@ -16,7 +16,6 @@ categories = [
   "development-tools::testing",
 ]
 keywords = ["codspeed", "benchmark", "divan"]
-publish = false # TODO: change when publishing instrumentation support
 
 [lib]
 proc-macro = true
