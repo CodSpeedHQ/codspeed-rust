@@ -17,3 +17,7 @@ pub(crate) fn generate(
 
     uri
 }
+
+pub(crate) fn append_arg(uri: &str, arg: &str) -> String {
+    format!("{uri}[{arg}]")
+}

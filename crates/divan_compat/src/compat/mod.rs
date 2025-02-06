@@ -52,7 +52,7 @@ pub fn main() {
                 let bench_runner = bench_runner();
 
                 for (arg_index, arg_name) in bench_runner.arg_names().iter().enumerate() {
-                    let entry_name_with_arg = format!("{}::{}", entry_uri, arg_name);
+                    let entry_name_with_arg = uri::append_arg(&entry_uri, arg_name);
                     let bencher = bench::Bencher::new(&codspeed, entry_name_with_arg);
 
                     bench_runner.bench(bencher, arg_index);
