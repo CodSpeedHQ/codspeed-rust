@@ -11,13 +11,13 @@ fn add() -> i32 {
     black_box(2) + black_box(1)
 }
 
-#[divan::bench]
+#[divan::bench(crate = divan)]
 #[ignore]
 fn sub() -> i32 {
     black_box(2) - black_box(1)
 }
 
-#[divan::bench]
+#[divan::bench(max_time = 1)]
 fn mul() -> i32 {
     black_box(2) * black_box(1)
 }
@@ -91,7 +91,6 @@ mod fibonacci {
 
     // Will be ignored in instrumented mode as we do not support type generics yet
     // O(n)
-    #[cfg(not(codspeed))]
     #[divan::bench(
         types = [BTreeMap<u64, u64>, HashMap<u64, u64>],
         args = VALUES,
