@@ -11,7 +11,7 @@ pub use self::{
 };
 
 use codspeed::codspeed::CodSpeed;
-use std::{cell::RefCell, rc::Rc};
+use std::cell::RefCell;
 
 /// Using this in place of `()` for `GenI` prevents `Bencher::with_inputs` from
 /// working with `()` unintentionally.
@@ -23,18 +23,18 @@ pub struct BencherConfig<GenI = Unit> {
 }
 
 pub struct Bencher<'a, 'b, C = BencherConfig> {
-    pub(crate) codspeed: Rc<RefCell<CodSpeed>>,
+    pub(crate) codspeed: &'a RefCell<CodSpeed>,
     pub(crate) uri: String,
     pub(crate) config: C,
-    pub(crate) _marker: std::marker::PhantomData<&'a &'b ()>,
+    pub(crate) _marker: std::marker::PhantomData<&'b ()>,
 }
 
 #[allow(clippy::needless_lifetimes)]
 impl<'a, 'b> Bencher<'a, 'b> {
-    pub(crate) fn new(uri: String) -> Self {
+    pub(crate) fn new(codspeed: &'a RefCell<CodSpeed>, uri: String) -> Self {
         Self {
-            codspeed: Rc::new(RefCell::new(CodSpeed::new())),
             config: BencherConfig { gen_input: Unit },
+            codspeed,
             uri,
             _marker: std::marker::PhantomData,
         }
