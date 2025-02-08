@@ -6,31 +6,31 @@ fn main() {
     divan::main();
 }
 
-#[divan::bench]
-fn add() -> i32 {
-    black_box(2) + black_box(1)
-}
-
-#[divan::bench(crate = divan)]
-#[ignore]
-fn sub() -> i32 {
-    black_box(2) - black_box(1)
-}
-
-#[divan::bench(max_time = 1)]
-fn mul() -> i32 {
-    black_box(2) * black_box(1)
-}
-
-#[divan::bench]
-fn div() -> i32 {
-    black_box(2) / black_box(1)
-}
-
-#[divan::bench]
-fn rem() -> i32 {
-    black_box(2) % black_box(1)
-}
+// #[divan::bench]
+// fn add() -> i32 {
+//     black_box(2) + black_box(1)
+// }
+//
+// #[divan::bench(crate = divan)]
+// #[ignore]
+// fn sub() -> i32 {
+//     black_box(2) - black_box(1)
+// }
+//
+// #[divan::bench(max_time = 1)]
+// fn mul() -> i32 {
+//     black_box(2) * black_box(1)
+// }
+//
+// #[divan::bench]
+// fn div() -> i32 {
+//     black_box(2) / black_box(1)
+// }
+//
+// #[divan::bench]
+// fn rem() -> i32 {
+//     black_box(2) % black_box(1)
+// }
 
 // 1, 1, 2, 3, 5, ...
 mod fibonacci {
@@ -38,30 +38,30 @@ mod fibonacci {
 
     const VALUES: &[u64] = &[0, 5, 10, 20, 30];
 
-    // O(n)
-    #[divan::bench(args = VALUES)]
-    fn iterative(n: u64) -> u64 {
-        let mut previous = 1;
-        let mut current = 1;
-
-        for _ in 2..=n {
-            let next = previous + current;
-            previous = current;
-            current = next;
-        }
-
-        current
-    }
-
-    // O(2^n)
-    #[divan::bench(args = VALUES, max_time = 1)]
-    fn recursive(n: u64) -> u64 {
-        if n <= 1 {
-            1
-        } else {
-            recursive(n - 2) + recursive(n - 1)
-        }
-    }
+    // // O(n)
+    // #[divan::bench(args = VALUES)]
+    // fn iterative(n: u64) -> u64 {
+    //     let mut previous = 1;
+    //     let mut current = 1;
+    //
+    //     for _ in 2..=n {
+    //         let next = previous + current;
+    //         previous = current;
+    //         current = next;
+    //     }
+    //
+    //     current
+    // }
+    //
+    // // O(2^n)
+    // #[divan::bench(args = VALUES, max_time = 1)]
+    // fn recursive(n: u64) -> u64 {
+    //     if n <= 1 {
+    //         1
+    //     } else {
+    //         recursive(n - 2) + recursive(n - 1)
+    //     }
+    // }
 
     #[allow(dead_code)]
     trait Map: Default {
