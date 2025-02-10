@@ -1,65 +1,25 @@
+mod args;
+
+use args::AttrOptions;
 use proc_macro::TokenStream;
 use proc_macro_crate::{crate_name, FoundCrate};
-use quote::{format_ident, quote};
-use syn::{
-    parse::Parse,
-    parse_macro_input,
-    punctuated::Punctuated,
-    ItemFn,
-    Meta::{self, NameValue},
-    MetaNameValue, Token,
-};
-
-struct MyBenchArgs {
-    args: Punctuated<Meta, Token![,]>,
-}
-
-impl Parse for MyBenchArgs {
-    fn parse(input: syn::parse::ParseStream) -> syn::Result<Self> {
-        Ok(Self {
-            args: Punctuated::parse_terminated(input)?,
-        })
-    }
-}
+use quote::{format_ident, quote, ToTokens};
+use syn::{parse_macro_input, Expr, ItemFn, Meta};
 
 #[proc_macro_attribute]
 pub fn bench_compat(attr: TokenStream, item: TokenStream) -> TokenStream {
-    let parsed_args = parse_macro_input!(attr as MyBenchArgs);
     let input = parse_macro_input!(item as ItemFn);
 
-    let mut filtered_args = Vec::new();
+    let attr_options = match AttrOptions::parse(attr) {
+        Ok(attr_options) => attr_options,
+        Err(error) => return error,
+    };
 
-    for arg in parsed_args.args {
-        match &arg {
-            NameValue(MetaNameValue { path, .. }) => {
-                if path.is_ident("crate") {
-                    return quote! {
-                        compile_error!("`crate` argument is not supported with codspeed_divan_compat");
-                    }.
-                    into();
-                }
-
-                if path.is_ident("types") {
-                    return quote! {
-                        compile_error!("`type` argument is not yet supported with codspeed_divan_compat");
-                    }
-                    .into();
-                }
-
-                if path.is_ident("min_time")
-                    || path.is_ident("max_time")
-                    || path.is_ident("sample_size")
-                    || path.is_ident("sample_count")
-                    || path.is_ident("skip_ext_time")
-                {
-                    // These arguments are ignored in instrumented mode
-                    continue;
-                }
-
-                filtered_args.push(arg);
-            }
-            _ => filtered_args.push(arg),
+    if attr_options.crate_ {
+        return quote! {
+            compile_error!("`crate` argument is yet supported with codspeed_divan_compat");
         }
+        .into();
     }
 
     let codspeed_divan_crate_ident = format_ident!(
@@ -72,10 +32,21 @@ pub fn bench_compat(attr: TokenStream, item: TokenStream) -> TokenStream {
             .unwrap_or("codspeed_divan_compat".to_string())
     );
 
-    filtered_args.push(syn::parse_quote!(crate = ::#codspeed_divan_crate_ident));
-    // Important: keep macro name in sync with re-exported macro name in divan-compat lib
+    let mut transfered_args = attr_options.other_args;
+
+    transfered_args.push(syn::parse_quote!(crate = ::#codspeed_divan_crate_ident));
+
+    if let Some(types) = attr_options.types {
+        transfered_args.push(Meta::NameValue(syn::MetaNameValue {
+            path: syn::parse_quote!(types),
+            eq_token: Default::default(),
+            value: Expr::Verbatim(types.into_token_stream()),
+        }));
+    }
+
+    // WARN: keep macro name in sync with re-exported macro name in divan-compat lib
     let expanded = quote! {
-        #[::#codspeed_divan_crate_ident::bench_original(#(#filtered_args),*)]
+        #[::#codspeed_divan_crate_ident::bench_original(#(#transfered_args),*)]
         #input
     };
 

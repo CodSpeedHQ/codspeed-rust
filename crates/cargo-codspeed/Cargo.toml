@@ -22,7 +22,7 @@ cargo_metadata = "0.19.1"
 clap = { version = "=4.5.17", features = ["derive", "env"] }
 termcolor = "1.4"
 anyhow = "1.0.86"
-itertools = "0.13.0"
+itertools = { workspace = true }
 anstyle = "1.0.8"
 serde = { workspace = true }
 serde_json = { workspace = true }
