@@ -91,7 +91,6 @@ mod fibonacci {
 
     // Will be ignored in instrumented mode as we do not support type generics yet
     // O(n)
-    #[cfg(not(codspeed))]
     #[divan::bench(
         types = [BTreeMap<u64, u64>, HashMap<u64, u64>],
         args = VALUES,
