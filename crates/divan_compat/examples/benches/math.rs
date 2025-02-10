@@ -17,7 +17,7 @@ fn sub() -> i32 {
     black_box(2) - black_box(1)
 }
 
-#[divan::bench]
+#[divan::bench(max_time = 1)]
 fn mul() -> i32 {
     black_box(2) * black_box(1)
 }
