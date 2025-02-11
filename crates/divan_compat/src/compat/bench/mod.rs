@@ -19,7 +19,7 @@ use std::cell::RefCell;
 pub struct Unit;
 
 pub struct BencherConfig<GenI = Unit> {
-    gen_input: GenI,
+    gen_input: RefCell<GenI>,
 }
 
 pub struct Bencher<'a, 'b, C = BencherConfig> {
@@ -29,11 +29,12 @@ pub struct Bencher<'a, 'b, C = BencherConfig> {
     pub(crate) _marker: std::marker::PhantomData<&'b ()>,
 }
 
-#[allow(clippy::needless_lifetimes)]
 impl<'a, 'b> Bencher<'a, 'b> {
     pub(crate) fn new(codspeed: &'a RefCell<CodSpeed>, uri: String) -> Self {
         Self {
-            config: BencherConfig { gen_input: Unit },
+            config: BencherConfig {
+                gen_input: RefCell::new(Unit),
+            },
             codspeed,
             uri,
             _marker: std::marker::PhantomData,
@@ -42,7 +43,9 @@ impl<'a, 'b> Bencher<'a, 'b> {
 
     pub fn with_inputs<G>(self, gen_input: G) -> Bencher<'a, 'b, BencherConfig<G>> {
         Bencher {
-            config: BencherConfig { gen_input },
+            config: BencherConfig {
+                gen_input: RefCell::new(gen_input),
+            },
             codspeed: self.codspeed,
             uri: self.uri,
             _marker: self._marker,
@@ -58,9 +61,9 @@ impl<'a, 'b> Bencher<'a, 'b> {
         self.with_inputs(|| ()).bench_values(|_| benched())
     }
 
-    pub fn bench_local<O, B>(self, benched: B)
+    pub fn bench_local<O, B>(self, mut benched: B)
     where
-        B: Fn() -> O,
+        B: FnMut() -> O,
     {
         self.with_inputs(|| ()).bench_local_values(|_| benched())
     }
@@ -86,24 +89,24 @@ where
         self.bench_local_refs(benched)
     }
 
-    pub fn bench_local_values<O, B>(mut self, benched: B)
+    pub fn bench_local_values<O, B>(self, mut benched: B)
     where
-        B: Fn(I) -> O,
+        B: FnMut(I) -> O,
     {
         let mut codspeed = self.codspeed.borrow_mut();
-        let gen_input = &mut self.config.gen_input;
+        let mut gen_input = self.config.gen_input.borrow_mut();
         let input = gen_input();
         codspeed.start_benchmark(self.uri.as_str());
         divan::black_box(benched(input));
         codspeed.end_benchmark();
     }
 
-    pub fn bench_local_refs<O, B>(mut self, mut benched: B)
+    pub fn bench_local_refs<O, B>(self, mut benched: B)
     where
         B: FnMut(&mut I) -> O,
     {
         let mut codspeed = self.codspeed.borrow_mut();
-        let gen_input = &mut self.config.gen_input;
+        let mut gen_input = self.config.gen_input.borrow_mut();
         let mut input = gen_input();
 
         codspeed.start_benchmark(self.uri.as_str());
