@@ -310,27 +310,11 @@ impl Divan {
 
                 if should_compute_stats {
                     let stats = bench_context.compute_stats();
-                    {
-                        let CodspeedBench { bench_name, uri } =
-                            generate_codspeed_bench_name(&bench_entry, bench_display_name);
-
-                        let iter_per_round = bench_context.samples.sample_size;
-                        let times_ns: Vec<_> = bench_context
-                            .samples
-                            .time_samples
-                            .iter()
-                            .map(|s| s.duration.picos / 1_000)
-                            .collect();
-                        let max_time_ns = options.max_time.map(|t| t.as_nanos());
-                        ::codspeed::walltime::collect_raw_walltime_results(
-                            "divan",
-                            bench_name,
-                            uri,
-                            iter_per_round,
-                            max_time_ns,
-                            times_ns,
-                        );
-                    };
+                    codspeed::collect_walltime_results(
+                        &bench_context,
+                        &bench_entry,
+                        bench_display_name,
+                    );
                     tree_painter.borrow_mut().finish_leaf(
                         is_last_thread_count,
                         &stats,
@@ -371,74 +355,88 @@ impl Divan {
     }
 }
 
-struct CodspeedBench {
-    bench_name: String,
-    uri: String,
-}
+mod codspeed {
+    use crate::bench::BenchContext;
+    use crate::entry::AnyBenchEntry;
 
-/// Generates a Codspeed benchmark name and URI
-///
-/// WARNING: Keep in sync with `codspeed-divan-compat::uri::generate`
-/// Not worth doing the work of actually using the same code since this fork
-/// is temporary
-fn generate_codspeed_bench_name(
-    bench_entry: &AnyBenchEntry,
-    closure_bench_display_name: &str,
-) -> CodspeedBench {
-    let bench_function_name = bench_entry.meta().display_name;
+    pub(crate) fn collect_walltime_results(
+        bench_context: &BenchContext,
+        bench_entry: &AnyBenchEntry,
+        closure_bench_display_name: &str,
+    ) {
+        // WARNING: Keep URI generation in sync with `codspeed-divan-compat::uri::generate`
+        // Not worth doing the work of actually using the same code since this fork is temporary
+        let (bench_name, uri) = {
+            let bench_function_name = bench_entry.meta().display_name;
 
-    let (bench_type_name, bench_arg_name) = {
-        let bench_function_or_type_name = bench_entry.display_name().to_string();
+            let (bench_type_name, bench_arg_name) = {
+                let bench_function_or_type_name = bench_entry.display_name().to_string();
 
-        let type_name = if bench_function_or_type_name == bench_function_name {
-            None
-        } else {
-            Some(bench_function_or_type_name)
-        };
-
-        let arg_name = match type_name.as_ref() {
-            None => {
-                if closure_bench_display_name == bench_function_name {
+                let type_name = if bench_function_or_type_name == bench_function_name {
                     None
                 } else {
-                    Some(closure_bench_display_name)
+                    Some(bench_function_or_type_name)
+                };
+
+                let arg_name = match type_name.as_ref() {
+                    None => {
+                        if closure_bench_display_name == bench_function_name {
+                            None
+                        } else {
+                            Some(closure_bench_display_name)
+                        }
+                    }
+                    Some(type_name) => {
+                        if closure_bench_display_name == type_name {
+                            None
+                        } else {
+                            Some(closure_bench_display_name)
+                        }
+                    }
+                };
+
+                (type_name, arg_name)
+            };
+
+            let mut bench_name = bench_function_name.to_string();
+
+            match (bench_type_name, bench_arg_name) {
+                (None, None) => {}
+                (Some(type_name), None) => {
+                    bench_name.push_str(format!("[{type_name}]").as_str());
+                }
+                (None, Some(arg_name)) => {
+                    bench_name.push_str(format!("[{arg_name}]").as_str());
+                }
+                (Some(type_name), Some(arg_name)) => {
+                    bench_name.push_str(format!("[{type_name}, {arg_name}]").as_str());
                 }
             }
-            Some(type_name) => {
-                if closure_bench_display_name == type_name {
-                    None
-                } else {
-                    Some(closure_bench_display_name)
-                }
+
+            let file = bench_entry.meta().location.file;
+            let mut module_path =
+                bench_entry.meta().module_path_components().skip(1).collect::<Vec<_>>().join("::");
+            if !module_path.is_empty() {
+                module_path.push_str("::");
             }
+            let uri = format!("{file}::{module_path}{bench_name}");
+            (bench_name, uri)
         };
 
-        (type_name, arg_name)
-    };
+        let iter_per_round = bench_context.samples.sample_size;
+        let times_ns: Vec<_> =
+            bench_context.samples.time_samples.iter().map(|s| s.duration.picos / 1_000).collect();
+        let max_time_ns = bench_context.options.max_time.map(|t| t.as_nanos());
 
-    let mut bench_name = bench_function_name.to_string();
-
-    match (bench_type_name, bench_arg_name) {
-        (None, None) => {}
-        (Some(type_name), None) => {
-            bench_name.push_str(format!("[{type_name}]").as_str());
-        }
-        (None, Some(arg_name)) => {
-            bench_name.push_str(format!("[{arg_name}]").as_str());
-        }
-        (Some(type_name), Some(arg_name)) => {
-            bench_name.push_str(format!("[{type_name}, {arg_name}]").as_str());
-        }
+        ::codspeed::walltime::collect_raw_walltime_results(
+            "divan",
+            bench_name,
+            uri,
+            iter_per_round,
+            max_time_ns,
+            times_ns,
+        );
     }
-
-    let file = bench_entry.meta().location.file;
-    let mut module_path =
-        bench_entry.meta().module_path_components().skip(1).collect::<Vec<_>>().join("::");
-    if !module_path.is_empty() {
-        module_path.push_str("::");
-    }
-    let uri = format!("{file}::{module_path}{bench_name}");
-    CodspeedBench { bench_name, uri }
 }
 
 /// Makes `Divan::skip_regex` input polymorphic.
