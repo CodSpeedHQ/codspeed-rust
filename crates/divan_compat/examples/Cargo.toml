@@ -6,9 +6,16 @@ description = "Examples for Divan, a comfy benchmarking framework."
 publish = false
 license = "MIT OR Apache-2.0"
 
+
 [dependencies]
-fastrand = "2.3.0"
 divan = { package = "codspeed-divan-compat", path = ".." }
+fastrand = "2.3.0"
+num-bigint = { version = "0.4", optional = true }
+num-traits = { version = "0.2", optional = true }
+
+[features]
+default = ["big-math"]
+big-math = ["num-bigint", "num-traits"]
 
 [[bench]]
 name = "math"
@@ -20,4 +27,8 @@ harness = false
 
 [[bench]]
 name = "time"
+harness = false
+
+[[bench]]
+name = "the_algorithms"
 harness = false

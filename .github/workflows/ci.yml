@@ -10,6 +10,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: moonrepo/setup-rust@v1
         with:
           components: rustfmt, clippy
@@ -21,6 +23,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: moonrepo/setup-rust@v1
         with:
           bins: cargo-msrv
@@ -35,6 +39,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: moonrepo/setup-rust@v1
       - run: cargo test --all
 
@@ -42,6 +48,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: moonrepo/setup-rust@v1
         with:
           cache-target: release
@@ -65,6 +73,8 @@ jobs:
     runs-on: codspeed-macro
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
       - uses: moonrepo/setup-rust@v1
         with:
           cache-target: release

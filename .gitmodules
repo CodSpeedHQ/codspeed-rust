@@ -1,0 +1,4 @@
+
+[submodule "crates/divan_compat/examples/src/the_algorithms/Rust"]
+	path = crates/divan_compat/examples/src/the_algorithms/Rust
+	url = git@github.com:TheAlgorithms/Rust.git

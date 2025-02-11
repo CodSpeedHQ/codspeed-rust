@@ -627,6 +627,8 @@ version = "0.0.0"
 dependencies = [
  "codspeed-divan-compat",
  "fastrand 2.3.0",
+ "num-bigint",
+ "num-traits",
 ]
 
 [[package]]
