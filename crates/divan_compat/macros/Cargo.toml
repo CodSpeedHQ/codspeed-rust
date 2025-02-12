@@ -1,7 +1,7 @@
 [package]
 name = "codspeed-divan-compat-macros"
 version = "2.8.0-alpha.3"
-rust-version = "1.74" # MSRV TODO: Check versioning
+rust-version = "1.80"
 edition = "2021"
 description = "Macros for the Divan compatibility layer for CodSpeed"
 authors = ["Arthur Pastel <arthur@codspeed.io>"]
