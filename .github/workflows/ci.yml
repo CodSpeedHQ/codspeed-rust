@@ -34,6 +34,8 @@ jobs:
         run: cargo msrv --path crates/bencher_compat verify -- cargo check --all-features --config codspeed=true
       - name: Check criterion_compat MSRV
         run: cargo msrv --path crates/criterion_compat verify -- cargo check --all-features --config codspeed=true
+      - name: Check divan_compat MSRV
+        run: cargo msrv --path crates/divan_compat verify -- cargo check --all-features --config codspeed=true
 
   tests:
     runs-on: ubuntu-latest
