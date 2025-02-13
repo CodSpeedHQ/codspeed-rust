@@ -1,4 +1,4 @@
-//! Copied from divan's exmaples
+//! Copied from divan's examples
 use divan::black_box;
 use std::collections::{BTreeMap, HashMap};
 
@@ -63,7 +63,6 @@ mod fibonacci {
         }
     }
 
-    #[allow(dead_code)]
     trait Map: Default {
         fn get(&self, key: u64) -> Option<u64>;
         fn set(&mut self, key: u64, value: u64);
