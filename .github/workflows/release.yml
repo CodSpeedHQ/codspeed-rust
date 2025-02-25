@@ -48,17 +48,18 @@ jobs:
       matrix:
         include:
           - target: x86_64-unknown-linux-musl
+            runner: ubuntu-24.04
           - target: aarch64-unknown-linux-musl
-            cross: true
+            runner: codspeedhq-arm64-ubuntu-24.04
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
-      - uses: moonrepo/setup-rust@v0
+      - uses: moonrepo/setup-rust@v1
         with:
-          bins: cross
+          targets: ${{ matrix.target }}
 
-      - run: ${{ matrix.cross && 'cross' || 'cargo' }} build --locked --release --bin cargo-codspeed --target ${{ matrix.target }}
+      - run: cargo build --locked --release --bin cargo-codspeed --target ${{ matrix.target }}
 
       - name: Upload Release Asset
         if: github.event_name != 'workflow_dispatch'
