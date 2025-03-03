@@ -17,9 +17,9 @@ mod gen {
         move || rng.i32(..)
     }
 
-    pub fn rand_int_vec_generator() -> impl FnMut() -> Vec<i32> {
+    pub fn rand_int_vec_generator<const N: usize>() -> impl FnMut() -> Vec<i32> {
         let mut rand_int_generator = rand_int_generator();
-        move || (0..LEN).map(|_| rand_int_generator()).collect()
+        move || (0..N).map(|_| rand_int_generator()).collect()
     }
 
     pub fn sorted_int_vec_generator() -> impl FnMut() -> Vec<i32> {
@@ -30,10 +30,12 @@ mod gen {
 mod random {
     use super::*;
 
-    #[divan::bench]
-    fn sort(bencher: Bencher) {
+    const SIZES: &[usize] = &[100_000, 1_000_000];
+
+    #[divan::bench(consts = SIZES)]
+    fn sort<const LEN: usize>(bencher: Bencher) {
         bencher
-            .with_inputs(gen::rand_int_vec_generator())
+            .with_inputs(gen::rand_int_vec_generator::<LEN>())
             .bench_local_refs(|v| v.sort());
     }
 
