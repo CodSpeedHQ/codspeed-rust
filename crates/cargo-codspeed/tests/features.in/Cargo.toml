@@ -10,7 +10,9 @@ codspeed = { path = "../../../codspeed" }
 codspeed-bencher-compat = { path = "../../../bencher_compat" }
 
 [features]
+default = ["default_feature"]
 sample_feature = []
+default_feature = []
 
 [workspace]
 

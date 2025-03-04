@@ -37,3 +37,40 @@ fn test_with_feature() {
         .stdout(contains("without_feature").not());
     teardown(dir);
 }
+
+#[test]
+fn test_no_default_features() {
+    let dir = setup(DIR, Project::Features);
+    cargo_codspeed(&dir)
+        .arg("build")
+        .arg("--no-default-features")
+        .assert()
+        .success();
+    cargo_codspeed(&dir)
+        .arg("run")
+        .assert()
+        .success()
+        .stderr(contains("Finished running 1 benchmark suite(s)"))
+        .stdout(contains("with_default_feature").not())
+        .stdout(contains("without_default_feature"));
+
+    teardown(dir);
+}
+
+#[test]
+fn test_all_features() {
+    let dir = setup(DIR, Project::Features);
+    cargo_codspeed(&dir)
+        .arg("build")
+        .arg("--all-features")
+        .assert()
+        .success();
+    cargo_codspeed(&dir)
+        .arg("run")
+        .assert()
+        .success()
+        .stderr(contains("Finished running 1 benchmark suite(s)"))
+        .stdout(contains("with_feature"))
+        .stdout(contains("with_default_feature"));
+    teardown(dir);
+}
