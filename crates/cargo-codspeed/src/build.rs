@@ -11,6 +11,7 @@ struct BuildOptions<'a> {
     filters: Filters,
     features: &'a Option<Vec<String>>,
     profile: &'a str,
+    passthrough_flags: &'a Vec<String>,
 }
 
 struct BuiltBench {
@@ -124,6 +125,8 @@ impl BuildOptions<'_> {
             cargo.arg("--features").arg(features.join(","));
         }
 
+        cargo.args(self.passthrough_flags);
+
         cargo.arg("--profile").arg(self.profile);
 
         self.filters.package.add_cargo_args(&mut cargo);
@@ -159,11 +162,13 @@ pub fn build_benches(
     profile: String,
     quiet: bool,
     measurement_mode: MeasurementMode,
+    passthrough_flags: Vec<String>,
 ) -> Result<()> {
     let built_benches = BuildOptions {
         filters,
         features: &features,
         profile: &profile,
+        passthrough_flags: &passthrough_flags,
     }
     .build(metadata, quiet, measurement_mode)?;
 

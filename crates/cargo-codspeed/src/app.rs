@@ -53,6 +53,14 @@ enum Commands {
         #[arg(short = 'F', long)]
         features: Option<String>,
 
+        /// Activate all available features of all selected packages.
+        #[arg(long)]
+        all_features: bool,
+
+        /// Do not activate the `default` feature of the selected packages.
+        #[arg(long)]
+        no_default_features: bool,
+
         /// Build the benchmarks with the specified profile
         #[arg(long, default_value = "release")]
         profile: String,
@@ -75,8 +83,23 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
         Commands::Build {
             filters,
             features,
+            all_features,
+            no_default_features,
             profile,
         } => {
+            let passthrough_flags = {
+                let mut passthrough_flags = Vec::new();
+
+                if all_features {
+                    passthrough_flags.push("--all-features".to_string());
+                }
+
+                if no_default_features {
+                    passthrough_flags.push("--no-default-features".to_string());
+                }
+
+                passthrough_flags
+            };
             let features =
                 features.map(|f| f.split([' ', ',']).map(|s| s.to_string()).collect_vec());
             build_benches(
@@ -86,6 +109,7 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
                 profile,
                 cli.quiet,
                 measurement_mode,
+                passthrough_flags,
             )
         }
         Commands::Run { filters } => run_benches(&metadata, filters, measurement_mode),
