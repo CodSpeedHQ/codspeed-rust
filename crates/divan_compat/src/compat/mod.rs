@@ -4,12 +4,12 @@ pub mod __private {
     pub use super::{
         bench::{BenchArgs, BenchOptions},
         entry::{
-            BenchEntry, BenchEntryRunner, EntryList, EntryLocation, EntryMeta, EntryType,
-            GenericBenchEntry, GroupEntry, BENCH_ENTRIES, GROUP_ENTRIES,
+            BenchEntry, BenchEntryRunner, EntryConst, EntryList, EntryLocation, EntryMeta,
+            EntryType, GenericBenchEntry, GroupEntry, BENCH_ENTRIES, GROUP_ENTRIES,
         },
     };
 
-    pub use divan::__private::{Arg, ToStringHelper};
+    pub use divan::__private::{shrink_array, Arg, ToStringHelper};
 }
 
 mod bench;
