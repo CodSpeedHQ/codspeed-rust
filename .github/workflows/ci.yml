@@ -85,6 +85,7 @@ jobs:
 
       - run: cargo codspeed build -p codspeed-divan-compat
       - run: cargo codspeed build -p codspeed-divan-compat-examples
+      - run: cargo codspeed build -p codspeed-criterion-compat
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@main
