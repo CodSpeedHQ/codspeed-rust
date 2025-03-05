@@ -375,6 +375,26 @@ pub struct Criterion<M: Measurement = WallTime> {
     profiler: Box<RefCell<dyn Profiler>>,
     connection: Option<MutexGuard<'static, Connection>>,
     mode: Mode,
+
+    current_file: String,
+    macro_group: String,
+}
+
+pub use ::codspeed::abs_file; // Required by the `criterion_group!` macro
+mod codspeed {
+    use crate::{measurement::Measurement, Criterion};
+
+    impl<M: Measurement> Criterion<M> {
+        #[doc(hidden)]
+        pub fn set_current_file(&mut self, file: impl Into<String>) {
+            self.current_file = file.into();
+        }
+
+        #[doc(hidden)]
+        pub fn set_macro_group(&mut self, macro_group: impl Into<String>) {
+            self.macro_group = macro_group.into();
+        }
+    }
 }
 
 /// Returns the Cargo target directory, possibly calling `cargo metadata` to
@@ -445,6 +465,8 @@ impl Default for Criterion {
                 .as_ref()
                 .map(|mtx| mtx.lock().unwrap()),
             mode: Mode::Benchmark,
+            current_file: String::new(),
+            macro_group: String::new(),
         };
 
         if criterion.connection.is_some() {
@@ -477,6 +499,8 @@ impl<M: Measurement> Criterion<M> {
             profiler: self.profiler,
             connection: self.connection,
             mode: self.mode,
+            current_file: self.current_file,
+            macro_group: self.macro_group,
         }
     }
 

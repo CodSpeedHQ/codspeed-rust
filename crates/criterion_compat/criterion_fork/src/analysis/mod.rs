@@ -256,6 +256,60 @@ pub(crate) fn common<M: Measurement, T: ?Sized>(
             );
         }
     }
+
+    if criterion.should_save_baseline() && std::env::var("CODSPEED_ENV").is_ok() {
+        codspeed::collect_walltime_results(id, criterion, &iters, avg_times);
+    }
+}
+
+mod codspeed {
+    use crate::{measurement::Measurement, report::BenchmarkId, Criterion};
+
+    /// WARNING: Keep URI generation in sync with `codspeed-criterion-compat::compat::group::run_bench`
+    pub fn create_uri_and_name<M: Measurement>(
+        id: &BenchmarkId,
+        c: &Criterion<M>,
+    ) -> (String, String) {
+        let mut bench_name = id.group_id.clone();
+        if let Some(ref function_name) = id.function_id {
+            bench_name.push_str(&format!("::{}", function_name));
+        }
+        if let Some(ref parameter) = id.value_str {
+            bench_name.push_str(&format!("[{}]", parameter));
+        }
+
+        let git_relative_file_path = codspeed::utils::get_git_relative_path(&c.current_file);
+        let uri = format!(
+            "{}::{}::{}",
+            git_relative_file_path.to_string_lossy(),
+            &c.macro_group,
+            bench_name
+        );
+
+        (uri, bench_name)
+    }
+
+    pub(crate) fn collect_walltime_results<M: Measurement>(
+        id: &BenchmarkId,
+        c: &Criterion<M>,
+        iters: &[f64],
+        avg_times: &[f64],
+    ) {
+        let (uri, bench_name) = create_uri_and_name(id, c);
+
+        let avg_iter_per_round = iters.iter().sum::<f64>() / iters.len() as f64;
+        let max_time_ns = Some(c.config.measurement_time.as_nanos());
+        let times_ns = avg_times.iter().map(|t| *t as u128).collect();
+
+        ::codspeed::walltime::collect_raw_walltime_results(
+            "criterion",
+            bench_name,
+            uri,
+            avg_iter_per_round as u32,
+            max_time_ns,
+            times_ns,
+        );
+    }
 }
 
 fn base_dir_exists(id: &BenchmarkId, baseline: &str, output_directory: &Path) -> bool {
