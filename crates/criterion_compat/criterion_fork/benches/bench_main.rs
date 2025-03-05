@@ -1,3 +1,6 @@
+#![allow(clippy::all, dead_code)]
+extern crate codspeed_criterion_compat_walltime as criterion;
+
 use criterion::criterion_main;
 
 mod benchmarks;

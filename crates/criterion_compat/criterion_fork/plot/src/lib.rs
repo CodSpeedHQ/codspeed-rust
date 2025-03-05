@@ -1,3 +1,5 @@
+#![allow(clippy::all, unexpected_cfgs)]
+
 //! [Criterion]'s plotting library.
 //!
 //! [Criterion]: https://github.com/bheisler/criterion.rs
