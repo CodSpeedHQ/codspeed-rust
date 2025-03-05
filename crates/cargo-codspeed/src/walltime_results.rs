@@ -41,6 +41,16 @@ pub struct WalltimeBenchmark {
     stats: BenchmarkStats,
 }
 
+impl WalltimeBenchmark {
+    pub(crate) fn is_invalid(&self) -> bool {
+        self.stats.min_ns < f64::EPSILON
+    }
+
+    pub(crate) fn name(&self) -> &str {
+        &self.metadata.name
+    }
+}
+
 impl From<RawWallTimeData> for WalltimeBenchmark {
     fn from(value: RawWallTimeData) -> Self {
         let times_ns: Vec<f64> = value.times_ns.iter().map(|&t| t as f64).collect();
