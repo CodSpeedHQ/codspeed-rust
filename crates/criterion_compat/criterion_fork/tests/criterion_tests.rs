@@ -1,3 +1,6 @@
+#![allow(clippy::all)]
+extern crate codspeed_criterion_compat_walltime as criterion;
+
 #[cfg(feature = "plotters")]
 use criterion::SamplingMode;
 use criterion::{

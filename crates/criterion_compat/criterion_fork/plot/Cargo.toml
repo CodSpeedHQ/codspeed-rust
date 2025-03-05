@@ -24,3 +24,6 @@ rand = "0.8"
 travis-ci = { repository = "bheisler/criterion.rs" }
 appveyor = { repository = "bheisler/criterion.rs", id = "4255ads9ctpupcl2" }
 maintenance = { status = "looking-for-maintainer" }
+
+[lints.clippy]
+deprecated_clippy_cfg_attr = "allow"

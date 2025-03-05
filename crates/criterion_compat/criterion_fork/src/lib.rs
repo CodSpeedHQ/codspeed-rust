@@ -15,9 +15,9 @@
 //! * Produces detailed charts, providing thorough understanding of your code's
 //!   performance behavior.
 
+#![allow(clippy::all, unexpected_cfgs, dead_code)]
 #![warn(missing_docs)]
 #![warn(bare_trait_objects)]
-#![cfg_attr(feature = "real_blackbox", feature(test))]
 #![cfg_attr(
     feature = "cargo-clippy",
     allow(
@@ -38,9 +38,6 @@ extern crate quickcheck;
 
 use is_terminal::IsTerminal;
 use regex::Regex;
-
-#[cfg(feature = "real_blackbox")]
-extern crate test;
 
 #[macro_use]
 extern crate serde_derive;
@@ -155,7 +152,7 @@ fn debug_enabled() -> bool {
 /// This variant is backed by the (unstable) test::black_box function.
 #[cfg(feature = "real_blackbox")]
 pub fn black_box<T>(dummy: T) -> T {
-    test::black_box(dummy)
+    core::hint::black_box(dummy)
 }
 
 /// A function that is opaque to the optimizer, used to prevent the compiler from
