@@ -2,6 +2,7 @@ pub use codspeed::codspeed_uri;
 
 #[cfg(not(codspeed))]
 mod compat_criterion {
+    pub use codspeed::abs_file;
     pub use criterion::*;
 }
 
