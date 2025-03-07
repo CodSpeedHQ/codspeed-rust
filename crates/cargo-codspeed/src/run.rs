@@ -11,6 +11,7 @@ use codspeed::walltime::get_raw_result_dir_from_workspace_root;
 use glob::glob;
 use std::{
     io::{self, Write},
+    os::unix::process::ExitStatusExt,
     path::{Path, PathBuf},
 };
 
@@ -157,10 +158,16 @@ pub fn run_benches(
                 if status.success() {
                     Ok(())
                 } else {
-                    Err(anyhow!(
+                    let code = status
+                        .code()
+                        .or(status.signal().map(|s| 128 + s)) // 128+N indicates that a command was interrupted by signal N (see: https://tldp.org/LDP/abs/html/exitcodes.html)
+                        .unwrap_or(1);
+
+                    eprintln!(
                         "failed to execute the benchmark process, exit code: {}",
-                        status.code().unwrap_or(1)
-                    ))
+                        code
+                    );
+                    std::process::exit(code);
                 }
             })?;
         eprintln!("Done running {}", bench_name);
