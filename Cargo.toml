@@ -2,8 +2,10 @@
 members = [
   "crates/codspeed",
   "crates/bencher_compat",
-  "crates/criterion_compat",
   "crates/cargo-codspeed",
+
+  "crates/criterion_compat",
+  "crates/criterion_compat/criterion_fork",
 
   "crates/divan_compat",
   "crates/divan_compat/macros",
@@ -16,3 +18,4 @@ resolver = "2"
 itertools = "0.14.0"
 serde = { version = "1.0.217", features = ["derive"] }
 serde_json = "1.0.138"
+tempfile = "3.7.0"

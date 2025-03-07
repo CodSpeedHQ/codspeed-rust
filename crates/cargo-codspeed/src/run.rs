@@ -209,6 +209,15 @@ fn aggregate_raw_walltime_data(workspace_root: &Path) -> Result<()> {
         return Ok(());
     }
 
+    for bench in &walltime_benchmarks {
+        if bench.is_invalid() {
+            eprintln!(
+                "Warning: Benchmark {} was possibly optimized away",
+                bench.name()
+            );
+        }
+    }
+
     let results_folder = std::env::var("CODSPEED_PROFILE_FOLDER")
         .map(PathBuf::from)
         .unwrap_or_else(|_| workspace_root.join("target/codspeed/profiles"))
