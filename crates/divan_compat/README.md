@@ -78,5 +78,4 @@ Finished running 1 benchmark suite(s)
 ### Not supported:
 
 - [`divan::bench(crate = xxx)`](https://docs.rs/divan/latest/divan/attr.bench.html#crate): due to how the compatibility layer works internally, we do not plan to support this feature.
-- [`divan::bench(consts = xxx)`](https://docs.rs/divan/latest/divan/attr.bench.html#consts): we do not support this feature yet, if you need it don't hesitate to create an issue.
 - [`divan::bench_group`](https://docs.rs/divan/latest/divan/attr.bench_group.html): we do not support benchmark grouping yet, if you need it don't hesitate to create an issue.
