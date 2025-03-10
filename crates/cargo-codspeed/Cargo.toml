@@ -1,6 +1,6 @@
 [package]
 name = "cargo-codspeed"
-version = "2.9.0"
+version = "2.9.1"
 edition = "2021"
 description = "Cargo extension to build & run your codspeed benchmarks"
 authors = ["Arthur Pastel <arthur@codspeed.io>"]
@@ -26,7 +26,7 @@ itertools = { workspace = true }
 anstyle = "1.0.8"
 serde = { workspace = true }
 serde_json = { workspace = true }
-codspeed = { path = "../codspeed", version = "=2.9.0" }
+codspeed = { path = "../codspeed", version = "=2.9.1" }
 glob = "0.3.2"
 statrs = "0.18.0"
 
