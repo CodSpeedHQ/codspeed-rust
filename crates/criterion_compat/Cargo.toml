@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-criterion-compat"
-version = "2.8.1"
+version = "2.9.0"
 rust-version = "1.74" # MSRV
 edition = "2021"
 description = "Criterion.rs compatibility layer for CodSpeed"
@@ -17,8 +17,8 @@ categories = [
 ]
 keywords = ["codspeed", "benchmark", "criterion"]
 [dependencies]
-criterion = { package = "codspeed-criterion-compat-walltime", path = "./criterion_fork", version = "0.5.1", default-features = false }
-codspeed = { path = "../codspeed", version = "=2.8.1" }
+criterion = { package = "codspeed-criterion-compat-walltime", path = "./criterion_fork", version = "=2.9.0", default-features = false }
+codspeed = { path = "../codspeed", version = "=2.9.0" }
 colored = "2.1.0"
 
 futures = { version = "0.3", default-features = false, optional = true }
