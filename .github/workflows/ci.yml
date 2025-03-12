@@ -67,6 +67,8 @@ jobs:
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@main
+        env:
+          MY_ENV_VAR: "YES"
         with:
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
@@ -89,6 +91,8 @@ jobs:
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@main
+        env:
+          MY_ENV_VAR: "YES"
         with:
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
