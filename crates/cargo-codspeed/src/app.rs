@@ -61,6 +61,10 @@ enum Commands {
         #[arg(long)]
         no_default_features: bool,
 
+        /// Number of parallel jobs, defaults to # of CPUs.
+        #[arg(short, long)]
+        jobs: Option<u32>,
+
         /// Build the benchmarks with the specified profile
         #[arg(long, default_value = "release")]
         profile: String,
@@ -84,6 +88,7 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
             filters,
             features,
             all_features,
+            jobs,
             no_default_features,
             profile,
         } => {
@@ -96,6 +101,10 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
 
                 if no_default_features {
                     passthrough_flags.push("--no-default-features".to_string());
+                }
+
+                if let Some(jobs) = jobs {
+                    passthrough_flags.push(format!("--jobs={jobs}"));
                 }
 
                 passthrough_flags
