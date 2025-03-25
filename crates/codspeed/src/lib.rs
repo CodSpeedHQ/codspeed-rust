@@ -1,4 +1,5 @@
 pub mod codspeed;
+pub mod fifo;
 mod macros;
 mod measurement;
 mod request;
