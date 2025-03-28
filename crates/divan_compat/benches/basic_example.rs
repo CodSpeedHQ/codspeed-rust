@@ -1,6 +1,6 @@
 use codspeed_divan_compat::Bencher;
 
-fn fibo(n: i32) -> i32 {
+fn fibo(n: u64) -> u64 {
     let mut a = 0;
     let mut b = 1;
 
@@ -14,12 +14,12 @@ fn fibo(n: i32) -> i32 {
 }
 
 #[codspeed_divan_compat::bench]
-fn fibo_500() -> i32 {
-    codspeed_divan_compat::black_box(fibo(500))
+fn fibo_50() -> u64 {
+    codspeed_divan_compat::black_box(fibo(50))
 }
 
 #[codspeed_divan_compat::bench]
-fn fibo_10() -> i32 {
+fn fibo_10() -> u64 {
     codspeed_divan_compat::black_box(fibo(10))
 }
 

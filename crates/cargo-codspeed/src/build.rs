@@ -115,6 +115,15 @@ impl BuildOptions<'_> {
         // Add debug info (equivalent to -g)
         rust_flags.push_str(" -C debuginfo=2");
 
+        // Prevent debug info stripping
+        // https://doc.rust-lang.org/cargo/reference/profiles.html#release
+        // According to cargo docs, for release profile which we default to:
+        // `strip = "none"` and `debug = false`.
+        // In practice, if we set debug info through RUSTFLAGS, cargo still strips them, most
+        // likely because debug = false in the release profile.
+        // We also need to disable stripping through rust flags.
+        rust_flags.push_str(" -C strip=none");
+
         // Add the codspeed cfg flag if instrumentation mode is enabled
         if measurement_mode == MeasurementMode::Instrumentation {
             rust_flags.push_str(" --cfg codspeed");
