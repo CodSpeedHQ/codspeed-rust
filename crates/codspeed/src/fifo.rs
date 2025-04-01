@@ -1,3 +1,4 @@
+use anyhow::bail;
 use nix::libc::O_NONBLOCK;
 use nix::sys::stat;
 use nix::unistd::{self, unlink};
@@ -5,7 +6,7 @@ use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 use std::os::unix::fs::OpenOptionsExt;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 pub const RUNNER_CTL_FIFO: &str = "/tmp/runner.ctl.fifo";
 pub const RUNNER_ACK_FIFO: &str = "/tmp/runner.ack.fifo";
@@ -16,26 +17,27 @@ pub struct PerfGuard {
 }
 
 impl PerfGuard {
-    pub fn new(ctl_fifo: &str, ack_fifo: &str) -> Option<Self> {
+    pub fn new(ctl_fifo: &str, ack_fifo: &str) -> anyhow::Result<Self> {
         let mut instance = Self {
-            ctl_fifo: FifoIpc::connect(ctl_fifo)?.with_writer().ok()?,
-            ack_fifo: FifoIpc::connect(ack_fifo)?.with_reader().ok()?,
+            ctl_fifo: FifoIpc::connect(ctl_fifo)?.with_writer()?,
+            ack_fifo: FifoIpc::connect(ack_fifo)?.with_reader()?,
         };
         instance.send_cmd(Command::StartBenchmark)?;
-        Some(instance)
+        Ok(instance)
     }
 
-    fn send_cmd(&mut self, cmd: Command) -> Option<()> {
+    fn send_cmd(&mut self, cmd: Command) -> anyhow::Result<()> {
         self.ctl_fifo.send_cmd(cmd)?;
-        self.ack_fifo.wait_for_ack()?;
+        self.ack_fifo.wait_for_ack();
 
-        Some(())
+        Ok(())
     }
 }
 
 impl Drop for PerfGuard {
     fn drop(&mut self) {
-        self.send_cmd(Command::StopBenchmark);
+        self.send_cmd(Command::StopBenchmark)
+            .expect("Failed to send stop command");
     }
 }
 
@@ -46,31 +48,47 @@ pub struct FifoIpc {
 }
 
 impl FifoIpc {
-    pub fn connect<P: Into<PathBuf>>(path: P) -> Option<Self> {
+    /// Creates a new FIFO at the specified path and connects to it.
+    ///
+    /// ```rust
+    /// use codspeed::fifo::{FifoIpc, Command};
+    ///
+    /// // Create the reader before the writer (required!):
+    /// let mut read_fifo = FifoIpc::create("/tmp/doctest.fifo").unwrap().with_reader().unwrap();
+    ///
+    /// // Connect to the FIFO and send a command
+    /// let mut fifo = FifoIpc::connect("/tmp/doctest.fifo").unwrap().with_writer().unwrap();
+    /// fifo.send_cmd(Command::StartBenchmark).unwrap();
+    ///
+    /// // Receive the command in the reader
+    /// let cmd = read_fifo.recv_cmd().unwrap();
+    /// assert_eq!(cmd, Command::StartBenchmark);
+    /// ```
+    pub fn create<P: AsRef<Path>>(path: P) -> anyhow::Result<Self> {
+        // Remove the previous FIFO (if it exists)
+        let _ = unlink(path.as_ref());
+
+        // Create the FIFO with RWX permissions for the owner
+        unistd::mkfifo(path.as_ref(), stat::Mode::S_IRWXU)?;
+
+        Self::connect(path.as_ref())
+    }
+
+    pub fn connect<P: Into<PathBuf>>(path: P) -> anyhow::Result<Self> {
         let path = path.into();
 
         if !path.exists() {
-            return None;
+            bail!("FIFO does not exist: {}", path.display());
         }
 
-        Some(Self {
+        Ok(Self {
             path,
             reader: None,
             writer: None,
         })
     }
 
-    pub fn create(path: &str) -> Option<Self> {
-        // Remove the previous FIFO (if it exists)
-        let _ = unlink(path);
-
-        // Create the FIFO with RWX permissions for the owner
-        unistd::mkfifo(path, stat::Mode::S_IRWXU).unwrap();
-
-        Self::connect(path)
-    }
-
-    pub fn with_reader(mut self) -> std::io::Result<Self> {
+    pub fn with_reader(mut self) -> anyhow::Result<Self> {
         self.reader = Some(
             OpenOptions::new()
                 .write(true)
@@ -82,7 +100,7 @@ impl FifoIpc {
     }
 
     /// WARNING: Writer must be opened _AFTER_ the reader.
-    pub fn with_writer(mut self) -> std::io::Result<Self> {
+    pub fn with_writer(mut self) -> anyhow::Result<Self> {
         self.writer = Some(
             OpenOptions::new()
                 .write(true)
@@ -92,10 +110,10 @@ impl FifoIpc {
         Ok(self)
     }
 
-    pub fn recv_cmd(&mut self) -> Option<Command> {
+    pub fn recv_cmd(&mut self) -> anyhow::Result<Command> {
         // First read the length (u32 = 4 bytes)
         let mut len_buffer = [0u8; 4];
-        self.read_exact(&mut len_buffer).ok()?;
+        self.read_exact(&mut len_buffer)?;
         let message_len = u32::from_le_bytes(len_buffer) as usize;
 
         // Try to read the message
@@ -106,26 +124,23 @@ impl FifoIpc {
             }
         }
 
-        let decoded = bincode::deserialize(&buffer).ok()?;
-        Some(decoded)
+        let decoded = bincode::deserialize(&buffer)?;
+        Ok(decoded)
     }
 
-    pub fn send_cmd(&mut self, cmd: Command) -> Option<()> {
-        let encoded = bincode::serialize(&cmd).ok()?;
-        self.write_all(&(encoded.len() as u32).to_le_bytes()).ok()?;
-        self.write_all(&encoded).ok()?;
-        Some(())
+    pub fn send_cmd(&mut self, cmd: Command) -> anyhow::Result<()> {
+        let encoded = bincode::serialize(&cmd)?;
+        self.write_all(&(encoded.len() as u32).to_le_bytes())?;
+        self.write_all(&encoded)?;
+        Ok(())
     }
 
-    pub fn wait_for_ack(&mut self) -> Option<()> {
-        // Wait for ACK command
+    pub fn wait_for_ack(&mut self) {
         loop {
-            if let Some(Command::Ack) = self.recv_cmd() {
+            if let Ok(Command::Ack) = self.recv_cmd() {
                 break;
             }
         }
-
-        Some(())
     }
 }
 
