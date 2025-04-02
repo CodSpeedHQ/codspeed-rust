@@ -2,21 +2,37 @@ use anyhow::bail;
 use nix::libc::O_NONBLOCK;
 use nix::sys::stat;
 use nix::unistd::{self, unlink};
-use serde::{Deserialize, Serialize};
 use std::fs::{File, OpenOptions};
-use std::io::{Read, Write};
+use std::io::Read;
 use std::os::unix::fs::OpenOptionsExt;
 use std::path::{Path, PathBuf};
 
+// !!!!!!!!!!!!!!!!!!!!!!!!
+// !! DO NOT TOUCH BELOW !!
+// !!!!!!!!!!!!!!!!!!!!!!!!
+// Has to be in sync with `runner`.
+//
 pub const RUNNER_CTL_FIFO: &str = "/tmp/runner.ctl.fifo";
 pub const RUNNER_ACK_FIFO: &str = "/tmp/runner.ack.fifo";
 
-pub struct PerfGuard {
+#[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
+pub enum Command {
+    CurrentBenchmark(String),
+    StartBenchmark,
+    StopBenchmark,
+    Ack,
+}
+//
+// !!!!!!!!!!!!!!!!!!!!!!!!
+// !! DO NOT TOUCH ABOVE !!
+// !!!!!!!!!!!!!!!!!!!!!!!!
+
+pub struct BenchGuard {
     ctl_fifo: FifoIpc,
     ack_fifo: FifoIpc,
 }
 
-impl PerfGuard {
+impl BenchGuard {
     pub fn new(ctl_fifo: &str, ack_fifo: &str) -> anyhow::Result<Self> {
         let mut instance = Self {
             ctl_fifo: FifoIpc::connect(ctl_fifo)?.with_writer()?,
@@ -34,11 +50,21 @@ impl PerfGuard {
     }
 }
 
-impl Drop for PerfGuard {
+impl Drop for BenchGuard {
     fn drop(&mut self) {
         self.send_cmd(Command::StopBenchmark)
             .expect("Failed to send stop command");
     }
+}
+
+pub fn send_cmd(cmd: Command) -> anyhow::Result<()> {
+    let mut writer = FifoIpc::connect(RUNNER_CTL_FIFO)?.with_writer()?;
+    writer.send_cmd(cmd).unwrap();
+
+    let mut reader = FifoIpc::connect(RUNNER_ACK_FIFO)?.with_reader()?;
+    reader.wait_for_ack();
+
+    Ok(())
 }
 
 pub struct FifoIpc {
@@ -129,6 +155,8 @@ impl FifoIpc {
     }
 
     pub fn send_cmd(&mut self, cmd: Command) -> anyhow::Result<()> {
+        use std::io::Write;
+
         let encoded = bincode::serialize(&cmd)?;
         self.write_all(&(encoded.len() as u32).to_le_bytes())?;
         self.write_all(&encoded)?;
@@ -174,16 +202,10 @@ impl std::io::Read for FifoIpc {
     }
 }
 
-#[derive(Serialize, Deserialize, Debug, PartialEq)]
-pub enum Command {
-    StartBenchmark,
-    StopBenchmark,
-    Ack,
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Write;
 
     #[test]
     fn test_ipc_write_read() {
