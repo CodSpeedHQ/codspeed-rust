@@ -103,3 +103,17 @@ jobs:
         with:
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
+
+  check:
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - lint
+      - msrv-check
+      - tests
+      - compat-integration-test-instrumentation
+      - compat-integration-test-walltime
+    steps:
+      - uses: re-actors/alls-green@release/v1
+        with:
+          jobs: ${{ toJson( needs ) }}
