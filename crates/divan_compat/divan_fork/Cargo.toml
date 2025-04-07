@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-divan-compat-walltime"
-version = "2.10.0"
+version = "2.10.1"
 rust-version = "1.80.0"
 edition = "2021"
 authors = ["Nikolai Vazquez"]
@@ -23,7 +23,7 @@ regex = { package = "regex-lite", version = "0.1", default-features = false, fea
     "std",
     "string",
 ] }
-codspeed = { path = "../../codspeed", version = "=2.10.0" }
+codspeed = { path = "../../codspeed", version = "=2.10.1" }
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.148"
