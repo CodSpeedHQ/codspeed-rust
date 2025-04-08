@@ -12,8 +12,22 @@ use std::path::{Path, PathBuf};
 // !!!!!!!!!!!!!!!!!!!!!!!!
 // Has to be in sync with `runner`.
 //
-pub const RUNNER_CTL_FIFO: &str = "/tmp/runner.ctl.fifo";
-pub const RUNNER_ACK_FIFO: &str = "/tmp/runner.ack.fifo";
+const RUNNER_CTL_FIFO_NAME: &str = "runner.ctl.fifo";
+const RUNNER_ACK_FIFO_NAME: &str = "runner.ack.fifo";
+
+pub fn runner_fifo_dir() -> PathBuf {
+    let raw_path =
+        std::env::var("CODSPEED_FIFO_DIR").expect("CODSPEED_FIFO_DIR environment variable not set");
+    PathBuf::from(raw_path)
+}
+
+pub fn runner_ctl_fifo_path() -> PathBuf {
+    runner_fifo_dir().join(RUNNER_CTL_FIFO_NAME)
+}
+
+pub fn runner_ack_fifo_path() -> PathBuf {
+    runner_fifo_dir().join(RUNNER_ACK_FIFO_NAME)
+}
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
 pub enum Command {
@@ -33,7 +47,7 @@ pub struct BenchGuard {
 }
 
 impl BenchGuard {
-    pub fn new(ctl_fifo: &str, ack_fifo: &str) -> anyhow::Result<Self> {
+    pub fn new<P: Into<PathBuf>>(ctl_fifo: P, ack_fifo: P) -> anyhow::Result<Self> {
         let mut instance = Self {
             ctl_fifo: FifoIpc::connect(ctl_fifo)?.with_writer()?,
             ack_fifo: FifoIpc::connect(ack_fifo)?.with_reader()?,
@@ -58,10 +72,10 @@ impl Drop for BenchGuard {
 }
 
 pub fn send_cmd(cmd: Command) -> anyhow::Result<()> {
-    let mut writer = FifoIpc::connect(RUNNER_CTL_FIFO)?.with_writer()?;
+    let mut writer = FifoIpc::connect(runner_ctl_fifo_path())?.with_writer()?;
     writer.send_cmd(cmd).unwrap();
 
-    let mut reader = FifoIpc::connect(RUNNER_ACK_FIFO)?.with_reader()?;
+    let mut reader = FifoIpc::connect(runner_ack_fifo_path())?.with_reader()?;
     reader.wait_for_ack();
 
     Ok(())

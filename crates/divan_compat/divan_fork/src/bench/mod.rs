@@ -658,7 +658,7 @@ impl<'a> BenchContext<'a> {
         let bench_overheads = timer.bench_overheads();
 
         use codspeed::fifo::*;
-        let _guard = BenchGuard::new(RUNNER_CTL_FIFO, RUNNER_ACK_FIFO);
+        let _guard = BenchGuard::new(runner_ctl_fifo_path(), runner_ack_fifo_path());
         while {
             // Conditions for when sampling is over:
             if elapsed_picos >= max_picos {
