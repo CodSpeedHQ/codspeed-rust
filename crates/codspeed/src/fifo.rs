@@ -1,4 +1,4 @@
-use anyhow::bail;
+use anyhow::{bail, Context};
 use nix::libc::O_NONBLOCK;
 use nix::sys::stat;
 use nix::unistd::{self, unlink};
@@ -15,18 +15,18 @@ use std::path::{Path, PathBuf};
 const RUNNER_CTL_FIFO_NAME: &str = "runner.ctl.fifo";
 const RUNNER_ACK_FIFO_NAME: &str = "runner.ack.fifo";
 
-pub fn runner_fifo_dir() -> PathBuf {
-    let raw_path =
-        std::env::var("CODSPEED_FIFO_DIR").expect("CODSPEED_FIFO_DIR environment variable not set");
-    PathBuf::from(raw_path)
+pub fn runner_fifo_dir() -> anyhow::Result<PathBuf> {
+    let raw_path = std::env::var("CODSPEED_FIFO_DIR")
+        .context("CODSPEED_FIFO_DIR environment variable not set")?;
+    Ok(PathBuf::from(raw_path))
 }
 
-pub fn runner_ctl_fifo_path() -> PathBuf {
-    runner_fifo_dir().join(RUNNER_CTL_FIFO_NAME)
+pub fn runner_ctl_fifo_path() -> anyhow::Result<PathBuf> {
+    runner_fifo_dir().map(|p| p.join(RUNNER_CTL_FIFO_NAME))
 }
 
-pub fn runner_ack_fifo_path() -> PathBuf {
-    runner_fifo_dir().join(RUNNER_ACK_FIFO_NAME)
+pub fn runner_ack_fifo_path() -> anyhow::Result<PathBuf> {
+    runner_fifo_dir().map(|p| p.join(RUNNER_ACK_FIFO_NAME))
 }
 
 #[derive(serde::Serialize, serde::Deserialize, Debug, PartialEq)]
@@ -56,6 +56,10 @@ impl BenchGuard {
         Ok(instance)
     }
 
+    pub fn new_with_runner_fifo() -> anyhow::Result<Self> {
+        Self::new(runner_ctl_fifo_path()?, runner_ack_fifo_path()?)
+    }
+
     fn send_cmd(&mut self, cmd: Command) -> anyhow::Result<()> {
         self.ctl_fifo.send_cmd(cmd)?;
         self.ack_fifo.wait_for_ack();
@@ -72,10 +76,10 @@ impl Drop for BenchGuard {
 }
 
 pub fn send_cmd(cmd: Command) -> anyhow::Result<()> {
-    let mut writer = FifoIpc::connect(runner_ctl_fifo_path())?.with_writer()?;
+    let mut writer = FifoIpc::connect(runner_ctl_fifo_path()?)?.with_writer()?;
     writer.send_cmd(cmd).unwrap();
 
-    let mut reader = FifoIpc::connect(runner_ack_fifo_path())?.with_reader()?;
+    let mut reader = FifoIpc::connect(runner_ack_fifo_path()?)?.with_reader()?;
     reader.wait_for_ack();
 
     Ok(())
