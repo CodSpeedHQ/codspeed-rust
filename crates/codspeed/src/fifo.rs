@@ -14,7 +14,7 @@ pub struct BenchGuard {
 }
 
 impl BenchGuard {
-    pub fn new<P: Into<PathBuf>>(ctl_fifo: P, ack_fifo: P) -> anyhow::Result<Self> {
+    pub fn new(ctl_fifo: &str, ack_fifo: &str) -> anyhow::Result<Self> {
         let mut instance = Self {
             ctl_fifo: FifoIpc::connect(ctl_fifo)?.with_writer()?,
             ack_fifo: FifoIpc::connect(ack_fifo)?.with_reader()?,
@@ -24,7 +24,7 @@ impl BenchGuard {
     }
 
     pub fn new_with_runner_fifo() -> anyhow::Result<Self> {
-        Self::new(runner_ctl_fifo_path()?, runner_ack_fifo_path()?)
+        Self::new(RUNNER_CTL_FIFO, RUNNER_ACK_FIFO)
     }
 
     fn send_cmd(&mut self, cmd: Command) -> anyhow::Result<()> {
@@ -43,10 +43,10 @@ impl Drop for BenchGuard {
 }
 
 pub fn send_cmd(cmd: Command) -> anyhow::Result<()> {
-    let mut writer = FifoIpc::connect(runner_ctl_fifo_path()?)?.with_writer()?;
+    let mut writer = FifoIpc::connect(RUNNER_CTL_FIFO)?.with_writer()?;
     writer.send_cmd(cmd).unwrap();
 
-    let mut reader = FifoIpc::connect(runner_ack_fifo_path()?)?.with_reader()?;
+    let mut reader = FifoIpc::connect(RUNNER_ACK_FIFO)?.with_reader()?;
     reader.wait_for_ack();
 
     Ok(())
