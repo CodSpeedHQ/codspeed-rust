@@ -19,7 +19,13 @@ impl BenchGuard {
             ctl_fifo: FifoIpc::connect(ctl_fifo)?.with_writer()?,
             ack_fifo: FifoIpc::connect(ack_fifo)?.with_reader()?,
         };
+
+        instance.send_cmd(Command::SetIntegration {
+            name: "codspeed-rust".into(),
+            version: env!("CARGO_PKG_VERSION").into(),
+        })?; // FIXME: Just send it once
         instance.send_cmd(Command::StartBenchmark)?;
+
         Ok(instance)
     }
 
