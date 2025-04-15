@@ -657,6 +657,7 @@ impl<'a> BenchContext<'a> {
 
         let bench_overheads = timer.bench_overheads();
 
+        let _guard = codspeed::fifo::BenchGuard::new_with_runner_fifo();
         while {
             // Conditions for when sampling is over:
             if elapsed_picos >= max_picos {
@@ -810,6 +811,7 @@ impl<'a> BenchContext<'a> {
                 elapsed_picos = elapsed_picos.saturating_add(progress_picos);
             }
         }
+        core::mem::drop(_guard);
 
         // Reset flag for ignoring allocations.
         crate::alloc::IGNORE_ALLOC.set(false);

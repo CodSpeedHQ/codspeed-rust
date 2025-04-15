@@ -76,8 +76,17 @@ impl<'a, M: Measurement> Bencher<'a, M> {
     /// criterion_main!(benches);
     /// ```
     ///
+    #[inline(always)]
+    pub fn iter<O, R>(&mut self, routine: R)
+    where
+        R: FnMut() -> O,
+    {
+        self.__codspeed_root_frame__iter(routine)
+    }
+
     #[inline(never)]
-    pub fn iter<O, R>(&mut self, mut routine: R)
+    #[allow(non_snake_case, missing_docs)]
+    pub fn __codspeed_root_frame__iter<O, R>(&mut self, mut routine: R)
     where
         R: FnMut() -> O,
     {
@@ -127,8 +136,17 @@ impl<'a, M: Measurement> Bencher<'a, M> {
     /// criterion_main!(benches);
     /// ```
     ///
+    #[inline(always)]
+    pub fn iter_custom<R>(&mut self, routine: R)
+    where
+        R: FnMut(u64) -> M::Value,
+    {
+        self.__codspeed_root_frame__iter_custom(routine)
+    }
+
     #[inline(never)]
-    pub fn iter_custom<R>(&mut self, mut routine: R)
+    #[allow(missing_docs, non_snake_case)]
+    pub fn __codspeed_root_frame__iter_custom<R>(&mut self, mut routine: R)
     where
         R: FnMut(u64) -> M::Value,
     {
@@ -232,9 +250,23 @@ impl<'a, M: Measurement> Bencher<'a, M> {
     /// criterion_main!(benches);
     /// ```
     ///
-    #[inline(never)]
-    pub fn iter_batched<I, O, S, R>(&mut self, mut setup: S, mut routine: R, size: BatchSize)
+    #[inline(always)]
+    pub fn iter_batched<I, O, S, R>(&mut self, setup: S, routine: R, size: BatchSize)
     where
+        S: FnMut() -> I,
+        R: FnMut(I) -> O,
+    {
+        self.__codspeed_root_frame__iter_batched(setup, routine, size);
+    }
+
+    #[inline(never)]
+    #[allow(missing_docs, non_snake_case)]
+    pub fn __codspeed_root_frame__iter_batched<I, O, S, R>(
+        &mut self,
+        mut setup: S,
+        mut routine: R,
+        size: BatchSize,
+    ) where
         S: FnMut() -> I,
         R: FnMut(I) -> O,
     {
@@ -322,9 +354,23 @@ impl<'a, M: Measurement> Bencher<'a, M> {
     /// criterion_main!(benches);
     /// ```
     ///
-    #[inline(never)]
-    pub fn iter_batched_ref<I, O, S, R>(&mut self, mut setup: S, mut routine: R, size: BatchSize)
+    #[inline(always)]
+    pub fn iter_batched_ref<I, O, S, R>(&mut self, setup: S, routine: R, size: BatchSize)
     where
+        S: FnMut() -> I,
+        R: FnMut(&mut I) -> O,
+    {
+        self.__codspeed_root_frame__iter_batched_ref(setup, routine, size)
+    }
+
+    #[inline(never)]
+    #[allow(missing_docs, non_snake_case)]
+    pub fn __codspeed_root_frame__iter_batched_ref<I, O, S, R>(
+        &mut self,
+        mut setup: S,
+        mut routine: R,
+        size: BatchSize,
+    ) where
         S: FnMut() -> I,
         R: FnMut(&mut I) -> O,
     {
@@ -430,8 +476,18 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
     /// criterion_main!(benches);
     /// ```
     ///
+    #[inline(always)]
+    pub fn iter<O, R, F>(&mut self, routine: R)
+    where
+        R: FnMut() -> F,
+        F: Future<Output = O>,
+    {
+        self.__codspeed_root_frame__iter(routine)
+    }
+
     #[inline(never)]
-    pub fn iter<O, R, F>(&mut self, mut routine: R)
+    #[allow(non_snake_case, missing_docs)]
+    pub fn __codspeed_root_frame__iter<O, R, F>(&mut self, mut routine: R)
     where
         R: FnMut() -> F,
         F: Future<Output = O>,
@@ -488,8 +544,18 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
     /// criterion_main!(benches);
     /// ```
     ///
+    #[inline(always)]
+    pub fn iter_custom<R, F>(&mut self, routine: R)
+    where
+        R: FnMut(u64) -> F,
+        F: Future<Output = M::Value>,
+    {
+        self.__codspeed_root_frame__iter_custom(routine)
+    }
+
     #[inline(never)]
-    pub fn iter_custom<R, F>(&mut self, mut routine: R)
+    #[allow(non_snake_case, missing_docs)]
+    pub fn __codspeed_root_frame__iter_custom<R, F>(&mut self, mut routine: R)
     where
         R: FnMut(u64) -> F,
         F: Future<Output = M::Value>,
@@ -611,9 +677,24 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
     /// criterion_main!(benches);
     /// ```
     ///
-    #[inline(never)]
-    pub fn iter_batched<I, O, S, R, F>(&mut self, mut setup: S, mut routine: R, size: BatchSize)
+    #[inline(always)]
+    pub fn iter_batched<I, O, S, R, F>(&mut self, setup: S, routine: R, size: BatchSize)
     where
+        S: FnMut() -> I,
+        R: FnMut(I) -> F,
+        F: Future<Output = O>,
+    {
+        self.__codspeed_root_frame__iter_batched(setup, routine, size);
+    }
+
+    #[inline(never)]
+    #[allow(non_snake_case, missing_docs)]
+    pub fn __codspeed_root_frame__iter_batched<I, O, S, R, F>(
+        &mut self,
+        mut setup: S,
+        mut routine: R,
+        size: BatchSize,
+    ) where
         S: FnMut() -> I,
         R: FnMut(I) -> F,
         F: Future<Output = O>,
@@ -709,9 +790,24 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
     /// criterion_main!(benches);
     /// ```
     ///
-    #[inline(never)]
-    pub fn iter_batched_ref<I, O, S, R, F>(&mut self, mut setup: S, mut routine: R, size: BatchSize)
+    #[inline(always)]
+    pub fn iter_batched_ref<I, O, S, R, F>(&mut self, setup: S, routine: R, size: BatchSize)
     where
+        S: FnMut() -> I,
+        R: FnMut(&mut I) -> F,
+        F: Future<Output = O>,
+    {
+        self.__codspeed_root_frame__iter_batched_ref(setup, routine, size)
+    }
+
+    #[inline(never)]
+    #[allow(non_snake_case, missing_docs)]
+    pub fn __codspeed_root_frame__iter_batched_ref<I, O, S, R, F>(
+        &mut self,
+        mut setup: S,
+        mut routine: R,
+        size: BatchSize,
+    ) where
         S: FnMut() -> I,
         R: FnMut(&mut I) -> F,
         F: Future<Output = O>,
