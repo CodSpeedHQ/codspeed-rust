@@ -1,3 +1,5 @@
+#![allow(unused_mut)]
+
 use std::iter::IntoIterator;
 use std::time::Duration;
 use std::time::Instant;
@@ -81,6 +83,15 @@ impl<'a, M: Measurement> Bencher<'a, M> {
     where
         R: FnMut() -> O,
     {
+        self.__codspeed_root_frame__iter(routine)
+    }
+
+    #[inline(never)]
+    #[allow(non_snake_case, missing_docs)]
+    pub fn __codspeed_root_frame__iter<O, R>(&mut self, mut routine: R)
+    where
+        R: FnMut() -> O,
+    {
         self.iterated = true;
         let time_start = Instant::now();
         let start = self.measurement.start();
@@ -129,6 +140,15 @@ impl<'a, M: Measurement> Bencher<'a, M> {
     ///
     #[inline(never)]
     pub fn iter_custom<R>(&mut self, mut routine: R)
+    where
+        R: FnMut(u64) -> M::Value,
+    {
+        self.__codspeed_root_frame__iter_custom(routine)
+    }
+
+    #[inline(never)]
+    #[allow(missing_docs, non_snake_case)]
+    pub fn __codspeed_root_frame__iter_custom<R>(&mut self, mut routine: R)
     where
         R: FnMut(u64) -> M::Value,
     {
@@ -238,6 +258,20 @@ impl<'a, M: Measurement> Bencher<'a, M> {
         S: FnMut() -> I,
         R: FnMut(I) -> O,
     {
+        self.__codspeed_root_frame__iter_batched(setup, routine, size);
+    }
+
+    #[inline(never)]
+    #[allow(missing_docs, non_snake_case)]
+    pub fn __codspeed_root_frame__iter_batched<I, O, S, R>(
+        &mut self,
+        mut setup: S,
+        mut routine: R,
+        size: BatchSize,
+    ) where
+        S: FnMut() -> I,
+        R: FnMut(I) -> O,
+    {
         self.iterated = true;
         let batch_size = size.iters_per_batch(self.iters);
         assert!(batch_size != 0, "Batch size must not be zero.");
@@ -325,6 +359,20 @@ impl<'a, M: Measurement> Bencher<'a, M> {
     #[inline(never)]
     pub fn iter_batched_ref<I, O, S, R>(&mut self, mut setup: S, mut routine: R, size: BatchSize)
     where
+        S: FnMut() -> I,
+        R: FnMut(&mut I) -> O,
+    {
+        self.__codspeed_root_frame__iter_batched_ref(setup, routine, size)
+    }
+
+    #[inline(never)]
+    #[allow(missing_docs, non_snake_case)]
+    pub fn __codspeed_root_frame__iter_batched_ref<I, O, S, R>(
+        &mut self,
+        mut setup: S,
+        mut routine: R,
+        size: BatchSize,
+    ) where
         S: FnMut() -> I,
         R: FnMut(&mut I) -> O,
     {
@@ -436,6 +484,16 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
         R: FnMut() -> F,
         F: Future<Output = O>,
     {
+        self.__codspeed_root_frame__iter(routine)
+    }
+
+    #[inline(never)]
+    #[allow(non_snake_case, missing_docs)]
+    pub fn __codspeed_root_frame__iter<O, R, F>(&mut self, mut routine: R)
+    where
+        R: FnMut() -> F,
+        F: Future<Output = O>,
+    {
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
             b.iterated = true;
@@ -490,6 +548,16 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
     ///
     #[inline(never)]
     pub fn iter_custom<R, F>(&mut self, mut routine: R)
+    where
+        R: FnMut(u64) -> F,
+        F: Future<Output = M::Value>,
+    {
+        self.__codspeed_root_frame__iter_custom(routine)
+    }
+
+    #[inline(never)]
+    #[allow(non_snake_case, missing_docs)]
+    pub fn __codspeed_root_frame__iter_custom<R, F>(&mut self, mut routine: R)
     where
         R: FnMut(u64) -> F,
         F: Future<Output = M::Value>,
@@ -618,6 +686,21 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
         R: FnMut(I) -> F,
         F: Future<Output = O>,
     {
+        self.__codspeed_root_frame__iter_batched(setup, routine, size);
+    }
+
+    #[inline(never)]
+    #[allow(non_snake_case, missing_docs)]
+    pub fn __codspeed_root_frame__iter_batched<I, O, S, R, F>(
+        &mut self,
+        mut setup: S,
+        mut routine: R,
+        size: BatchSize,
+    ) where
+        S: FnMut() -> I,
+        R: FnMut(I) -> F,
+        F: Future<Output = O>,
+    {
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
             b.iterated = true;
@@ -712,6 +795,21 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
     #[inline(never)]
     pub fn iter_batched_ref<I, O, S, R, F>(&mut self, mut setup: S, mut routine: R, size: BatchSize)
     where
+        S: FnMut() -> I,
+        R: FnMut(&mut I) -> F,
+        F: Future<Output = O>,
+    {
+        self.__codspeed_root_frame__iter_batched_ref(setup, routine, size)
+    }
+
+    #[inline(never)]
+    #[allow(non_snake_case, missing_docs)]
+    pub fn __codspeed_root_frame__iter_batched_ref<I, O, S, R, F>(
+        &mut self,
+        mut setup: S,
+        mut routine: R,
+        size: BatchSize,
+    ) where
         S: FnMut() -> I,
         R: FnMut(&mut I) -> F,
         F: Future<Output = O>,

@@ -297,6 +297,13 @@ mod codspeed {
     ) {
         let (uri, bench_name) = create_uri_and_name(id, c);
 
+        if let Err(error) = ::codspeed::fifo::send_cmd(codspeed::fifo::Command::CurrentBenchmark {
+            pid: std::process::id(),
+            uri: uri.clone(),
+        }) {
+            eprintln!("Failed to send benchmark URI to runner: {}", error);
+        }
+
         let avg_iter_per_round = iters.iter().sum::<f64>() / iters.len() as f64;
         let max_time_ns = Some(c.config.measurement_time.as_nanos());
         let times_ns = avg_times.iter().map(|t| *t as u128).collect();
