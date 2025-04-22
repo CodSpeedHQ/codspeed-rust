@@ -201,9 +201,17 @@ impl<F> TaskShared<F> {
         where
             F: Fn(usize),
         {
-            let task_fn = &(*task.cast::<TaskShared<F>>()).task_fn;
+            #[inline(never)]
+            unsafe fn __codspeed_root_frame__<F>(task: *const TaskShared<()>, thread: usize)
+            where
+                F: Fn(usize),
+            {
+                let task_fn = &(*task.cast::<TaskShared<F>>()).task_fn;
 
-            task_fn(thread);
+                task_fn(thread);
+            }
+
+            __codspeed_root_frame__::<F>(task, thread);
         }
 
         Self {
