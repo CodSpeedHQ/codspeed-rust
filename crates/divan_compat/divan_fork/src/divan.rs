@@ -428,12 +428,10 @@ mod codspeed {
             bench_context.samples.time_samples.iter().map(|s| s.duration.picos / 1_000).collect();
         let max_time_ns = bench_context.options.max_time.map(|t| t.as_nanos());
 
-        if let Err(error) = ::codspeed::fifo::send_cmd(codspeed::fifo::Command::CurrentBenchmark {
+        let _ = ::codspeed::fifo::send_cmd(codspeed::fifo::Command::CurrentBenchmark {
             pid: std::process::id(),
             uri: uri.clone(),
-        }) {
-            eprintln!("Failed to send benchmark URI to runner: {}", error);
-        }
+        });
 
         ::codspeed::walltime::collect_raw_walltime_results(
             "divan",
