@@ -432,7 +432,9 @@ mod codspeed {
             pid: std::process::id(),
             uri: uri.clone(),
         }) {
-            eprintln!("Failed to send benchmark URI to runner: {}", error);
+            if std::env::var("CODSPEED_ENV").is_ok() {
+                eprintln!("Failed to send benchmark URI to runner: {error:?}");
+            }
         }
 
         ::codspeed::walltime::collect_raw_walltime_results(
