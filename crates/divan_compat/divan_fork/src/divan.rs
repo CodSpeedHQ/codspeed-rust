@@ -432,7 +432,7 @@ mod codspeed {
             pid: std::process::id(),
             uri: uri.clone(),
         }) {
-            if std::env::var("CODSPEED_ENV").is_ok() {
+            if codspeed::utils::running_with_codspeed_runner() {
                 eprintln!("Failed to send benchmark URI to runner: {error:?}");
             }
         }

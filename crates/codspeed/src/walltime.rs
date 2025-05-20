@@ -58,7 +58,7 @@ pub fn collect_raw_walltime_results(
     max_time_ns: Option<u128>,
     times_ns: Vec<u128>,
 ) {
-    if std::env::var("CODSPEED_ENV").is_err() {
+    if !crate::utils::running_with_codspeed_runner() {
         return;
     }
     let workspace_root = std::env::var("CODSPEED_CARGO_WORKSPACE_ROOT").map(PathBuf::from);

@@ -38,6 +38,10 @@ pub fn get_formated_function_path(function_path: impl Into<String>) -> String {
     function_path.replace(" :: ", "::")
 }
 
+pub fn running_with_codspeed_runner() -> bool {
+    std::env::var("CODSPEED_ENV").is_ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
