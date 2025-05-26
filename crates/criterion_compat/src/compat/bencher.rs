@@ -67,11 +67,11 @@ impl<'a> Bencher<'a> {
         for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
             let input = black_box(setup());
             let output = if i < codspeed::codspeed::WARMUP_RUNS {
-                black_box(routine(input))
+                routine(input)
             } else {
                 let input = black_box(setup());
                 codspeed.start_benchmark(self.uri.as_str());
-                let output = black_box(routine(input));
+                let output = routine(input);
                 codspeed.end_benchmark();
                 output
             };
@@ -219,10 +219,10 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
             for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
                 let input = black_box(setup());
                 let output = if i < codspeed::codspeed::WARMUP_RUNS {
-                    black_box(routine(input).await)
+                    routine(input).await
                 } else {
                     codspeed.start_benchmark(b.uri.as_str());
-                    let output = black_box(routine(input).await);
+                    let output = routine(input).await;
                     codspeed.end_benchmark();
                     output
                 };
