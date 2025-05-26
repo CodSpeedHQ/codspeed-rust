@@ -1,19 +1,10 @@
-use std::{ffi::CString, mem::forget, ptr};
-
-use colored::Colorize;
-
 use crate::measurement;
+use colored::Colorize;
+use std::ffi::CString;
+
+pub use std::hint::black_box;
 
 pub const WARMUP_RUNS: u32 = 5;
-
-//TODO: use std::hint::black_box when it's stable
-pub fn black_box<T>(dummy: T) -> T {
-    unsafe {
-        let ret = ptr::read_volatile(&dummy);
-        forget(dummy);
-        ret
-    }
-}
 
 pub fn display_native_harness() {
     println!("Harness: codspeed v{}", env!("CARGO_PKG_VERSION"),);
