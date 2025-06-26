@@ -59,7 +59,14 @@ impl From<RawWallTimeData> for WalltimeBenchmark {
         let total_time = times_ns.iter().sum::<f64>() / 1_000_000_000.0;
 
         let mean_ns = data.mean().unwrap();
-        let stdev_ns = data.std_dev().unwrap();
+
+        let stdev_ns = if data.len() < 2 {
+            // std_dev() returns f64::NAN if data has less than two entries, so we have to
+            // manually handle this case.
+            0.0
+        } else {
+            data.std_dev().unwrap()
+        };
 
         let q1_ns = data.quantile(0.25);
         let median_ns = data.median();
@@ -150,5 +157,30 @@ impl WalltimeResults {
             },
             benchmarks,
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_single_benchmark() {
+        let metadata = BenchmarkMetadata {
+            name: "benchmark".to_string(),
+            uri: "test::benchmark".to_string(),
+        };
+        let raw_bench = RawWallTimeData {
+            metadata,
+            iter_per_round: 1,
+            max_time_ns: None,
+            times_ns: vec![42],
+        };
+
+        let benchmark: WalltimeBenchmark = raw_bench.into();
+        assert_eq!(benchmark.stats.stdev_ns, 0.);
+        assert_eq!(benchmark.stats.min_ns, 42.);
+        assert_eq!(benchmark.stats.max_ns, 42.);
+        assert_eq!(benchmark.stats.mean_ns, 42.);
     }
 }
