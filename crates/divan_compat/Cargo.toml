@@ -25,3 +25,7 @@ codspeed-divan-compat-macros = { version = "=2.10.1", path = './macros' }
 [[bench]]
 name = "basic_example"
 harness = false
+
+[[bench]]
+name = "sleep_benches"
+harness = false

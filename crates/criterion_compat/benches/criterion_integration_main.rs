@@ -13,5 +13,6 @@ criterion_main! {
     criterion_integration::measurement_overhead::benches,
     criterion_integration::custom_measurement::benches,
     criterion_integration::sampling_mode::benches,
+    criterion_integration::sleep::benches,
     criterion_integration::async_measurement_overhead::benches,
 }
