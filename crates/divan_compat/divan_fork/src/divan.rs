@@ -424,7 +424,9 @@ mod codspeed {
         };
 
         let iter_per_round = bench_context.samples.sample_size;
-        let times_ns: Vec<_> =
+        let iters_per_round =
+            vec![iter_per_round as u128; bench_context.samples.time_samples.len()];
+        let times_per_round_ns: Vec<_> =
             bench_context.samples.time_samples.iter().map(|s| s.duration.picos / 1_000).collect();
         let max_time_ns = bench_context.options.max_time.map(|t| t.as_nanos());
 
@@ -441,9 +443,9 @@ mod codspeed {
             "divan",
             bench_name,
             uri,
-            iter_per_round,
+            iters_per_round,
+            times_per_round_ns,
             max_time_ns,
-            times_ns,
         );
     }
 }

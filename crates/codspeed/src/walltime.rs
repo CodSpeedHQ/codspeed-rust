@@ -15,24 +15,24 @@ pub struct BenchmarkMetadata {
 pub struct RawWallTimeData {
     #[serde(flatten)]
     pub metadata: BenchmarkMetadata,
-    pub iter_per_round: u32,
+    pub iters_per_round: Vec<u128>,
+    pub times_per_round_ns: Vec<u128>,
     pub max_time_ns: Option<u128>,
-    pub times_ns: Vec<u128>,
 }
 
 impl RawWallTimeData {
     fn from_runtime_data(
         name: String,
         uri: String,
-        iter_per_round: u32,
+        iters_per_round: Vec<u128>,
+        times_per_round_ns: Vec<u128>,
         max_time_ns: Option<u128>,
-        times_ns: Vec<u128>,
     ) -> Self {
         RawWallTimeData {
             metadata: BenchmarkMetadata { name, uri },
-            iter_per_round,
+            iters_per_round,
             max_time_ns,
-            times_ns,
+            times_per_round_ns,
         }
     }
 
@@ -50,13 +50,37 @@ impl RawWallTimeData {
 /// Entry point called in patched integration to harvest raw walltime data
 ///
 /// `CODSPEED_CARGO_WORKSPACE_ROOT` is expected to be set for this to work
+///
+/// # Arguments
+///
+/// - `scope`: The used integration, e.g. "divan" or "criterion"
+/// - `name`: The name of the benchmark
+/// - `uri`: The URI of the benchmark
+/// - `iters_per_round`: The number of iterations for each round (=sample_size), e.g. `[1, 2, 3]` (variable) or `[2, 2, 2, 2]` (constant).
+/// - `times_per_round_ns`: The measured time for each round in nanoseconds, e.g. `[1000, 2000, 3000]`
+/// - `max_time_ns`: The time limit for the benchmark in nanoseconds (if defined)
+///
+/// # Pseudo-code
+///
+/// ```text
+/// let sample_count = /* The number of executions for the same benchmark. */
+/// let sample_size = iters_per_round = vec![/* The number of iterations within each sample. */];
+/// for round in 0..sample_count {
+///     let times_per_round_ns = 0;
+///     for iteration in 0..sample_size[round] {
+///         run_benchmark();
+///         times_per_round_ns += /* measured execution time */;
+///     }
+/// }
+/// ```
+///
 pub fn collect_raw_walltime_results(
     scope: &str,
     name: String,
     uri: String,
-    iter_per_round: u32,
+    iters_per_round: Vec<u128>,
+    times_per_round_ns: Vec<u128>,
     max_time_ns: Option<u128>,
-    times_ns: Vec<u128>,
 ) {
     if !crate::utils::running_with_codspeed_runner() {
         return;
@@ -66,7 +90,13 @@ pub fn collect_raw_walltime_results(
         eprintln!("codspeed failed to get workspace root. skipping");
         return;
     };
-    let data = RawWallTimeData::from_runtime_data(name, uri, iter_per_round, max_time_ns, times_ns);
+    let data = RawWallTimeData::from_runtime_data(
+        name,
+        uri,
+        iters_per_round,
+        times_per_round_ns,
+        max_time_ns,
+    );
     data.dump_to_results(&workspace_root, scope);
 }
 

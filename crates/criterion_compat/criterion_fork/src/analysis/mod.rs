@@ -258,7 +258,7 @@ pub(crate) fn common<M: Measurement, T: ?Sized>(
     }
 
     if criterion.should_save_baseline() && ::codspeed::utils::running_with_codspeed_runner() {
-        codspeed::collect_walltime_results(id, criterion, &iters, avg_times);
+        codspeed::collect_walltime_results(id, criterion, &iters, &times);
     }
 }
 
@@ -293,7 +293,7 @@ mod codspeed {
         id: &BenchmarkId,
         c: &Criterion<M>,
         iters: &[f64],
-        avg_times: &[f64],
+        times: &[f64],
     ) {
         let (uri, bench_name) = create_uri_and_name(id, c);
 
@@ -306,17 +306,17 @@ mod codspeed {
             }
         }
 
-        let avg_iter_per_round = iters.iter().sum::<f64>() / iters.len() as f64;
+        let iters_per_round = iters.iter().map(|t| *t as u128).collect();
+        let times_per_round_ns = times.iter().map(|t| *t as u128).collect();
         let max_time_ns = Some(c.config.measurement_time.as_nanos());
-        let times_ns = avg_times.iter().map(|t| *t as u128).collect();
 
         ::codspeed::walltime::collect_raw_walltime_results(
             "criterion",
             bench_name,
             uri,
-            avg_iter_per_round as u32,
+            iters_per_round,
+            times_per_round_ns,
             max_time_ns,
-            times_ns,
         );
     }
 }

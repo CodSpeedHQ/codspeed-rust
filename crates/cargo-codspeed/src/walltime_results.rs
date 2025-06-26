@@ -53,10 +53,17 @@ impl WalltimeBenchmark {
 
 impl From<RawWallTimeData> for WalltimeBenchmark {
     fn from(value: RawWallTimeData) -> Self {
-        let times_ns: Vec<f64> = value.times_ns.iter().map(|&t| t as f64).collect();
-        let mut data = Data::new(times_ns.clone());
+        let total_time = value.times_per_round_ns.iter().sum::<u128>() as f64 / 1_000_000_000.0;
+        let time_per_iteration_per_round_ns: Vec<_> = value
+            .times_per_round_ns
+            .into_iter()
+            .zip(&value.iters_per_round)
+            .map(|(time_per_round, iter_per_round)| time_per_round / iter_per_round)
+            .map(|t| t as f64)
+            .collect::<Vec<f64>>();
+
+        let mut data = Data::new(time_per_iteration_per_round_ns);
         let rounds = data.len() as u64;
-        let total_time = times_ns.iter().sum::<f64>() / 1_000_000_000.0;
 
         let mean_ns = data.mean().unwrap();
 
@@ -91,7 +98,9 @@ impl From<RawWallTimeData> for WalltimeBenchmark {
         let min_ns = data.min();
         let max_ns = data.max();
 
-        let iter_per_round = value.iter_per_round as u64;
+        // TODO(COD-1056): We currently only support single iteration count per round
+        let iter_per_round = (value.iters_per_round.iter().sum::<u128>()
+            / value.iters_per_round.len() as u128) as u64;
         let warmup_iters = 0; // FIXME: add warmup detection
 
         let stats = BenchmarkStats {
@@ -172,9 +181,9 @@ mod tests {
         };
         let raw_bench = RawWallTimeData {
             metadata,
-            iter_per_round: 1,
+            iters_per_round: vec![1],
             max_time_ns: None,
-            times_ns: vec![42],
+            times_per_round_ns: vec![42],
         };
 
         let benchmark: WalltimeBenchmark = raw_bench.into();
@@ -182,5 +191,32 @@ mod tests {
         assert_eq!(benchmark.stats.min_ns, 42.);
         assert_eq!(benchmark.stats.max_ns, 42.);
         assert_eq!(benchmark.stats.mean_ns, 42.);
+    }
+
+    #[test]
+    fn test_parse_bench_with_variable_iterations() {
+        let metadata = BenchmarkMetadata {
+            name: "benchmark".to_string(),
+            uri: "test::benchmark".to_string(),
+        };
+
+        let raw_bench = RawWallTimeData {
+            metadata,
+            iters_per_round: vec![1, 2, 3, 4, 5, 6],
+            max_time_ns: None,
+            times_per_round_ns: vec![42, 42 * 2, 42 * 3, 42 * 4, 42 * 5, 42 * 6],
+        };
+
+        let total_rounds = raw_bench.iters_per_round.iter().sum::<u128>() as f64;
+
+        let benchmark: WalltimeBenchmark = raw_bench.into();
+        assert_eq!(benchmark.stats.stdev_ns, 0.);
+        assert_eq!(benchmark.stats.min_ns, 42.);
+        assert_eq!(benchmark.stats.max_ns, 42.);
+        assert_eq!(benchmark.stats.mean_ns, 42.);
+        assert_eq!(
+            benchmark.stats.total_time,
+            42. * total_rounds / 1_000_000_000.0
+        );
     }
 }
