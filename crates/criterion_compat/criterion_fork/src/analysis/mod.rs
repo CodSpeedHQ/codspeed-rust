@@ -310,7 +310,7 @@ mod codspeed {
         let times_per_round_ns = times.iter().map(|t| *t as u128).collect();
         let max_time_ns = Some(c.config.measurement_time.as_nanos());
 
-        ::codspeed::walltime::collect_raw_walltime_results(
+        ::codspeed::walltime_results::WalltimeBenchmark::collect_raw_walltime_results(
             "criterion",
             bench_name,
             uri,

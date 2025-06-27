@@ -6,11 +6,7 @@ use crate::{
 };
 use anyhow::Context;
 use cargo_metadata::{Metadata, Package};
-use codspeed::{
-    walltime::get_raw_result_dir_from_workspace_root,
-    walltime_results::{WalltimeBenchmark, WalltimeResults},
-};
-use glob::glob;
+use codspeed::walltime_results::WalltimeResults;
 use std::{
     io::{self, Write},
     os::unix::process::ExitStatusExt,
@@ -105,7 +101,7 @@ pub fn run_benches(
     let codspeed_target_dir = get_codspeed_target_dir(metadata, measurement_mode);
     let workspace_root = metadata.workspace_root.as_std_path();
     if measurement_mode == MeasurementMode::Walltime {
-        clear_raw_walltime_data(workspace_root)?;
+        WalltimeResults::clear(workspace_root)?;
     }
     let benches = filters.benches_to_run(codspeed_target_dir, metadata)?;
     if benches.is_empty() {
@@ -183,35 +179,14 @@ pub fn run_benches(
     Ok(())
 }
 
-fn clear_raw_walltime_data(workspace_root: &Path) -> Result<()> {
-    let raw_results_dir = get_raw_result_dir_from_workspace_root(workspace_root);
-    std::fs::remove_dir_all(&raw_results_dir).ok(); // ignore errors when the directory does not exist
-    std::fs::create_dir_all(&raw_results_dir).context("Failed to create raw_results directory")?;
-    Ok(())
-}
-
 fn aggregate_raw_walltime_data(workspace_root: &Path) -> Result<()> {
-    // retrieve data from `{workspace_root}/target/codspeed/raw_results/{scope}/*.json
-    let walltime_benchmarks = glob(&format!(
-        "{}/**/*.json",
-        get_raw_result_dir_from_workspace_root(workspace_root)
-            .to_str()
-            .unwrap(),
-    ))?
-    .map(|sample| {
-        let sample = sample?;
-        let raw_walltime_data: codspeed::walltime::RawWallTimeData =
-            serde_json::from_reader(std::fs::File::open(&sample)?)?;
-        Ok(WalltimeBenchmark::from(raw_walltime_data))
-    })
-    .collect::<Result<Vec<_>>>()?;
-
-    if walltime_benchmarks.is_empty() {
+    let results = WalltimeResults::collect_walltime_results(workspace_root)?;
+    if results.benchmarks().is_empty() {
         eprintln!("No walltime benchmarks found");
         return Ok(());
     }
 
-    for bench in &walltime_benchmarks {
+    for bench in results.benchmarks() {
         if bench.is_invalid() {
             eprintln!(
                 "Warning: Benchmark {} was possibly optimized away",
@@ -226,7 +201,6 @@ fn aggregate_raw_walltime_data(workspace_root: &Path) -> Result<()> {
         .join("results");
     std::fs::create_dir_all(&results_folder).context("Failed to create results folder")?;
 
-    let results = WalltimeResults::from_benchmarks(walltime_benchmarks);
     let results_path = results_folder.join(format!("{}.json", std::process::id()));
     let mut results_file =
         std::fs::File::create(&results_path).context("Failed to create results file")?;

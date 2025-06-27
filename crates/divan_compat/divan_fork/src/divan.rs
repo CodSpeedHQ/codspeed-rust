@@ -439,7 +439,7 @@ mod codspeed {
             }
         }
 
-        ::codspeed::walltime::collect_raw_walltime_results(
+        ::codspeed::walltime_results::WalltimeBenchmark::collect_raw_walltime_results(
             "divan",
             bench_name,
             uri,
