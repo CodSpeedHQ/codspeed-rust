@@ -189,8 +189,7 @@ impl WalltimeBenchmark {
     }
 
     fn dump_to_results(&self, workspace_root: &Path, scope: &str) {
-        let output_dir =
-            WalltimeResults::result_dir_from_workspace_root(workspace_root).join(scope);
+        let output_dir = result_dir_from_workspace_root(workspace_root).join(scope);
         std::fs::create_dir_all(&output_dir).unwrap();
         let bench_id = uuid::Uuid::new_v4().to_string();
         let output_path = output_dir.join(format!("{}.json", bench_id));
@@ -233,7 +232,7 @@ impl WalltimeResults {
         // retrieve data from `{workspace_root}/target/codspeed/raw_results/{scope}/*.json
         let benchmarks = glob::glob(&format!(
             "{}/**/*.json",
-            WalltimeResults::result_dir_from_workspace_root(workspace_root)
+            result_dir_from_workspace_root(workspace_root)
                 .to_str()
                 .unwrap(),
         ))?
@@ -258,26 +257,26 @@ impl WalltimeResults {
     }
 
     pub fn clear(workspace_root: &Path) -> Result<()> {
-        let raw_results_dir = WalltimeResults::result_dir_from_workspace_root(workspace_root);
+        let raw_results_dir = result_dir_from_workspace_root(workspace_root);
         std::fs::remove_dir_all(&raw_results_dir).ok(); // ignore errors when the directory does not exist
         std::fs::create_dir_all(&raw_results_dir)
             .context("Failed to create raw_results directory")?;
         Ok(())
     }
 
-    // FIXME: This assumes that the cargo target dir is `target`, and duplicates information with
-    // `cargo-codspeed::helpers::get_codspeed_target_dir`
-    fn result_dir_from_workspace_root(workspace_root: &Path) -> PathBuf {
-        workspace_root
-            .join("target")
-            .join("codspeed")
-            .join("walltime")
-            .join("raw_results")
-    }
-
     pub fn benchmarks(&self) -> &[WalltimeBenchmark] {
         &self.benchmarks
     }
+}
+
+// FIXME: This assumes that the cargo target dir is `target`, and duplicates information with
+// `cargo-codspeed::helpers::get_codspeed_target_dir`
+fn result_dir_from_workspace_root(workspace_root: &Path) -> PathBuf {
+    workspace_root
+        .join("target")
+        .join("codspeed")
+        .join("walltime")
+        .join("raw_results")
 }
 
 #[cfg(test)]

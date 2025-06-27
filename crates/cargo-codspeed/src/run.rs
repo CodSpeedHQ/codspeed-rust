@@ -180,7 +180,16 @@ pub fn run_benches(
 }
 
 fn aggregate_raw_walltime_data(workspace_root: &Path) -> Result<()> {
-    let results = WalltimeResults::collect_walltime_results(workspace_root)?;
+    let results = WalltimeResults::collect_walltime_results(workspace_root)
+        .with_context(|| {
+            format!(
+                "Failed to collect walltime results. This may be due to version incompatibility. \
+                Ensure that your compat layer (codspeed-criterion-compat, codspeed-bencher-compat, or codspeed-divan-compat) \
+                has the same major version as cargo-codspeed (currently v{}).",
+                env!("CARGO_PKG_VERSION")
+            )
+        })?;
+
     if results.benchmarks().is_empty() {
         eprintln!("No walltime benchmarks found");
         return Ok(());
