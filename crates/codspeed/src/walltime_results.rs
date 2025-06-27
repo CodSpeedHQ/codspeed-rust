@@ -1,4 +1,4 @@
-use codspeed::walltime::{BenchmarkMetadata, RawWallTimeData};
+use crate::walltime::{BenchmarkMetadata, RawWallTimeData};
 use serde::{Deserialize, Serialize};
 use statrs::statistics::{Data, Distribution, Max, Min, OrderStatistics};
 
@@ -42,11 +42,11 @@ pub struct WalltimeBenchmark {
 }
 
 impl WalltimeBenchmark {
-    pub(crate) fn is_invalid(&self) -> bool {
+    pub fn is_invalid(&self) -> bool {
         self.stats.min_ns < f64::EPSILON
     }
 
-    pub(crate) fn name(&self) -> &str {
+    pub fn name(&self) -> &str {
         &self.metadata.name
     }
 }

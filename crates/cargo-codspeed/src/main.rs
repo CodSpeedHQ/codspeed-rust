@@ -4,7 +4,6 @@ mod helpers;
 mod measurement_mode;
 mod prelude;
 mod run;
-mod walltime_results;
 
 use crate::prelude::*;
 use std::{env::args_os, process::exit};

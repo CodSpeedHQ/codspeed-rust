@@ -6,3 +6,4 @@ mod request;
 mod shared;
 pub mod utils;
 pub mod walltime;
+pub mod walltime_results;

@@ -3,11 +3,13 @@ use crate::{
     helpers::get_codspeed_target_dir,
     measurement_mode::MeasurementMode,
     prelude::*,
-    walltime_results::{WalltimeBenchmark, WalltimeResults},
 };
 use anyhow::Context;
 use cargo_metadata::{Metadata, Package};
-use codspeed::walltime::get_raw_result_dir_from_workspace_root;
+use codspeed::{
+    walltime::get_raw_result_dir_from_workspace_root,
+    walltime_results::{WalltimeBenchmark, WalltimeResults},
+};
 use glob::glob;
 use std::{
     io::{self, Write},

@@ -474,7 +474,6 @@ dependencies = [
  "predicates",
  "serde",
  "serde_json",
- "statrs",
  "termcolor",
  "uuid",
 ]
@@ -605,6 +604,7 @@ dependencies = [
  "nix",
  "serde",
  "serde_json",
+ "statrs",
  "tempfile",
  "uuid",
 ]

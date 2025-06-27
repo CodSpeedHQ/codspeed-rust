@@ -1,9 +1,9 @@
+use serde::{Deserialize, Serialize};
+
 use std::{
     io::Write,
     path::{Path, PathBuf},
 };
-
-use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct BenchmarkMetadata {
