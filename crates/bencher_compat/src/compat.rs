@@ -38,8 +38,9 @@ impl Bencher {
             black_box(inner());
         }
         self.codspeed.start_benchmark(uri.as_str());
-        black_box(inner());
+        let output = inner();
         self.codspeed.end_benchmark();
+        black_box(output);
     }
 }
 

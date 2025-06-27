@@ -97,8 +97,9 @@ where
         let mut gen_input = self.config.gen_input.borrow_mut();
         let input = gen_input();
         codspeed.start_benchmark(self.uri.as_str());
-        divan::black_box(benched(input));
+        let output = benched(input);
         codspeed.end_benchmark();
+        divan::black_box(output);
     }
 
     pub fn bench_local_refs<O, B>(self, mut benched: B)
@@ -110,7 +111,8 @@ where
         let mut input = gen_input();
 
         codspeed.start_benchmark(self.uri.as_str());
-        divan::black_box(benched(&mut input));
+        let output = benched(&mut input);
         codspeed.end_benchmark();
+        divan::black_box(output);
     }
 }
