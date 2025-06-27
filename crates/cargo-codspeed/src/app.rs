@@ -66,7 +66,7 @@ enum Commands {
         jobs: Option<u32>,
 
         /// Build the benchmarks with the specified profile
-        #[arg(long, default_value = "release")]
+        #[arg(long, default_value = "bench")]
         profile: String,
     },
     /// Run the previously built benchmarks
