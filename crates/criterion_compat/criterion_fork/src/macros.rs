@@ -68,7 +68,7 @@ macro_rules! criterion_group {
             let mut criterion: $crate::Criterion<_> = $config
                 .configure_from_args();
             $(
-                if codspeed::utils::running_with_codspeed_runner()  {
+                if std::env::var("CODSPEED_ENV").is_ok() {
                     criterion.set_current_file($crate::abs_file!());
                     criterion.set_macro_group(format!("{}::{}", stringify!($name), stringify!($target)));
                 }
