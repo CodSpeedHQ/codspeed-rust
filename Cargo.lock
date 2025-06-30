@@ -460,7 +460,7 @@ dependencies = [
 
 [[package]]
 name = "cargo-codspeed"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "anstyle",
  "anyhow",
@@ -594,7 +594,7 @@ checksum = "1462739cb27611015575c0c11df5df7601141071f07518d56fcc1be504cbec97"
 
 [[package]]
 name = "codspeed"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "anyhow",
  "bincode",
@@ -611,7 +611,7 @@ dependencies = [
 
 [[package]]
 name = "codspeed-bencher-compat"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "bencher",
  "codspeed",
@@ -619,7 +619,7 @@ dependencies = [
 
 [[package]]
 name = "codspeed-criterion-compat"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "async-std",
  "codspeed",
@@ -632,7 +632,7 @@ dependencies = [
 
 [[package]]
 name = "codspeed-criterion-compat-walltime"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "anes",
  "approx",
@@ -666,7 +666,7 @@ dependencies = [
 
 [[package]]
 name = "codspeed-divan-compat"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "codspeed",
  "codspeed-divan-compat-macros",
@@ -685,7 +685,7 @@ dependencies = [
 
 [[package]]
 name = "codspeed-divan-compat-macros"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "divan-macros",
  "itertools 0.14.0",
@@ -697,7 +697,7 @@ dependencies = [
 
 [[package]]
 name = "codspeed-divan-compat-walltime"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "cfg-if",
  "clap",

@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-bencher-compat"
-version = "3.0.0"
+version = "3.0.1"
 rust-version = "1.74" # MSRV
 edition = "2021"
 description = "Bencher compatibility layer for CodSpeed"
@@ -19,7 +19,7 @@ keywords = ["codspeed", "benchmark", "bencher"]
 
 [dependencies]
 bencher = "0.1.5"
-codspeed = { path = "../codspeed", version = "=3.0.0" }
+codspeed = { path = "../codspeed", version = "=3.0.1" }
 
 [[bench]]
 name = "bencher_example"
