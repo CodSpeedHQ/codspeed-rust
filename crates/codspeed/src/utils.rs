@@ -71,6 +71,7 @@ mod tests {
         assert_eq!(relative_path, path_dir.canonicalize().unwrap());
     }
 
+    #[cfg(unix)]
     #[test]
     fn test_get_git_relative_path_not_found_with_symlink() {
         let dir = tempdir().unwrap();

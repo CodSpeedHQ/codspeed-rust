@@ -9,9 +9,11 @@ use cargo_metadata::{Metadata, Package};
 use codspeed::walltime_results::WalltimeResults;
 use std::{
     io::{self, Write},
-    os::unix::process::ExitStatusExt,
     path::{Path, PathBuf},
 };
+
+#[cfg(unix)]
+use std::os::unix::process::ExitStatusExt;
 
 struct BenchToRun {
     bench_path: PathBuf,
@@ -156,13 +158,21 @@ pub fn run_benches(
                 if status.success() {
                     Ok(())
                 } else {
-                    let code = status
-                        .code()
-                        .or(status.signal().map(|s| 128 + s)) // 128+N indicates that a command was interrupted by signal N (see: https://tldp.org/LDP/abs/html/exitcodes.html)
-                        .unwrap_or(1);
+                    #[cfg(unix)]
+                    {
+                        let code = status
+                            .code()
+                            .or(status.signal().map(|s| 128 + s)) // 128+N indicates that a command was interrupted by signal N (see: https://tldp.org/LDP/abs/html/exitcodes.html)
+                            .unwrap_or(1);
 
-                    eprintln!("failed to execute the benchmark process, exit code: {code}");
-                    std::process::exit(code);
+                        eprintln!("failed to execute the benchmark process, exit code: {code}");
+
+                        std::process::exit(code);
+                    }
+                    #[cfg(not(unix))]
+                    {
+                        bail!("failed to execute the benchmark process: {}", status)
+                    }
                 }
             })?;
         eprintln!("Done running {bench_name}");

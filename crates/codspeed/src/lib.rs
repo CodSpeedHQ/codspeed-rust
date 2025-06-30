@@ -1,5 +1,8 @@
 pub mod codspeed;
+
+#[cfg(unix)]
 pub mod fifo;
+
 mod macros;
 mod measurement;
 mod request;

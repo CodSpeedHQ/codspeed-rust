@@ -192,6 +192,7 @@ pub(crate) trait Routine<M: Measurement, T: ?Sized> {
         }
 
         let m_elapsed = {
+            #[cfg(unix)]
             let _guard = codspeed::fifo::BenchGuard::new_with_runner_fifo();
             self.bench(measurement, &m_iters, parameter)
         };

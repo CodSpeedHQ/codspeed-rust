@@ -297,12 +297,17 @@ mod codspeed {
     ) {
         let (uri, bench_name) = create_uri_and_name(id, c);
 
-        if let Err(error) = ::codspeed::fifo::send_cmd(codspeed::fifo::Command::CurrentBenchmark {
-            pid: std::process::id(),
-            uri: uri.clone(),
-        }) {
-            if codspeed::utils::running_with_codspeed_runner() {
-                eprintln!("Failed to send benchmark URI to runner: {error:?}");
+        #[cfg(unix)]
+        {
+            if let Err(error) =
+                ::codspeed::fifo::send_cmd(codspeed::fifo::Command::CurrentBenchmark {
+                    pid: std::process::id(),
+                    uri: uri.clone(),
+                })
+            {
+                if codspeed::utils::running_with_codspeed_runner() {
+                    eprintln!("Failed to send benchmark URI to runner: {error:?}");
+                }
             }
         }
 
