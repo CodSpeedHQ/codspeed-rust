@@ -26,7 +26,7 @@ libc = "^0.2"
 nix = { version = "0.29.0", features = ["fs"] }
 serde = { workspace = true }
 serde_json = { workspace = true }
-statrs = "0.18.0"
+statrs = { version = "0.18.0", default-features = false }
 uuid = { version = "1.12.1", features = ["v4"] }
 
 [[bench]]
