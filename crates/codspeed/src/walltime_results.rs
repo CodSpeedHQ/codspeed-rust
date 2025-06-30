@@ -192,7 +192,7 @@ impl WalltimeBenchmark {
         let output_dir = result_dir_from_workspace_root(workspace_root).join(scope);
         std::fs::create_dir_all(&output_dir).unwrap();
         let bench_id = uuid::Uuid::new_v4().to_string();
-        let output_path = output_dir.join(format!("{}.json", bench_id));
+        let output_path = output_dir.join(format!("{bench_id}.json"));
         let mut writer = std::fs::File::create(&output_path).expect("Failed to create the file");
         serde_json::to_writer_pretty(&mut writer, self).expect("Failed to write the data");
         writer.flush().expect("Failed to flush the writer");

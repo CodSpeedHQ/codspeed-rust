@@ -153,7 +153,7 @@ impl EntryConst {
     /// Returns [`PartialOrd::partial_cmp`] ordering if `<` or `>, falling back
     /// to comparing [`ToString::to_string`] otherwise.
     pub(crate) fn cmp_name(&self, other: &Self) -> Ordering {
-        if self.partial_cmp == other.partial_cmp {
+        if self.partial_cmp as usize == other.partial_cmp as usize {
             // SAFETY: Both constants have the same comparison function, so they
             // must be the same type.
             if let Some(ordering) = unsafe { (self.partial_cmp)(self.value, other.value) } {

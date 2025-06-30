@@ -17,7 +17,7 @@ fn main() {
     };
 
     if let Err(e) = app::run(args_vec.into_iter()) {
-        eprintln!("{}", e);
+        eprintln!("{e}");
         exit(1);
     }
 }

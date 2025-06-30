@@ -56,7 +56,7 @@ impl BuildOptions<'_> {
                     println!("{}", &msg.message);
                 }
                 Message::TextLine(line) => {
-                    println!("{}", line);
+                    println!("{line}");
                 }
                 Message::CompilerArtifact(artifact)
                     if artifact.target.is_kind(TargetKind::Bench) =>

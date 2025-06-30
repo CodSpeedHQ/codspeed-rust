@@ -58,7 +58,7 @@ pub fn main() {
         if let Some(options) = &meta.bench_options {
             if let Some(true) = options.ignore {
                 let uri = uri::generate(&entry, entry.display_name());
-                println!("Skipped: {}", uri);
+                println!("Skipped: {uri}");
                 continue;
             }
         }

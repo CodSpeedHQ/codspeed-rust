@@ -68,10 +68,10 @@ impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
             self.group_name,
         );
         if let Some(function_name) = id.function_name {
-            uri = format!("{}::{}", uri, function_name);
+            uri = format!("{uri}::{function_name}");
         }
         if let Some(parameter) = id.parameter {
-            uri = format!("{}[{}]", uri, parameter);
+            uri = format!("{uri}[{parameter}]");
         }
         let mut b = Bencher::new(self.codspeed.clone(), uri);
         f(&mut b, input);
@@ -129,7 +129,7 @@ impl BenchmarkId {
     ) -> BenchmarkId {
         BenchmarkId {
             function_name: Some(function_name.into()),
-            parameter: Some(format!("{}", parameter)),
+            parameter: Some(format!("{parameter}")),
         }
     }
 
@@ -138,7 +138,7 @@ impl BenchmarkId {
     pub fn from_parameter<P: ::std::fmt::Display>(parameter: P) -> BenchmarkId {
         BenchmarkId {
             function_name: None,
-            parameter: Some(format!("{}", parameter)),
+            parameter: Some(format!("{parameter}")),
         }
     }
 
@@ -152,7 +152,7 @@ impl BenchmarkId {
     pub(crate) fn no_function_with_input<P: ::std::fmt::Display>(parameter: P) -> BenchmarkId {
         BenchmarkId {
             function_name: None,
-            parameter: Some(format!("{}", parameter)),
+            parameter: Some(format!("{parameter}")),
         }
     }
 }

@@ -161,14 +161,11 @@ pub fn run_benches(
                         .or(status.signal().map(|s| 128 + s)) // 128+N indicates that a command was interrupted by signal N (see: https://tldp.org/LDP/abs/html/exitcodes.html)
                         .unwrap_or(1);
 
-                    eprintln!(
-                        "failed to execute the benchmark process, exit code: {}",
-                        code
-                    );
+                    eprintln!("failed to execute the benchmark process, exit code: {code}");
                     std::process::exit(code);
                 }
             })?;
-        eprintln!("Done running {}", bench_name);
+        eprintln!("Done running {bench_name}");
     }
     eprintln!("Finished running {} benchmark suite(s)", to_run.len());
 

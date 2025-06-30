@@ -32,7 +32,7 @@ pub fn setup(dir: &str, project: Project) -> String {
     copy_opts.content_only = true;
     copy(dir, &tmp_dir, &copy_opts).unwrap();
     if env::var("DEBUG").is_ok() {
-        println!("tmp_dir={:?}", tmp_dir);
+        println!("tmp_dir={tmp_dir:?}");
     }
 
     let package_root = PathBuf::from_str(env!("CARGO_MANIFEST_DIR")).unwrap();
