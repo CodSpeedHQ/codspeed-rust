@@ -8,6 +8,12 @@
 
 </div>
 
+---
+
+**Documentation**: https://codspeed.io/docs/reference/codspeed-rust
+
+---
+
 This mono-repo contains the integration crates for using CodSpeed in Rust:
 
 - [`cargo-codspeed`](./crates/cargo-codspeed/): A cargo subcommand for running CodSpeed on your project
