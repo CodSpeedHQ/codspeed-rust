@@ -1,0 +1,19 @@
+[package]
+name = "simple-criterion"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+criterion = { package = "codspeed-criterion-compat", path = "../../../criterion_compat" }
+
+[workspace]
+
+
+[[bench]]
+name = "criterion_example"
+harness = false
+
+[[bench]]
+name = "another_criterion_example"
+harness = false

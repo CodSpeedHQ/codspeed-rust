@@ -1,0 +1,19 @@
+[package]
+name = "simple-divan"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+divan = { package = "codspeed-divan-compat", path = "../../../divan_compat" }
+
+[workspace]
+
+
+[[bench]]
+name = "divan_example"
+harness = false
+
+[[bench]]
+name = "another_divan_example"
+harness = false
