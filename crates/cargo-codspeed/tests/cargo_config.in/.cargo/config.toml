@@ -1,0 +1,2 @@
+[build]
+rustflags = ["--cfg", "custom_feature_flag"]
