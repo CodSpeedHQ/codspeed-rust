@@ -105,30 +105,62 @@ impl BuildOptions<'_> {
         Ok(built_benches)
     }
 
+    /// Adds debug flags and codspeed compilation
+    ///
+    /// If the user has set `RUSTFLAGS`, it will append the flags to it.
+    /// Else, and if the cargo version allows it, it will set the cargo config through
+    /// `--config 'build.rustflags=[ ... ]'`
+    ///
+    /// # Why we do this
+    /// As tracked in [https://github.com/rust-lang/cargo/issues/5376], setting `RUSTFLAGS`
+    /// completely overrides rustflags from cargo config
+    /// We use the cargo built-in config mechanism to set the flags if the user has not set
+    /// `RUSTFLAGS`.
+    fn add_rust_flags(&self, cargo: &mut Command, measurement_mode: MeasurementMode) {
+        let mut flags = vec![
+            // Add debug info (equivalent to -g)
+            "-Cdebuginfo=2".to_owned(),
+            // Prevent debug info stripping
+            // https://doc.rust-lang.org/cargo/reference/profiles.html#release
+            // According to cargo docs, for release profile which we default to:
+            // `strip = "none"` and `debug = false`.
+            // In practice, if we set debug info through RUSTFLAGS, cargo still strips them, most
+            // likely because debug = false in the release profile.
+            // We also need to disable stripping through rust flags.
+            "-Cstrip=none".to_owned(),
+        ];
+
+        // Add the codspeed cfg flag if instrumentation mode is enabled
+        if measurement_mode == MeasurementMode::Instrumentation {
+            flags.push("--cfg=codspeed".to_owned());
+        }
+
+        match std::env::var("RUSTFLAGS") {
+            Result::Ok(existing_rustflags) => {
+                // Expand already existing RUSTFLAGS env var
+                let flags_str = flags.join(" ");
+                cargo.env("RUSTFLAGS", format!("{existing_rustflags} {flags_str}"));
+            }
+            Err(_) => {
+                // Use --config to set rustflags
+                // Our rust integration has an msrv of 1.74, --config is available since 1.63
+                // https://doc.rust-lang.org/nightly/cargo/CHANGELOG.html#cargo-163-2022-08-11
+                let config_value = format!(
+                    "build.rustflags=[{}]",
+                    flags.into_iter().map(|f| format!("\"{f}\"")).join(",")
+                );
+                cargo.arg("--config").arg(config_value);
+            }
+        }
+    }
+
     /// Generates a subcommand to build the benchmarks by invoking cargo and forwarding the filters
     /// This command explicitly ignores the `self.benches`: all benches are built
     fn build_command(&self, measurement_mode: MeasurementMode) -> Command {
         let mut cargo = Command::new("cargo");
         cargo.args(["build", "--benches"]);
 
-        let mut rust_flags = std::env::var("RUSTFLAGS").unwrap_or_else(|_| "".into());
-        // Add debug info (equivalent to -g)
-        rust_flags.push_str(" -C debuginfo=2");
-
-        // Prevent debug info stripping
-        // https://doc.rust-lang.org/cargo/reference/profiles.html#release
-        // According to cargo docs, for release profile which we default to:
-        // `strip = "none"` and `debug = false`.
-        // In practice, if we set debug info through RUSTFLAGS, cargo still strips them, most
-        // likely because debug = false in the release profile.
-        // We also need to disable stripping through rust flags.
-        rust_flags.push_str(" -C strip=none");
-
-        // Add the codspeed cfg flag if instrumentation mode is enabled
-        if measurement_mode == MeasurementMode::Instrumentation {
-            rust_flags.push_str(" --cfg codspeed");
-        }
-        cargo.env("RUSTFLAGS", rust_flags);
+        self.add_rust_flags(&mut cargo, measurement_mode);
 
         if let Some(features) = self.features {
             cargo.arg("--features").arg(features.join(","));
