@@ -107,7 +107,10 @@ jobs:
 
       - run: cargo install --path crates/cargo-codspeed --locked
 
-      - run: cargo codspeed build -p ${{ matrix.package }}
+      - run: |
+          # Remove the cargo config else it forces instrumentation mode
+          rm -f .cargo/config.toml
+          cargo codspeed build -p ${{ matrix.package }}
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@main
