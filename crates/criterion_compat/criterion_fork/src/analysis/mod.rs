@@ -305,7 +305,9 @@ mod codspeed {
                     uri: uri.clone(),
                 })
             {
-                if codspeed::utils::running_with_codspeed_runner() {
+                if codspeed::utils::running_with_codspeed_runner()
+                    && codspeed::utils::is_perf_enabled()
+                {
                     eprintln!("Failed to send benchmark URI to runner: {error:?}");
                 }
             }

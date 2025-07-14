@@ -42,6 +42,10 @@ pub fn running_with_codspeed_runner() -> bool {
     std::env::var("CODSPEED_ENV").is_ok()
 }
 
+pub fn is_perf_enabled() -> bool {
+    std::env::var("CODSPEED_PERF_ENABLED").is_ok()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
