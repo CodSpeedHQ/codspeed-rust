@@ -1,2 +1,10 @@
+# Note: This does nothing since `target.<cfg>.rustflags` takes precedence over `build.rustflags`
+# See: https://doc.rust-lang.org/nightly/cargo/reference/config.html#buildrustflags
 [build]
+rustflags = ["--cfg", "this_does_nothing"]
+
+[target.x86_64-unknown-linux-gnu]
+rustflags = ["--cfg", "target_feature_flag"]
+
+[target.'cfg(all())']
 rustflags = ["--cfg", "custom_feature_flag"]

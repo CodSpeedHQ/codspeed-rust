@@ -145,8 +145,9 @@ impl BuildOptions<'_> {
                 // Use --config to set rustflags
                 // Our rust integration has an msrv of 1.74, --config is available since 1.63
                 // https://doc.rust-lang.org/nightly/cargo/CHANGELOG.html#cargo-163-2022-08-11
+                // Note: We have to use `target.cfg(all())` since `build` has a lower precedence.
                 let config_value = format!(
-                    "build.rustflags=[{}]",
+                    "target.'cfg(all())'.rustflags=[{}]",
                     flags.into_iter().map(|f| format!("\"{f}\"")).join(",")
                 );
                 cargo.arg("--config").arg(config_value);

@@ -8,6 +8,11 @@ fn bench_failing_without_custom_flag(c: &mut Criterion) {
             compile_error!(
                 "custom_feature_flag is not enabled - .cargo/config.toml rustflags not applied"
             );
+
+            #[cfg(not(target_feature_flag))]
+            compile_error!(
+                "target_feature_flag is not enabled - .cargo/config.toml rustflags not applied"
+            );
         })
     });
 }
