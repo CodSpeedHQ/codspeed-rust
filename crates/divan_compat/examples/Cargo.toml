@@ -40,3 +40,7 @@ harness = false
 [[bench]]
 name = "the_algorithms"
 harness = false
+
+[[bench]]
+name = "counters"
+harness = false
