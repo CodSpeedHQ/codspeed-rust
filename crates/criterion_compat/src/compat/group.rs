@@ -19,8 +19,8 @@ pub struct BenchmarkGroup<'a, M: Measurement = WallTime> {
 
 #[allow(clippy::needless_lifetimes)]
 impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
-    pub fn new(criterion: &mut Criterion<M>, group_name: String) -> BenchmarkGroup<M> {
-        BenchmarkGroup::<M> {
+    pub(crate) fn new(criterion: &'a mut Criterion<M>, group_name: String) -> Self {
+        Self {
             codspeed: criterion
                 .codspeed
                 .as_ref()
@@ -73,7 +73,8 @@ impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
         if let Some(parameter) = id.parameter {
             uri = format!("{uri}[{parameter}]");
         }
-        let mut b = Bencher::new(self.codspeed.clone(), uri);
+        let mut codspeed = self.codspeed.borrow_mut();
+        let mut b = Bencher::new(&mut codspeed, uri);
         f(&mut b, input);
     }
 }
