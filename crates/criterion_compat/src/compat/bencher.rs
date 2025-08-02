@@ -1,5 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
 use codspeed::codspeed::{black_box, CodSpeed};
 use colored::Colorize;
 use criterion::BatchSize;
@@ -10,19 +8,14 @@ use criterion::async_executor::AsyncExecutor;
 use std::future::Future;
 
 pub struct Bencher<'a> {
-    codspeed: Rc<RefCell<CodSpeed>>,
+    codspeed: &'a mut CodSpeed,
     uri: String,
-    _marker: std::marker::PhantomData<&'a ()>,
 }
 
 #[allow(clippy::needless_lifetimes)]
 impl<'a> Bencher<'a> {
-    pub fn new(codspeed: Rc<RefCell<CodSpeed>>, uri: String) -> Self {
-        Bencher {
-            codspeed,
-            uri,
-            _marker: std::marker::PhantomData,
-        }
+    pub(crate) fn new(codspeed: &'a mut CodSpeed, uri: String) -> Self {
+        Bencher { codspeed, uri }
     }
 
     #[inline(never)]
@@ -30,7 +23,7 @@ impl<'a> Bencher<'a> {
     where
         R: FnMut() -> O,
     {
-        let mut codspeed = self.codspeed.borrow_mut();
+        let codspeed = &mut *self.codspeed;
         // NOTE: this structure hardens our benchmark against dead code elimination
         // https://godbolt.org/z/KnYeKMd1o
         for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
@@ -62,7 +55,7 @@ impl<'a> Bencher<'a> {
         S: FnMut() -> I,
         R: FnMut(I) -> O,
     {
-        let mut codspeed = self.codspeed.borrow_mut();
+        let codspeed = &mut *self.codspeed;
 
         for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
             let input = black_box(setup());
@@ -108,7 +101,7 @@ impl<'a> Bencher<'a> {
         S: FnMut() -> I,
         R: FnMut(&mut I) -> O,
     {
-        let mut codspeed = self.codspeed.borrow_mut();
+        let codspeed = &mut *self.codspeed;
 
         for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
             let mut input = black_box(setup());
@@ -149,7 +142,7 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
     {
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
-            let mut codspeed = b.codspeed.borrow_mut();
+            let codspeed = &mut *b.codspeed;
             for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
                 if i < codspeed::codspeed::WARMUP_RUNS {
                     black_box(routine().await);
@@ -214,7 +207,7 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
     {
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
-            let mut codspeed = b.codspeed.borrow_mut();
+            let codspeed = &mut *b.codspeed;
 
             for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
                 let input = black_box(setup());
@@ -245,7 +238,7 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
     {
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
-            let mut codspeed = b.codspeed.borrow_mut();
+            let codspeed = &mut *b.codspeed;
 
             for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
                 let mut input = black_box(setup());
@@ -261,5 +254,19 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
                 drop(black_box(input));
             }
         });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn assert_send<T: Send>() {}
+    fn assert_sync<T: Sync>() {}
+
+    #[test]
+    fn test_auto_traits() {
+        assert_send::<Bencher>();
+        assert_sync::<Bencher>();
     }
 }
