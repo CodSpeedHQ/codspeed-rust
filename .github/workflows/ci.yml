@@ -116,6 +116,7 @@ jobs:
         uses: CodSpeedHQ/action@main
         env:
           MY_ENV_VAR: "YES"
+          CODSPEED_PERF_ENABLED: true
         with:
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
