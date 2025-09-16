@@ -86,6 +86,7 @@ jobs:
         env:
           MY_ENV_VAR: "YES"
         with:
+          mode: instrumentation
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
 
@@ -118,6 +119,7 @@ jobs:
           MY_ENV_VAR: "YES"
           CODSPEED_PERF_ENABLED: true
         with:
+          mode: walltime
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
 
