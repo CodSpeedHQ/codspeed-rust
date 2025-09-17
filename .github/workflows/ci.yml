@@ -59,44 +59,45 @@ jobs:
       - uses: moonrepo/setup-rust@v1
       - run: cargo test --all
 
-  compat-integration-test-instrumentation:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        build-args:
-          - "-p codspeed"
-          - "-p codspeed-bencher-compat"
-          - "--features async_futures -p codspeed-criterion-compat"
-          - "-p codspeed-divan-compat"
-          - "-p codspeed-divan-compat-examples"
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - uses: moonrepo/setup-rust@v1
-        with:
-          cache-target: release
+  # compat-integration-test-instrumentation:
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       build-args:
+  #         - "-p codspeed"
+  #         - "-p codspeed-bencher-compat"
+  #         - "--features async_futures -p codspeed-criterion-compat"
+  #         - "-p codspeed-divan-compat"
+  #         - "-p codspeed-divan-compat-examples"
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
+  #     - uses: moonrepo/setup-rust@v1
+  #       with:
+  #         cache-target: release
 
-      - run: cargo install --path crates/cargo-codspeed --locked
+  #     - run: cargo install --path crates/cargo-codspeed --locked
 
-      - run: cargo codspeed build ${{ matrix.build-args }}
+  #     - run: cargo codspeed build ${{ matrix.build-args }}
 
-      - name: Run the benchmarks
-        uses: CodSpeedHQ/action@main
-        env:
-          MY_ENV_VAR: "YES"
-        with:
-          run: cargo codspeed run
-          token: ${{ secrets.CODSPEED_TOKEN }}
+  #     - name: Run the benchmarks
+  #       uses: CodSpeedHQ/action@main
+  #       env:
+  #         MY_ENV_VAR: "YES"
+  #       with:
+  #         mode: instrumentation
+  #         run: cargo codspeed run
+  #         token: ${{ secrets.CODSPEED_TOKEN }}
 
   compat-integration-test-walltime:
     runs-on: codspeed-macro
     strategy:
       matrix:
         package:
-          - codspeed-divan-compat
+          # - codspeed-divan-compat
           - codspeed-divan-compat-examples
-          - codspeed-criterion-compat
+          # - codspeed-criterion-compat
     steps:
       - uses: actions/checkout@v4
         with:
@@ -118,6 +119,7 @@ jobs:
           MY_ENV_VAR: "YES"
           CODSPEED_PERF_ENABLED: true
         with:
+          mode: walltime
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
 

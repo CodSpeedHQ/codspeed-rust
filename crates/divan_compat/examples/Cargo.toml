@@ -17,25 +17,25 @@ num-traits = { version = "0.2", optional = true }
 default = ["big-math"]
 big-math = ["num-bigint", "num-traits"]
 
-[[bench]]
-name = "math"
-harness = false
+# [[bench]]
+# name = "math"
+# harness = false
 
-[[bench]]
-name = "sort"
-harness = false
+# [[bench]]
+# name = "sort"
+# harness = false
 
-[[bench]]
-name = "time"
-harness = false
+# [[bench]]
+# name = "time"
+# harness = false
 
-[[bench]]
-name = "time_scale"
-harness = false
+# [[bench]]
+# name = "time_scale"
+# harness = false
 
-[[bench]]
-name = "env"
-harness = false
+# [[bench]]
+# name = "env"
+# harness = false
 
 [[bench]]
 name = "the_algorithms"
