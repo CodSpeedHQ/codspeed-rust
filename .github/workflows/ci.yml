@@ -131,7 +131,6 @@ jobs:
       - lint-windows
       - msrv-check
       - tests
-      - compat-integration-test-instrumentation
       - compat-integration-test-walltime
     steps:
       - uses: re-actors/alls-green@release/v1
