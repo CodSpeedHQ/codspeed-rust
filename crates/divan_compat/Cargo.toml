@@ -33,3 +33,7 @@ harness = false
 [[bench]]
 name = "drop_example"
 harness = false
+
+[[bench]]
+name = "thread_example"
+harness = false
