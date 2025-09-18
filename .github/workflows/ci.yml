@@ -114,11 +114,12 @@ jobs:
           cargo codspeed build -p ${{ matrix.package }}
 
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@main
+        uses: CodSpeedHQ/action@chore/runner-branch
         env:
           MY_ENV_VAR: "YES"
           CODSPEED_PERF_ENABLED: true
         with:
+          runner-branch: cod-1344-investigate-benchmark-time-in-drop_in_place-and-perf
           mode: walltime
           run: cargo codspeed run
           token: ${{ secrets.CODSPEED_TOKEN }}
