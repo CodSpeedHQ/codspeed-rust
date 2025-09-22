@@ -2,3 +2,6 @@
 [submodule "crates/divan_compat/examples/src/the_algorithms/Rust"]
 	path = crates/divan_compat/examples/src/the_algorithms/Rust
 	url = https://github.com/TheAlgorithms/Rust.git
+[submodule "crates/codspeed/instrument-hooks"]
+	path = crates/codspeed/instrument-hooks
+	url = https://github.com/CodSpeedHQ/instrument-hooks

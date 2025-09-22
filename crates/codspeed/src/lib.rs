@@ -1,11 +1,10 @@
 pub mod codspeed;
 
 #[cfg(unix)]
-pub mod fifo;
+pub mod instrument_hooks;
 
 mod macros;
 mod measurement;
 mod request;
-mod shared;
 pub mod utils;
 pub mod walltime_results;
