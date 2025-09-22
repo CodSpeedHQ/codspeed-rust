@@ -29,3 +29,7 @@ harness = false
 [[bench]]
 name = "sleep_benches"
 harness = false
+
+[[bench]]
+name = "drop_example"
+harness = false
