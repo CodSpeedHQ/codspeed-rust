@@ -29,6 +29,7 @@ mod args;
 mod defer;
 mod options;
 
+use ::codspeed::instrument_hooks::InstrumentHooks;
 use defer::{DeferSlot, DeferStore};
 
 pub use self::{
@@ -657,8 +658,7 @@ impl<'a> BenchContext<'a> {
 
         let bench_overheads = timer.bench_overheads();
 
-        #[cfg(unix)]
-        let _guard = codspeed::fifo::BenchGuard::new_with_runner_fifo();
+        let _ = InstrumentHooks::instance().start_benchmark();
         while {
             // Conditions for when sampling is over:
             if elapsed_picos >= max_picos {
@@ -812,8 +812,7 @@ impl<'a> BenchContext<'a> {
                 elapsed_picos = elapsed_picos.saturating_add(progress_picos);
             }
         }
-        #[cfg(unix)]
-        core::mem::drop(_guard);
+        let _ = InstrumentHooks::instance().stop_benchmark();
 
         // Reset flag for ignoring allocations.
         crate::alloc::IGNORE_ALLOC.set(false);
@@ -899,6 +898,7 @@ impl<'a> BenchContext<'a> {
             let sample_start: UntaggedTimestamp;
             let sample_end: UntaggedTimestamp;
 
+            let instrument_hooks = InstrumentHooks::instance();
             if size_of::<I>() == 0 && (size_of::<O>() == 0 || !mem::needs_drop::<O>()) {
                 // Use a range instead of `defer_store` to make the benchmarking
                 // loop cheaper.
@@ -914,6 +914,8 @@ impl<'a> BenchContext<'a> {
                 }
 
                 sync_threads(true);
+
+                let start_time = InstrumentHooks::current_timestamp();
                 sample_start = UntaggedTimestamp::start(timer_kind);
 
                 // Sample loop:
@@ -926,6 +928,9 @@ impl<'a> BenchContext<'a> {
                 }
 
                 sample_end = UntaggedTimestamp::end(timer_kind);
+                let end_time = InstrumentHooks::current_timestamp();
+                instrument_hooks.add_benchmark_timestamps(start_time, end_time);
+
                 sync_threads(false);
                 save_alloc_info();
 
@@ -967,6 +972,7 @@ impl<'a> BenchContext<'a> {
                         let defer_slots_iter = defer_slots_slice.iter();
 
                         sync_threads(true);
+                        let start_time = InstrumentHooks::current_timestamp();
                         sample_start = UntaggedTimestamp::start(timer_kind);
 
                         // Sample loop:
@@ -981,6 +987,8 @@ impl<'a> BenchContext<'a> {
                         }
 
                         sample_end = UntaggedTimestamp::end(timer_kind);
+                        let end_time = InstrumentHooks::current_timestamp();
+                        instrument_hooks.add_benchmark_timestamps(start_time, end_time);
                         sync_threads(false);
                         save_alloc_info();
 
@@ -1020,6 +1028,7 @@ impl<'a> BenchContext<'a> {
                         let defer_inputs_iter = defer_inputs_slice.iter();
 
                         sync_threads(true);
+                        let start_time = InstrumentHooks::current_timestamp();
                         sample_start = UntaggedTimestamp::start(timer_kind);
 
                         // Sample loop:
@@ -1030,6 +1039,8 @@ impl<'a> BenchContext<'a> {
                         }
 
                         sample_end = UntaggedTimestamp::end(timer_kind);
+                        let end_time = InstrumentHooks::current_timestamp();
+                        instrument_hooks.add_benchmark_timestamps(start_time, end_time);
                         sync_threads(false);
                         save_alloc_info();
 
