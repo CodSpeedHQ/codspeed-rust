@@ -37,3 +37,7 @@ harness = false
 [[bench]]
 name = "thread_example"
 harness = false
+
+[[bench]]
+name = "fib_example"
+harness = false
