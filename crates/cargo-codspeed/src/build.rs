@@ -1,5 +1,5 @@
 use crate::{
-    app::PackageFilters,
+    app::{BenchTargetFilters, PackageFilters},
     helpers::{clear_dir, get_codspeed_target_dir},
     measurement_mode::MeasurementMode,
     prelude::*,
@@ -8,6 +8,7 @@ use cargo_metadata::{camino::Utf8PathBuf, Message, Metadata, TargetKind};
 use std::process::{exit, Command, Stdio};
 
 struct BuildOptions<'a> {
+    bench_target_filters: BenchTargetFilters,
     package_filters: PackageFilters,
     features: &'a Option<Vec<String>>,
     profile: &'a str,
@@ -18,6 +19,16 @@ struct BuiltBench {
     package: String,
     bench: String,
     executable_path: Utf8PathBuf,
+}
+
+pub struct BuildConfig {
+    pub package_filters: PackageFilters,
+    pub bench_target_filters: BenchTargetFilters,
+    pub features: Option<Vec<String>>,
+    pub profile: String,
+    pub quiet: bool,
+    pub measurement_mode: MeasurementMode,
+    pub passthrough_flags: Vec<String>,
 }
 
 impl BuildOptions<'_> {
@@ -167,7 +178,15 @@ impl BuildOptions<'_> {
     /// This command explicitly ignores the `self.benches`: all benches are built
     fn build_command(&self, measurement_mode: MeasurementMode) -> Command {
         let mut cargo = Command::new("cargo");
-        cargo.args(["build", "--benches"]);
+        cargo.arg("build");
+
+        if let Some(bench_target_filters) = &self.bench_target_filters.bench {
+            for bench_target_filter in bench_target_filters {
+                cargo.args(["--bench", bench_target_filter]);
+            }
+        } else {
+            cargo.args(["--benches"]);
+        }
 
         self.add_rust_flags(&mut cargo, measurement_mode);
 
@@ -205,22 +224,15 @@ impl PackageFilters {
     }
 }
 
-pub fn build_benches(
-    metadata: &Metadata,
-    package_filters: PackageFilters,
-    features: Option<Vec<String>>,
-    profile: String,
-    quiet: bool,
-    measurement_mode: MeasurementMode,
-    passthrough_flags: Vec<String>,
-) -> Result<()> {
+pub fn build_benches(metadata: &Metadata, config: BuildConfig) -> Result<()> {
     let built_benches = BuildOptions {
-        package_filters,
-        features: &features,
-        profile: &profile,
-        passthrough_flags: &passthrough_flags,
+        bench_target_filters: config.bench_target_filters,
+        package_filters: config.package_filters,
+        features: &config.features,
+        profile: &config.profile,
+        passthrough_flags: &config.passthrough_flags,
     }
-    .build(metadata, quiet, measurement_mode)?;
+    .build(metadata, config.quiet, config.measurement_mode)?;
 
     if built_benches.is_empty() {
         bail!(
@@ -229,7 +241,7 @@ pub fn build_benches(
         );
     }
 
-    let codspeed_target_dir = get_codspeed_target_dir(metadata, measurement_mode);
+    let codspeed_target_dir = get_codspeed_target_dir(metadata, config.measurement_mode);
     let built_bench_count = built_benches.len();
 
     // Create and clear packages codspeed target directories

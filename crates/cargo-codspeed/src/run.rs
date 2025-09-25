@@ -1,5 +1,7 @@
 use crate::{
-    app::PackageFilters, helpers::get_codspeed_target_dir, measurement_mode::MeasurementMode,
+    app::{BenchTargetFilters, PackageFilters},
+    helpers::get_codspeed_target_dir,
+    measurement_mode::MeasurementMode,
     prelude::*,
 };
 use anyhow::Context;
@@ -15,7 +17,7 @@ use std::os::unix::process::ExitStatusExt;
 
 struct BenchToRun {
     bench_path: PathBuf,
-    bench_name: String,
+    bench_target_name: String,
     working_directory: PathBuf,
     package_name: String,
 }
@@ -47,8 +49,9 @@ impl PackageFilters {
 
     fn benches_to_run(
         &self,
-        codspeed_target_dir: PathBuf,
         metadata: &Metadata,
+        bench_target_filters: BenchTargetFilters,
+        codspeed_target_dir: PathBuf,
     ) -> Result<Vec<BenchToRun>> {
         let packages = self.packages_from_flags(metadata)?;
 
@@ -63,18 +66,23 @@ impl PackageFilters {
                 for entry in read_dir {
                     let entry = entry?;
                     let bench_path = entry.path();
-                    let bench_name = bench_path
+                    let bench_target_name = bench_path
                         .file_name()
                         .unwrap()
                         .to_str()
                         .unwrap()
                         .to_string();
+                    if let Some(bench_target_filter) = &bench_target_filters.bench {
+                        if !bench_target_filter.contains(&bench_target_name) {
+                            continue;
+                        }
+                    }
                     if !bench_path.is_dir() {
                         benches.push(BenchToRun {
                             package_name: package_name.clone(),
                             working_directory: working_directory.into(),
                             bench_path,
-                            bench_name,
+                            bench_target_name,
                         });
                     }
                 }
@@ -89,6 +97,7 @@ pub fn run_benches(
     metadata: &Metadata,
     bench_name_filter: Option<String>,
     package_filters: PackageFilters,
+    bench_target_filters: BenchTargetFilters,
     measurement_mode: MeasurementMode,
 ) -> Result<()> {
     let codspeed_target_dir = get_codspeed_target_dir(metadata, measurement_mode);
@@ -96,7 +105,8 @@ pub fn run_benches(
     if measurement_mode == MeasurementMode::Walltime {
         WalltimeResults::clear(workspace_root)?;
     }
-    let benches = package_filters.benches_to_run(codspeed_target_dir, metadata)?;
+    let benches =
+        package_filters.benches_to_run(metadata, bench_target_filters, codspeed_target_dir)?;
     if benches.is_empty() {
         bail!("No benchmarks found. Run `cargo codspeed build` first.");
     }
@@ -104,11 +114,11 @@ pub fn run_benches(
     eprintln!("Collected {} benchmark suite(s) to run", benches.len());
 
     for bench in benches.iter() {
-        let bench_name = &bench.bench_name;
+        let bench_target_name = &bench.bench_target_name;
         // workspace_root is needed since file! returns the path relatively to the workspace root
         // while CARGO_MANIFEST_DIR returns the path to the sub package
         let workspace_root = metadata.workspace_root.clone();
-        eprintln!("Running {} {}", &bench.package_name, bench_name);
+        eprintln!("Running {} {}", &bench.package_name, bench_target_name);
         let mut command = std::process::Command::new(&bench.bench_path);
         command
             .env("CODSPEED_CARGO_WORKSPACE_ROOT", workspace_root)
@@ -146,7 +156,7 @@ pub fn run_benches(
                     }
                 }
             })?;
-        eprintln!("Done running {bench_name}");
+        eprintln!("Done running {bench_target_name}");
     }
     eprintln!("Finished running {} benchmark suite(s)", benches.len());
 

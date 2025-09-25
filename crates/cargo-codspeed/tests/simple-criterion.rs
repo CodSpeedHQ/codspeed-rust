@@ -45,7 +45,7 @@ fn test_criterion_build_single() {
     let dir = setup(DIR, Project::Simple);
     cargo_codspeed(&dir)
         .arg("build")
-        .arg("another_criterion_example")
+        .args(["--bench", "another_criterion_example"])
         .assert()
         .success()
         .stderr(contains("Built 1 benchmark suite(s)"))
@@ -58,16 +58,42 @@ fn test_criterion_build_and_run_single() {
     let dir = setup(DIR, Project::Simple);
     cargo_codspeed(&dir)
         .arg("build")
-        .arg("another_criterion_example")
+        .args(["--bench", "another_criterion_example"])
         .assert()
         .success();
     cargo_codspeed(&dir)
         .arg("run")
-        .arg("another_criterion_example")
+        .args(["--bench", "another_criterion_example"])
         .assert()
         .success()
         .stderr(contains("Finished running 1 benchmark suite(s)"))
         .stderr(contains("another_criterion_example"));
+    teardown(dir);
+}
+
+#[test]
+fn test_criterion_build_and_run_filtered_by_name() {
+    let dir = setup(DIR, Project::Simple);
+    cargo_codspeed(&dir).arg("build").assert().success();
+    cargo_codspeed(&dir)
+        .arg("run")
+        .arg("fib 20")
+        .assert()
+        .success()
+        .stderr(contains("Finished running 2 benchmark suite(s)"));
+    teardown(dir);
+}
+
+#[test]
+fn test_criterion_build_and_run_filtered_by_partial_name() {
+    let dir = setup(DIR, Project::Simple);
+    cargo_codspeed(&dir).arg("build").assert().success();
+    cargo_codspeed(&dir)
+        .arg("run")
+        .arg("bubble")
+        .assert()
+        .success()
+        .stderr(contains("Finished running 2 benchmark suite(s)"));
     teardown(dir);
 }
 

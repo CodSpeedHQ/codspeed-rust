@@ -45,7 +45,7 @@ fn test_simple_build_single() {
     let dir = setup(DIR, Project::Simple);
     cargo_codspeed(&dir)
         .arg("build")
-        .arg("another_bencher_example")
+        .args(["--bench", "another_bencher_example"])
         .assert()
         .success()
         .stderr(contains("Built 1 benchmark suite(s)"))
@@ -58,12 +58,12 @@ fn test_simple_build_and_run_single() {
     let dir = setup(DIR, Project::Simple);
     cargo_codspeed(&dir)
         .arg("build")
-        .arg("another_bencher_example")
+        .args(["--bench", "another_bencher_example"])
         .assert()
         .success();
     cargo_codspeed(&dir)
         .arg("run")
-        .arg("another_bencher_example")
+        .args(["--bench", "another_bencher_example"])
         .assert()
         .success()
         .stderr(contains("Finished running 1 benchmark suite(s)"))

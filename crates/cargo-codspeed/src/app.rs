@@ -3,7 +3,7 @@ use cargo_metadata::MetadataCommand;
 use clap::{Args, Parser, Subcommand};
 use std::{ffi::OsString, process::exit};
 
-use crate::build::build_benches;
+use crate::build::{build_benches, BuildConfig};
 
 #[derive(Parser)]
 #[command(author, version, about, long_about = None)]
@@ -35,8 +35,16 @@ pub(crate) struct PackageFilters {
     pub(crate) package: Vec<String>,
 }
 
+#[derive(Args)]
+pub(crate) struct BenchTargetFilters {
+    /// Select only the specified benchmark target (all benchmark targets by default)
+    #[arg(long, help_heading = TARGET_HELP)]
+    pub(crate) bench: Option<Vec<String>>,
+}
+
 const FEATURE_HELP: &str = "Feature Selection";
 const COMPILATION_HELP: &str = "Compilation Options";
+const TARGET_HELP: &str = "Target Selection";
 #[derive(Subcommand)]
 enum Commands {
     /// Build the benchmarks
@@ -63,13 +71,20 @@ enum Commands {
         /// Build the benchmarks with the specified profile
         #[arg(long, default_value = "bench", help_heading = COMPILATION_HELP)]
         profile: String,
+
+        #[command(flatten)]
+        bench_target_filters: BenchTargetFilters,
     },
     /// Run the previously built benchmarks
     Run {
         /// If specified, only run benches containing this string in their names
-        bench_name: Option<String>,
+        benchname: Option<String>,
+
         #[command(flatten)]
         package_filters: PackageFilters,
+
+        #[command(flatten)]
+        bench_target_filters: BenchTargetFilters,
     },
 }
 
@@ -83,6 +98,7 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
     let res = match cli.command {
         Commands::Build {
             package_filters,
+            bench_target_filters,
             features,
             all_features,
             jobs,
@@ -110,18 +126,28 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
                 features.map(|f| f.split([' ', ',']).map(|s| s.to_string()).collect_vec());
             build_benches(
                 &metadata,
-                package_filters,
-                features,
-                profile,
-                cli.quiet,
-                measurement_mode,
-                passthrough_flags,
+                BuildConfig {
+                    package_filters,
+                    bench_target_filters,
+                    features,
+                    profile,
+                    quiet: cli.quiet,
+                    measurement_mode,
+                    passthrough_flags,
+                },
             )
         }
         Commands::Run {
-            bench_name,
+            benchname,
             package_filters,
-        } => run_benches(&metadata, bench_name, package_filters, measurement_mode),
+            bench_target_filters,
+        } => run_benches(
+            &metadata,
+            benchname,
+            package_filters,
+            bench_target_filters,
+            measurement_mode,
+        ),
     };
 
     if let Err(e) = res {
