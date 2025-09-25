@@ -21,58 +21,55 @@ struct Cli {
     command: Commands,
 }
 
+const PACKAGE_HELP: &str = "Package Selection";
 #[derive(Args)]
 pub(crate) struct PackageFilters {
     /// Select all packages in the workspace
-    #[arg(long)]
+    #[arg(long, help_heading = PACKAGE_HELP)]
     pub(crate) workspace: bool,
-    /// Exclude packages
-    #[arg(long)]
+    /// Package to exclude
+    #[arg(long, value_name = "SPEC", help_heading = PACKAGE_HELP)]
     pub(crate) exclude: Vec<String>,
-    /// Package to select (builds all workspace package by default)
-    #[arg(short, long)]
+    /// Package to select
+    #[arg(short, long, value_name= "SPEC", help_heading = PACKAGE_HELP)]
     pub(crate) package: Vec<String>,
 }
 
-#[derive(Args)]
-pub(crate) struct Filters {
-    /// Optional list of benchmarks to build (builds all benchmarks by default)
-    pub(crate) bench: Option<Vec<String>>,
-    #[command(flatten)]
-    pub(crate) package: PackageFilters,
-}
-
+const FEATURE_HELP: &str = "Feature Selection";
+const COMPILATION_HELP: &str = "Compilation Options";
 #[derive(Subcommand)]
 enum Commands {
     /// Build the benchmarks
     Build {
         #[command(flatten)]
-        filters: Filters,
+        package_filters: PackageFilters,
 
         /// Space or comma separated list of features to activate
-        #[arg(short = 'F', long)]
+        #[arg(short = 'F', long, help_heading = FEATURE_HELP)]
         features: Option<String>,
 
         /// Activate all available features of all selected packages.
-        #[arg(long)]
+        #[arg(long, help_heading = FEATURE_HELP)]
         all_features: bool,
 
         /// Do not activate the `default` feature of the selected packages.
-        #[arg(long)]
+        #[arg(long, help_heading = FEATURE_HELP)]
         no_default_features: bool,
 
         /// Number of parallel jobs, defaults to # of CPUs.
-        #[arg(short, long)]
+        #[arg(short, long, help_heading = COMPILATION_HELP)]
         jobs: Option<u32>,
 
         /// Build the benchmarks with the specified profile
-        #[arg(long, default_value = "bench")]
+        #[arg(long, default_value = "bench", help_heading = COMPILATION_HELP)]
         profile: String,
     },
     /// Run the previously built benchmarks
     Run {
+        /// If specified, only run benches containing this string in their names
+        bench_name: Option<String>,
         #[command(flatten)]
-        filters: Filters,
+        package_filters: PackageFilters,
     },
 }
 
@@ -85,7 +82,7 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
 
     let res = match cli.command {
         Commands::Build {
-            filters,
+            package_filters,
             features,
             all_features,
             jobs,
@@ -113,7 +110,7 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
                 features.map(|f| f.split([' ', ',']).map(|s| s.to_string()).collect_vec());
             build_benches(
                 &metadata,
-                filters,
+                package_filters,
                 features,
                 profile,
                 cli.quiet,
@@ -121,7 +118,10 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
                 passthrough_flags,
             )
         }
-        Commands::Run { filters } => run_benches(&metadata, filters, measurement_mode),
+        Commands::Run {
+            bench_name,
+            package_filters,
+        } => run_benches(&metadata, bench_name, package_filters, measurement_mode),
     };
 
     if let Err(e) = res {

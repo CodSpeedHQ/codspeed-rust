@@ -1,7 +1,5 @@
 use crate::{
-    app::{Filters, PackageFilters},
-    helpers::get_codspeed_target_dir,
-    measurement_mode::MeasurementMode,
+    app::PackageFilters, helpers::get_codspeed_target_dir, measurement_mode::MeasurementMode,
     prelude::*,
 };
 use anyhow::Context;
@@ -22,13 +20,37 @@ struct BenchToRun {
     package_name: String,
 }
 
-impl Filters {
+impl PackageFilters {
+    /// Logic taken from [cargo::ops::Packages](https://docs.rs/cargo/0.85.0/src/cargo/ops/cargo_compile/packages.rs.html#34-42)
+    pub(crate) fn packages_from_flags<'a>(
+        &self,
+        metadata: &'a Metadata,
+    ) -> Result<Vec<&'a Package>> {
+        Ok(
+            match (self.workspace, self.exclude.len(), self.package.len()) {
+                (false, 0, 0) => metadata.workspace_default_packages(),
+                (false, 0, _) => metadata
+                    .workspace_packages()
+                    .into_iter()
+                    .filter(|p| self.package.contains(&p.name))
+                    .collect(),
+                (false, _, _) => bail!("--exclude can only be used with --workspace"),
+                (true, 0, _) => metadata.workspace_packages(),
+                (true, _, _) => metadata
+                    .workspace_packages()
+                    .into_iter()
+                    .filter(|p| !self.exclude.contains(&p.name))
+                    .collect(),
+            },
+        )
+    }
+
     fn benches_to_run(
         &self,
         codspeed_target_dir: PathBuf,
         metadata: &Metadata,
     ) -> Result<Vec<BenchToRun>> {
-        let packages = self.package.packages(metadata)?;
+        let packages = self.packages_from_flags(metadata)?;
 
         let mut benches = vec![];
         for package in packages {
@@ -63,41 +85,10 @@ impl Filters {
     }
 }
 
-impl PackageFilters {
-    /// Logic taken from [cargo::ops::Packages](https://docs.rs/cargo/0.85.0/src/cargo/ops/cargo_compile/packages.rs.html#34-42)
-    fn packages<'a>(&self, metadata: &'a Metadata) -> Result<Vec<&'a Package>> {
-        Ok(
-            match (self.workspace, self.exclude.len(), self.package.len()) {
-                (false, 0, 0) => metadata.workspace_default_packages(),
-                (false, 0, _) => metadata
-                    .workspace_packages()
-                    .into_iter()
-                    .filter(|p| {
-                        self.package
-                            .iter()
-                            .any(|allowed_package| p.name.contains(allowed_package))
-                    })
-                    .collect(),
-                (false, _, _) => bail!("--exclude can only be used with --workspace"),
-                (true, 0, _) => metadata.workspace_packages(),
-                (true, _, _) => metadata
-                    .workspace_packages()
-                    .into_iter()
-                    .filter(|p| {
-                        !self
-                            .exclude
-                            .iter()
-                            .any(|denied_package| p.name.contains(denied_package))
-                    })
-                    .collect(),
-            },
-        )
-    }
-}
-
 pub fn run_benches(
     metadata: &Metadata,
-    filters: Filters,
+    bench_name_filter: Option<String>,
+    package_filters: PackageFilters,
     measurement_mode: MeasurementMode,
 ) -> Result<()> {
     let codspeed_target_dir = get_codspeed_target_dir(metadata, measurement_mode);
@@ -105,38 +96,14 @@ pub fn run_benches(
     if measurement_mode == MeasurementMode::Walltime {
         WalltimeResults::clear(workspace_root)?;
     }
-    let benches = filters.benches_to_run(codspeed_target_dir, metadata)?;
+    let benches = package_filters.benches_to_run(codspeed_target_dir, metadata)?;
     if benches.is_empty() {
         bail!("No benchmarks found. Run `cargo codspeed build` first.");
     }
 
-    let mut to_run = vec![];
-    if let Some(allowed_bench_names) = filters.bench {
-        // Make sure all benchmarks are found
-        let mut not_found = vec![];
-        for allowed_bench_name in allowed_bench_names.iter() {
-            let bench = benches
-                .iter()
-                .find(|b| b.bench_name.contains(allowed_bench_name));
+    eprintln!("Collected {} benchmark suite(s) to run", benches.len());
 
-            if let Some(bench) = bench {
-                to_run.push(bench);
-            } else {
-                not_found.push(allowed_bench_name);
-            }
-        }
-
-        if !not_found.is_empty() {
-            bail!(
-                "The following benchmarks to run were not found: {}",
-                not_found.iter().join(", ")
-            );
-        }
-    } else {
-        to_run = benches.iter().collect();
-    }
-    eprintln!("Collected {} benchmark suite(s) to run", to_run.len());
-    for bench in to_run.iter() {
+    for bench in benches.iter() {
         let bench_name = &bench.bench_name;
         // workspace_root is needed since file! returns the path relatively to the workspace root
         // while CARGO_MANIFEST_DIR returns the path to the sub package
@@ -149,6 +116,10 @@ pub fn run_benches(
 
         if measurement_mode == MeasurementMode::Walltime {
             command.arg("--bench"); // Walltime targets need this additional argument (inherited from running them with `cargo bench`)
+        }
+
+        if let Some(bench_name_filter) = bench_name_filter.as_ref() {
+            command.arg(bench_name_filter);
         }
 
         command
@@ -177,7 +148,7 @@ pub fn run_benches(
             })?;
         eprintln!("Done running {bench_name}");
     }
-    eprintln!("Finished running {} benchmark suite(s)", to_run.len());
+    eprintln!("Finished running {} benchmark suite(s)", benches.len());
 
     if measurement_mode == MeasurementMode::Walltime {
         aggregate_raw_walltime_data(workspace_root)?;

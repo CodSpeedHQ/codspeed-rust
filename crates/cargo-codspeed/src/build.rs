@@ -1,5 +1,5 @@
 use crate::{
-    app::{Filters, PackageFilters},
+    app::PackageFilters,
     helpers::{clear_dir, get_codspeed_target_dir},
     measurement_mode::MeasurementMode,
     prelude::*,
@@ -8,7 +8,7 @@ use cargo_metadata::{camino::Utf8PathBuf, Message, Metadata, TargetKind};
 use std::process::{exit, Command, Stdio};
 
 struct BuildOptions<'a> {
-    filters: Filters,
+    package_filters: PackageFilters,
     features: &'a Option<Vec<String>>,
     profile: &'a str,
     passthrough_flags: &'a Vec<String>,
@@ -49,6 +49,19 @@ impl BuildOptions<'_> {
         );
 
         let mut built_benches = Vec::new();
+
+        let package_names = self
+            .package_filters
+            .packages_from_flags(metadata)
+            .map_err(|e| {
+                // Avoid leaving an orphan cargo process, even if something went wrong
+                cargo.wait().expect("Could not get cargo's exist status");
+                e
+            })?
+            .into_iter()
+            .map(|t| t.name.clone())
+            .collect::<Vec<_>>();
+
         for message in Message::parse_stream(reader) {
             match message.expect("Failed to parse message") {
                 // Those messages will include build errors and warnings even if stderr also contain some of them
@@ -66,19 +79,14 @@ impl BuildOptions<'_> {
                         .find(|p| p.id == artifact.package_id)
                         .expect("Could not find package");
 
-                    let bench_name = artifact.target.name;
+                    let bench_target_name = artifact.target.name;
 
-                    let add_bench_to_codspeed_dir = match &self.filters.bench {
-                        Some(allowed_bench_names) => allowed_bench_names
-                            .iter()
-                            .any(|allowed_bench_name| bench_name.contains(allowed_bench_name)),
-                        None => true,
-                    };
+                    let add_bench_to_codspeed_dir = package_names.iter().contains(&package.name);
 
                     if add_bench_to_codspeed_dir {
                         built_benches.push(BuiltBench {
                             package: package.name.clone(),
-                            bench: bench_name,
+                            bench: bench_target_name,
                             executable_path: artifact
                                 .executable
                                 .expect("Unexpected missing executable path"),
@@ -171,7 +179,7 @@ impl BuildOptions<'_> {
 
         cargo.arg("--profile").arg(self.profile);
 
-        self.filters.package.add_cargo_args(&mut cargo);
+        self.package_filters.add_cargo_args(&mut cargo);
 
         cargo
     }
@@ -199,7 +207,7 @@ impl PackageFilters {
 
 pub fn build_benches(
     metadata: &Metadata,
-    filters: Filters,
+    package_filters: PackageFilters,
     features: Option<Vec<String>>,
     profile: String,
     quiet: bool,
@@ -207,7 +215,7 @@ pub fn build_benches(
     passthrough_flags: Vec<String>,
 ) -> Result<()> {
     let built_benches = BuildOptions {
-        filters,
+        package_filters,
         features: &features,
         profile: &profile,
         passthrough_flags: &passthrough_flags,
