@@ -87,6 +87,7 @@ jobs:
           MY_ENV_VAR: "YES"
         with:
           run: cargo codspeed run
+          mode: instrumentation
           token: ${{ secrets.CODSPEED_TOKEN }}
 
   compat-integration-test-walltime:
@@ -116,9 +117,9 @@ jobs:
         uses: CodSpeedHQ/action@main
         env:
           MY_ENV_VAR: "YES"
-          CODSPEED_PERF_ENABLED: true
         with:
           run: cargo codspeed run
+          mode: walltime
           token: ${{ secrets.CODSPEED_TOKEN }}
 
   check:
