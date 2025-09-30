@@ -85,6 +85,10 @@ enum Commands {
 
         #[command(flatten)]
         bench_target_filters: BenchTargetFilters,
+
+        /// Print per-benchmark duration details
+        #[arg(long)]
+        details: bool,
     },
 }
 
@@ -141,12 +145,14 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
             benchname,
             package_filters,
             bench_target_filters,
+            details,
         } => run_benches(
             &metadata,
             benchname,
             package_filters,
             bench_target_filters,
             measurement_mode,
+            details,
         ),
     };
 

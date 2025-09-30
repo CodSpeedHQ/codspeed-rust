@@ -46,6 +46,32 @@ pub fn is_perf_enabled() -> bool {
     std::env::var("CODSPEED_PERF_ENABLED").is_ok()
 }
 
+pub fn show_details() -> bool {
+    std::env::var("CODSPEED_SHOW_DETAILS").is_ok()
+}
+
+/// Format a duration value (as f64 nanoseconds) into a human-readable string with appropriate units
+pub fn format_duration_nanos_f64(value: f64) -> String {
+    if value <= 0.0 {
+        return "<1 ns".to_string();
+    }
+
+    if value < 1_000.0 {
+        format!("{value:.0} ns")
+    } else if value < 1_000_000.0 {
+        format!("{:.1} us", value / 1_000.0)
+    } else if value < 1_000_000_000.0 {
+        format!("{:.1} ms", value / 1_000_000.0)
+    } else {
+        format!("{:.2} s", value / 1_000_000_000.0)
+    }
+}
+
+/// Format a duration value into a human-readable string with appropriate units
+pub fn format_duration_nanos(nanos: u128) -> String {
+    format_duration_nanos_f64(nanos as f64)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -93,5 +119,66 @@ mod tests {
         let input = "std :: vec :: Vec :: new";
         let expected_output = "std::vec::Vec::new".to_string();
         assert_eq!(get_formated_function_path(input), expected_output);
+    }
+
+    #[test]
+    fn test_format_duration_nanos_handles_zero() {
+        assert_eq!(format_duration_nanos(0), "<1 ns");
+    }
+
+    #[test]
+    fn test_format_duration_nanos_scales_to_microseconds() {
+        assert_eq!(format_duration_nanos(1_500), "1.5 us");
+    }
+
+    #[test]
+    fn test_format_duration_nanos_scales_to_milliseconds() {
+        assert_eq!(format_duration_nanos(2_345_000), "2.3 ms");
+    }
+
+    #[test]
+    fn test_format_duration_nanos_scales_to_seconds() {
+        assert_eq!(format_duration_nanos(2_500_000_000), "2.50 s");
+    }
+
+    #[test]
+    fn test_format_duration_nanos_f64_handles_zero() {
+        assert_eq!(format_duration_nanos_f64(0.0), "<1 ns");
+    }
+
+    #[test]
+    fn test_format_duration_nanos_f64_scales_to_microseconds() {
+        assert_eq!(format_duration_nanos_f64(1_500.0), "1.5 us");
+    }
+
+    #[test]
+    fn test_format_duration_nanos_f64_scales_to_milliseconds() {
+        assert_eq!(format_duration_nanos_f64(2_345_000.0), "2.3 ms");
+    }
+
+    #[test]
+    fn test_format_duration_nanos_f64_scales_to_seconds() {
+        assert_eq!(format_duration_nanos_f64(2_500_000_000.0), "2.50 s");
+    }
+
+    // Additional format_duration_nanos_f64 tests (moved from walltime_results.rs)
+    #[test]
+    fn test_format_duration_nanos_f64_formats_small_values() {
+        assert_eq!(format_duration_nanos_f64(420.0), "420 ns");
+    }
+
+    #[test]
+    fn test_format_duration_nanos_f64_formats_microseconds() {
+        assert_eq!(format_duration_nanos_f64(12_500.0), "12.5 us");
+    }
+
+    #[test]
+    fn test_format_duration_nanos_f64_formats_milliseconds() {
+        assert_eq!(format_duration_nanos_f64(3_250_000.0), "3.2 ms");
+    }
+
+    #[test]
+    fn test_format_duration_nanos_f64_formats_seconds() {
+        assert_eq!(format_duration_nanos_f64(1_750_000_000.0), "1.75 s");
     }
 }
