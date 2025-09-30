@@ -45,6 +45,8 @@ pub(crate) struct BenchTargetFilters {
 const FEATURE_HELP: &str = "Feature Selection";
 const COMPILATION_HELP: &str = "Compilation Options";
 const TARGET_HELP: &str = "Target Selection";
+const LOCKED_HELP: &str = "Assert the `Cargo.lock` file remains unchanged";
+
 #[derive(Subcommand)]
 enum Commands {
     /// Build the benchmarks
@@ -71,6 +73,10 @@ enum Commands {
         /// Build the benchmarks with the specified profile
         #[arg(long, default_value = "bench", help_heading = COMPILATION_HELP)]
         profile: String,
+
+        /// Assert that `Cargo.lock` will remain unchanged
+        #[arg(long, help_heading = LOCKED_HELP)]
+        locked: bool,
 
         #[command(flatten)]
         bench_target_filters: BenchTargetFilters,
@@ -104,6 +110,7 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
             jobs,
             no_default_features,
             profile,
+            locked,
         } => {
             let passthrough_flags = {
                 let mut passthrough_flags = Vec::new();
@@ -114,6 +121,10 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
 
                 if no_default_features {
                     passthrough_flags.push("--no-default-features".to_string());
+                }
+
+                if locked {
+                    passthrough_flags.push("--locked".to_string());
                 }
 
                 if let Some(jobs) = jobs {
