@@ -42,9 +42,12 @@ pub(crate) struct BenchTargetFilters {
     pub(crate) bench: Option<Vec<String>>,
 }
 
+// Help headings, should mostly match the headers from cargo build --help
 const FEATURE_HELP: &str = "Feature Selection";
 const COMPILATION_HELP: &str = "Compilation Options";
 const TARGET_HELP: &str = "Target Selection";
+const MANIFEST_HELP: &str = "Manifest Options";
+
 #[derive(Subcommand)]
 enum Commands {
     /// Build the benchmarks
@@ -71,6 +74,18 @@ enum Commands {
         /// Build the benchmarks with the specified profile
         #[arg(long, default_value = "bench", help_heading = COMPILATION_HELP)]
         profile: String,
+
+        /// Assert that `Cargo.lock` will remain unchanged
+        #[arg(long, help_heading = MANIFEST_HELP)]
+        locked: bool,
+
+        /// Run without accessing the network
+        #[arg(long, help_heading = MANIFEST_HELP)]
+        offline: bool,
+
+        /// Equivalent to specifying both --locked and --offline
+        #[arg(long, help_heading = MANIFEST_HELP)]
+        frozen: bool,
 
         #[command(flatten)]
         bench_target_filters: BenchTargetFilters,
@@ -104,22 +119,30 @@ pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
             jobs,
             no_default_features,
             profile,
+            locked,
+            offline,
+            frozen,
         } => {
             let passthrough_flags = {
                 let mut passthrough_flags = Vec::new();
-
                 if all_features {
                     passthrough_flags.push("--all-features".to_string());
                 }
-
                 if no_default_features {
                     passthrough_flags.push("--no-default-features".to_string());
                 }
-
+                if locked {
+                    passthrough_flags.push("--locked".to_string());
+                }
+                if offline {
+                    passthrough_flags.push("--offline".to_string());
+                }
+                if frozen {
+                    passthrough_flags.push("--frozen".to_string());
+                }
                 if let Some(jobs) = jobs {
                     passthrough_flags.push(format!("--jobs={jobs}"));
                 }
-
                 passthrough_flags
             };
             let features =
