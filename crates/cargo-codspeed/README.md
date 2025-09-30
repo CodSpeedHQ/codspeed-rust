@@ -48,6 +48,26 @@ Options:
   -V, --version  Print version information
 ```
 
+### Running benchmarks with details
+
+Use the `--details` flag to see timing information for each benchmark:
+
+```bash
+cargo codspeed run --details
+```
+
+This will show execution times for each benchmark:
+```
+  Checked: benches/example.rs::fibonacci (5.6 us)
+  Checked: benches/example.rs::factorial (368 ns)
+```
+
+The output also shows the total number of benchmarks executed:
+```
+Done running benchmark_suite (5 benchmarks)
+Finished running 2 benchmark suite(s) (10 benchmarks total)
+```
+
 ## Development
 
 ### Troubleshooting

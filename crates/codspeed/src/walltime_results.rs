@@ -66,6 +66,15 @@ impl WalltimeBenchmark {
     /// - `times_per_round_ns`: The measured time for each round in nanoseconds, e.g. `[1000, 2000, 3000]`
     /// - `max_time_ns`: The time limit for the benchmark in nanoseconds (if defined)
     ///
+    /// # Example Output
+    ///
+    /// ```text
+    ///   Measured: core/benches/io.rs::benches::read (3.2 ms)
+    /// ```
+    ///
+    /// The message above is only emitted when `CODSPEED_SHOW_DETAILS=1`
+    /// (e.g. via `cargo codspeed run --details`).
+    ///
     /// # Pseudo-code
     ///
     /// ```text
@@ -103,6 +112,13 @@ impl WalltimeBenchmark {
             times_per_round_ns,
             max_time_ns,
         );
+        if crate::utils::show_details() {
+            println!(
+                "  Measured: {} ({})",
+                data.uri(),
+                crate::utils::format_duration_nanos_f64(data.mean_per_iter_ns())
+            );
+        }
         data.dump_to_results(&workspace_root, scope);
     }
 
@@ -204,6 +220,14 @@ impl WalltimeBenchmark {
 
     pub fn name(&self) -> &str {
         &self.metadata.name
+    }
+
+    pub fn mean_per_iter_ns(&self) -> f64 {
+        self.stats.mean_ns
+    }
+
+    pub fn uri(&self) -> &str {
+        &self.metadata.uri
     }
 }
 
