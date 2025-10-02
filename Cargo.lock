@@ -652,10 +652,12 @@ name = "codspeed-criterion-compat"
 version = "4.0.0"
 dependencies = [
  "async-std",
+ "clap",
  "codspeed",
  "codspeed-criterion-compat-walltime",
  "colored",
  "futures",
+ "regex",
  "smol 2.0.0",
  "tokio",
 ]

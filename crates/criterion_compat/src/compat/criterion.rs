@@ -6,13 +6,15 @@ use criterion::{
     profiler::Profiler,
     PlottingBackend,
 };
+use regex::Regex;
 
-use crate::{Bencher, BenchmarkGroup, BenchmarkId};
+use crate::{Bencher, BenchmarkFilter, BenchmarkGroup, BenchmarkId};
 
 pub struct Criterion<M: Measurement = WallTime> {
     pub codspeed: Option<Rc<RefCell<CodSpeed>>>,
     pub current_file: String,
     pub macro_group: String,
+    pub filter: BenchmarkFilter,
     phantom: PhantomData<*const M>,
 }
 
@@ -23,11 +25,48 @@ impl Criterion {
             "Harness: codspeed-criterion-compat v{}",
             env!("CARGO_PKG_VERSION"),
         );
+
+        // Parse CLI arguments to extract filter
+        let filter = Self::parse_filter();
+
         Criterion {
             codspeed: Some(Rc::new(RefCell::new(CodSpeed::new()))),
             current_file: String::new(),
             macro_group: String::new(),
+            filter,
             phantom: PhantomData,
+        }
+    }
+
+    fn parse_filter() -> BenchmarkFilter {
+        use clap::{Arg, Command};
+
+        let matches = Command::new("Criterion Benchmark")
+            .arg(
+                Arg::new("FILTER")
+                    .help("Skip benchmarks whose names do not contain FILTER.")
+                    .index(1),
+            )
+            .arg(
+                Arg::new("exact")
+                    .long("exact")
+                    .num_args(0)
+                    .help("Run benchmarks that exactly match the provided filter"),
+            )
+            .get_matches();
+
+        if let Some(filter) = matches.get_one::<String>("FILTER") {
+            if matches.get_flag("exact") {
+                BenchmarkFilter::Exact(filter.to_owned())
+            } else {
+                let regex = Regex::new(filter).unwrap_or_else(|err| {
+                    eprintln!("Unable to parse '{filter}' as a regular expression: {err}");
+                    std::process::exit(1);
+                });
+                BenchmarkFilter::Regex(regex)
+            }
+        } else {
+            BenchmarkFilter::AcceptAll
         }
     }
 
@@ -36,6 +75,7 @@ impl Criterion {
             codspeed: self.codspeed.clone(),
             current_file: self.current_file.clone(),
             macro_group: self.macro_group.clone(),
+            filter: self.filter.clone(),
             phantom: PhantomData,
         }
     }
@@ -92,6 +132,7 @@ impl Default for Criterion {
             codspeed: None,
             current_file: String::new(),
             macro_group: String::new(),
+            filter: BenchmarkFilter::AcceptAll,
             phantom: PhantomData,
         }
     }
@@ -104,6 +145,7 @@ impl<M: Measurement> Criterion<M> {
             codspeed: self.codspeed,
             current_file: self.current_file,
             macro_group: self.macro_group,
+            filter: self.filter,
             phantom: PhantomData::<*const M2>,
         }
     }

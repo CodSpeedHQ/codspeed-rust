@@ -5,7 +5,7 @@ use codspeed::{codspeed::CodSpeed, utils::get_git_relative_path};
 use criterion::measurement::WallTime;
 use criterion::{measurement::Measurement, PlotConfiguration, SamplingMode, Throughput};
 
-use crate::{Bencher, Criterion};
+use crate::{Bencher, BenchmarkFilter, Criterion};
 
 /// Deprecated: using the default measurement will be removed in the next major version.
 /// Defaulting to WallTime differs from the original BenchmarkGroup implementation but avoids creating a breaking change
@@ -14,6 +14,7 @@ pub struct BenchmarkGroup<'a, M: Measurement = WallTime> {
     current_file: String,
     macro_group: String,
     group_name: String,
+    filter: BenchmarkFilter,
     _marker: PhantomData<&'a M>,
 }
 
@@ -29,6 +30,7 @@ impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
             current_file: criterion.current_file.clone(),
             macro_group: criterion.macro_group.clone(),
             group_name,
+            filter: criterion.filter.clone(),
             _marker: PhantomData,
         }
     }
@@ -73,6 +75,12 @@ impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
         if let Some(parameter) = id.parameter {
             uri = format!("{uri}[{parameter}]");
         }
+
+        // Apply filter - skip benchmark if it doesn't match
+        if !self.filter.is_match(&uri) {
+            return;
+        }
+
         let mut codspeed = self.codspeed.borrow_mut();
         let mut b = Bencher::new(&mut codspeed, uri);
         f(&mut b, input);
