@@ -21,6 +21,8 @@ keywords = ["codspeed", "benchmark", "divan"]
 codspeed = { path = "../codspeed", version = "=4.0.0" }
 divan = { package = "codspeed-divan-compat-walltime", path = "./divan_fork", version = "=4.0.0" }
 codspeed-divan-compat-macros = { version = "=4.0.0", path = './macros' }
+regex = "1.11.3"
+clap = { version = "4", default-features = false, features = ["std", "env"] }
 
 [[bench]]
 name = "basic_example"

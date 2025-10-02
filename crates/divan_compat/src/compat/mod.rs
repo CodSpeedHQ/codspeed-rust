@@ -13,15 +13,18 @@ pub mod __private {
 }
 
 mod bench;
+mod cli;
+mod config;
 mod entry;
 mod uri;
 mod util;
 
-use std::{cell::RefCell, rc::Rc};
-
 pub use bench::*;
 use codspeed::codspeed::CodSpeed;
+use config::Filter;
 use entry::AnyBenchEntry;
+use regex::Regex;
+use std::{cell::RefCell, rc::Rc};
 
 pub fn main() {
     // Outlined steps of original divan::main and their equivalent in codspeed instrumented mode
@@ -46,8 +49,37 @@ pub fn main() {
     // codspeed URI from entry metadata directly.
 
     // 3. Filtering
-    // We do not support finer filtering that bench targets for now, do nothing here, bench
-    // filtering is managed by the `cargo-codspeed` wrappers before we reach this point.
+    let should_run_benchmark_from_filters = {
+        let mut command = cli::command();
+        let matches = command.get_matches_mut();
+        let is_exact = matches.get_flag("exact");
+
+        let parse_filter = |filter: &String| {
+            if is_exact {
+                Filter::Exact(filter.to_owned())
+            } else {
+                match Regex::new(filter) {
+                    Ok(r) => Filter::Regex(r),
+                    Err(error) => {
+                        let kind = clap::error::ErrorKind::ValueValidation;
+                        command.error(kind, error).exit();
+                    }
+                }
+            }
+        };
+
+        let filters: Option<Vec<Filter>> = matches
+            .get_many::<String>("filter")
+            .map(|arg_filters| arg_filters.map(parse_filter).collect());
+
+        move |uri: &str| {
+            if let Some(filters) = filters.as_ref() {
+                filters.iter().any(|filter| filter.is_match(uri))
+            } else {
+                true
+            }
+        }
+    };
 
     // 4. Scan the tree and execute benchmarks
     let codspeed = Rc::new(RefCell::new(CodSpeed::new()));
@@ -66,6 +98,10 @@ pub fn main() {
             entry::BenchEntryRunner::Plain(bench_fn) => {
                 let uri = uri::generate(&entry, entry.display_name());
 
+                if !should_run_benchmark_from_filters(&uri) {
+                    continue;
+                }
+
                 bench_fn(bench::Bencher::new(&codspeed, uri));
             }
             entry::BenchEntryRunner::Args(bench_runner) => {
@@ -73,6 +109,10 @@ pub fn main() {
 
                 for (arg_index, arg_name) in bench_runner.arg_names().iter().enumerate() {
                     let uri = uri::generate(&entry, arg_name);
+
+                    if !should_run_benchmark_from_filters(&uri) {
+                        continue;
+                    }
 
                     let bencher = bench::Bencher::new(&codspeed, uri);
 
