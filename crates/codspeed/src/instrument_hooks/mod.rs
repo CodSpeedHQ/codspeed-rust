@@ -174,3 +174,20 @@ pub use unix_impl::InstrumentHooks;
 
 #[cfg(not(unix))]
 pub use other_impl::InstrumentHooks;
+
+#[cfg(test)]
+mod tests {
+    use super::InstrumentHooks;
+
+    #[test]
+    fn test_instrument_hooks() {
+        let hooks = InstrumentHooks::instance();
+        assert!(!hooks.is_instrumented() || hooks.start_benchmark().is_ok());
+        assert!(hooks.set_executed_benchmark("test_uri").is_ok());
+        assert!(hooks.set_integration("test_integration", "1.0.0").is_ok());
+        let start = InstrumentHooks::current_timestamp();
+        let end = start + 1_000_000; // Simulate 1ms later
+        hooks.add_benchmark_timestamps(start, end);
+        assert!(!hooks.is_instrumented() || hooks.stop_benchmark().is_ok());
+    }
+}
