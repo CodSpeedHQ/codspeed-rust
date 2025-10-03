@@ -59,6 +59,9 @@ jobs:
         with:
           targets: ${{ matrix.target }}
 
+      - name: Install musl tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
       - run: cargo build --locked --release --bin cargo-codspeed --target ${{ matrix.target }}
 
       - name: Upload Release Asset
