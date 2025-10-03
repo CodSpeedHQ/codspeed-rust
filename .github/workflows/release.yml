@@ -55,6 +55,9 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
       - uses: moonrepo/setup-rust@v1
         with:
           targets: ${{ matrix.target }}
