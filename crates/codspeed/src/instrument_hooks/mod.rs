@@ -1,8 +1,8 @@
-#[cfg(unix)]
+#[cfg(target_os = "linux")]
 mod ffi;
 
-#[cfg(unix)]
-mod unix_impl {
+#[cfg(target_os = "linux")]
+mod linux_impl {
     use nix::sys::time::TimeValLike;
 
     use super::ffi;
@@ -131,7 +131,7 @@ mod unix_impl {
     }
 }
 
-#[cfg(not(unix))]
+#[cfg(not(target_os = "linux"))]
 mod other_impl {
     pub struct InstrumentHooks;
 
@@ -169,10 +169,10 @@ mod other_impl {
     }
 }
 
-#[cfg(unix)]
-pub use unix_impl::InstrumentHooks;
+#[cfg(target_os = "linux")]
+pub use linux_impl::InstrumentHooks;
 
-#[cfg(not(unix))]
+#[cfg(not(target_os = "linux"))]
 pub use other_impl::InstrumentHooks;
 
 #[cfg(test)]

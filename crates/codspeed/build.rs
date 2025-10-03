@@ -1,6 +1,11 @@
 use std::{env, path::PathBuf};
 
 fn main() {
+    if cfg!(not(target_os = "linux")) {
+        // The instrument-hooks library is only supported on Linux.
+        return;
+    }
+
     // Compile the C library
     cc::Build::new()
         .file("instrument-hooks/dist/core.c")
