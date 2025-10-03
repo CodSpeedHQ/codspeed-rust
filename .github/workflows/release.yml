@@ -10,7 +10,39 @@ permissions:
   contents: write
 
 jobs:
+  build-musl-binaries:
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-musl
+            runner: ubuntu-24.04
+          - target: aarch64-unknown-linux-musl
+            runner: codspeedhq-arm64-ubuntu-24.04
+
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+          fetch-depth: 0
+      - uses: moonrepo/setup-rust@v1
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install musl tools
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
+
+      - run: cargo build --locked --release --bin cargo-codspeed --target ${{ matrix.target }}
+
+      - name: Upload binary as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cargo-codspeed-${{ matrix.target }}
+          path: ./target/${{ matrix.target }}/release/cargo-codspeed
+          if-no-files-found: error
+
   publish:
+    needs: build-musl-binaries
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,35 +73,25 @@ jobs:
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
 
-  build-upload-binaries:
+  upload-binaries:
     needs: publish
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - target: x86_64-unknown-linux-musl
-            runner: ubuntu-24.04
-          - target: aarch64-unknown-linux-musl
-            runner: codspeedhq-arm64-ubuntu-24.04
+        target:
+          - x86_64-unknown-linux-musl
+          - aarch64-unknown-linux-musl
 
-    runs-on: ${{ matrix.runner }}
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
         with:
-          submodules: true
-          fetch-depth: 0
-      - uses: moonrepo/setup-rust@v1
-        with:
-          targets: ${{ matrix.target }}
-
-      - name: Install musl tools
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
-
-      - run: cargo build --locked --release --bin cargo-codspeed --target ${{ matrix.target }}
+          name: cargo-codspeed-${{ matrix.target }}
+          path: ./target/${{ matrix.target }}/release
 
       - name: Upload Release Asset
         if: github.event_name != 'workflow_dispatch'
-        id: upload-release-asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
