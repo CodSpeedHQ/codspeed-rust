@@ -45,7 +45,7 @@ mod linux_impl {
         }
 
         #[inline(always)]
-        pub fn start_benchmark(&self) -> Result<(), i8> {
+        pub fn start_benchmark(&self) -> Result<(), u8> {
             let result = unsafe { ffi::instrument_hooks_start_benchmark(self.0) };
             if result == 0 {
                 Ok(())
@@ -55,7 +55,7 @@ mod linux_impl {
         }
 
         #[inline(always)]
-        pub fn stop_benchmark(&self) -> Result<(), i8> {
+        pub fn stop_benchmark(&self) -> Result<(), u8> {
             let result = unsafe { ffi::instrument_hooks_stop_benchmark(self.0) };
             if result == 0 {
                 Ok(())
@@ -65,9 +65,9 @@ mod linux_impl {
         }
 
         #[inline(always)]
-        pub fn set_executed_benchmark(&self, uri: &str) -> Result<(), i8> {
+        pub fn set_executed_benchmark(&self, uri: &str) -> Result<(), u8> {
             let pid = std::process::id() as i32;
-            let c_uri = CString::new(uri).map_err(|_| -1i8)?;
+            let c_uri = CString::new(uri).map_err(|_| 1u8)?;
             let result = unsafe {
                 ffi::instrument_hooks_set_executed_benchmark(self.0, pid, c_uri.as_ptr())
             };
@@ -79,9 +79,9 @@ mod linux_impl {
         }
 
         #[inline(always)]
-        pub fn set_integration(&self, name: &str, version: &str) -> Result<(), i8> {
-            let c_name = CString::new(name).map_err(|_| -1i8)?;
-            let c_version = CString::new(version).map_err(|_| -1i8)?;
+        pub fn set_integration(&self, name: &str, version: &str) -> Result<(), u8> {
+            let c_name = CString::new(name).map_err(|_| 1u8)?;
+            let c_version = CString::new(version).map_err(|_| 1u8)?;
             let result = unsafe {
                 ffi::instrument_hooks_set_integration(self.0, c_name.as_ptr(), c_version.as_ptr())
             };
@@ -145,19 +145,19 @@ mod other_impl {
             false
         }
 
-        pub fn start_benchmark(&self) -> Result<(), i8> {
+        pub fn start_benchmark(&self) -> Result<(), u8> {
             Ok(())
         }
 
-        pub fn stop_benchmark(&self) -> Result<(), i8> {
+        pub fn stop_benchmark(&self) -> Result<(), u8> {
             Ok(())
         }
 
-        pub fn set_executed_benchmark(&self, _uri: &str) -> Result<(), i8> {
+        pub fn set_executed_benchmark(&self, _uri: &str) -> Result<(), u8> {
             Ok(())
         }
 
-        pub fn set_integration(&self, _name: &str, _version: &str) -> Result<(), i8> {
+        pub fn set_integration(&self, _name: &str, _version: &str) -> Result<(), u8> {
             Ok(())
         }
 
