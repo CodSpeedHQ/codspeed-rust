@@ -35,7 +35,18 @@ jobs:
           cache-target: release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - run: cargo test -p codspeed
+        if: runner.os == 'Linux'
+
+      # We don't support Windows/MacOS for now, due to libclang not found on some runners:
+      - run: LIBCLANG_PATH= cargo test -p codspeed
+        if: runner.os == 'macOS'
+      - run: |
+          $env:LIBCLANG_PATH=""
+          cargo test -p codspeed
+        if: runner.os == 'Windows'
+        shell: powershell
 
   msrv-check:
     runs-on: ubuntu-latest
