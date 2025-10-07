@@ -1,6 +1,6 @@
 [package]
 name = "cargo-codspeed"
-version = "4.0.2"
+version = "4.0.3"
 rust-version = "1.74" # MSRV
 edition = "2021"
 description = "Cargo extension to build & run your codspeed benchmarks"
@@ -27,7 +27,7 @@ itertools = { workspace = true }
 anstyle = "1.0.8"
 serde = { workspace = true }
 serde_json = { workspace = true }
-codspeed = { path = "../codspeed", version = "=4.0.2" }
+codspeed = { path = "../codspeed", version = "=4.0.3" }
 
 [dev-dependencies]
 assert_cmd = "2.0.15"
