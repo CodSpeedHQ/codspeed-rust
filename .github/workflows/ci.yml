@@ -36,8 +36,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - run: cargo test -p codspeed
+      - name: Install dependencies
         if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y clang gcc
+
+      - name: Test with GCC
+        if: runner.os == 'Linux'
+        run: |
+          CC=gcc cargo test -p codspeed
+          cargo clean # Ensure we don't use the cached artifactss
+          CC=clang cargo test -p codspeed
 
       # We don't support Windows/MacOS for now, due to libclang not found on some runners:
       - run: LIBCLANG_PATH= cargo test -p codspeed
