@@ -133,3 +133,38 @@ fn test_criterion_cargo_bench_no_run() {
         .success();
     teardown(dir);
 }
+
+#[test]
+fn test_criterion_run_without_details() {
+    let dir = setup(DIR, Project::Simple);
+    cargo_codspeed(&dir).arg("build").assert().success();
+    cargo_codspeed(&dir)
+        .arg("run")
+        .assert()
+        .success()
+        .stderr(contains("Finished running 2 benchmark suite(s)"))
+        .stderr(predicates::str::contains("benchmarks total").not())
+        .stdout(
+            predicates::str::is_match(r"  Checked: .* \([0-9]+(\.[0-9]+)? (ns|us|ms|s)\)")
+                .unwrap()
+                .not(),
+        );
+    teardown(dir);
+}
+
+#[test]
+fn test_criterion_run_with_details() {
+    let dir = setup(DIR, Project::Simple);
+    cargo_codspeed(&dir).arg("build").assert().success();
+    cargo_codspeed(&dir)
+        .arg("run")
+        .arg("--details")
+        .assert()
+        .success()
+        .stderr(contains("benchmarks total"))
+        .stderr(contains("Done running"))
+        .stdout(
+            predicates::str::is_match(r"  Checked: .* \([0-9]+(\.[0-9]+)? (ns|us|ms|s)\)").unwrap(),
+        );
+    teardown(dir);
+}
