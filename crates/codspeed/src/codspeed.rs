@@ -52,10 +52,14 @@ impl CodSpeed {
     #[inline(always)]
     pub fn start_benchmark(&mut self, name: &str) {
         self.current_benchmark = CString::new(name).expect("CString::new failed");
-        measurement::start();
-        if self.show_details && !self.is_instrumented {
-            self.start_time = Some(Instant::now());
+        // Start timing before measurement for non-instrumented details mode
+        // This has minimal overhead since it's behind a short-circuit AND
+        if self.show_details {
+            if !self.is_instrumented {
+                self.start_time = Some(Instant::now());
+            }
         }
+        measurement::start();
     }
 
     #[inline(always)]
@@ -64,53 +68,55 @@ impl CodSpeed {
         self.benchmarked
             .push(self.current_benchmark.to_str().unwrap().to_string());
 
-        // Early return for instrumented mode with details - no output needed
-        if self.show_details && self.is_instrumented {
-            return;
-        }
-
-        // For --details mode in non-instrumented environment, show timing
-        if self.show_details {
-            let elapsed = self
-                .start_time
-                .take()
-                .map(|start| start.elapsed())
-                .unwrap_or_default();
+        // Fast path optimization: when show_details is false (the common case for perf testing),
+        // skip all the detailed output logic entirely
+        if !self.show_details {
+            // Original simple output path - no extra overhead
+            let action_str = if self.is_instrumented {
+                "Measured"
+            } else {
+                "Checked"
+            };
             if self.group_stack.is_empty() {
                 println!(
-                    "  Checked: {} ({})",
-                    self.current_benchmark.to_string_lossy(),
-                    crate::utils::format_duration_nanos(elapsed.as_nanos())
+                    "{}: {}",
+                    action_str,
+                    self.current_benchmark.to_string_lossy()
                 );
             } else {
                 println!(
-                    "  Checked: {} (group: {}) ({})",
+                    "{}: {} (group: {})",
+                    action_str,
                     self.current_benchmark.to_string_lossy(),
-                    self.group_stack.join("/"),
-                    crate::utils::format_duration_nanos(elapsed.as_nanos())
+                    self.group_stack.join("/")
                 );
             }
             return;
         }
 
-        // Default output for non-details mode
-        let action_str = if self.is_instrumented {
-            "Measured"
-        } else {
-            "Checked"
-        };
+        // Details mode: skip output in instrumented environment
+        if self.is_instrumented {
+            return;
+        }
+
+        // Details mode for non-instrumented: show timing
+        let elapsed = self
+            .start_time
+            .take()
+            .map(|start| start.elapsed())
+            .unwrap_or_default();
         if self.group_stack.is_empty() {
             println!(
-                "{}: {}",
-                action_str,
-                self.current_benchmark.to_string_lossy()
+                "  Checked: {} ({})",
+                self.current_benchmark.to_string_lossy(),
+                crate::utils::format_duration_nanos(elapsed.as_nanos())
             );
         } else {
             println!(
-                "{}: {} (group: {})",
-                action_str,
+                "  Checked: {} (group: {}) ({})",
                 self.current_benchmark.to_string_lossy(),
-                self.group_stack.join("/")
+                self.group_stack.join("/"),
+                crate::utils::format_duration_nanos(elapsed.as_nanos())
             );
         }
     }
