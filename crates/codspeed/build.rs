@@ -26,7 +26,8 @@ fn main() {
         // Disable warnings, as we will have lots of them
         .warnings(false)
         .extra_warnings(false)
-        .cargo_warnings(false);
+        .cargo_warnings(false)
+        .opt_level(3);
 
     let result = build.try_compile("instrument_hooks");
     match result {
