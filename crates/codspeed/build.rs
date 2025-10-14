@@ -10,7 +10,7 @@ fn main() {
 
     let mut build = cc::Build::new();
     build
-        .flag("-std=gnu17")
+        .flag("-std=c11")
         .file("instrument-hooks/dist/core.c")
         .include("instrument-hooks/includes")
         .warnings(false)
