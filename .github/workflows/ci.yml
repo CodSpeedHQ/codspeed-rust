@@ -21,6 +21,19 @@ jobs:
         with:
           extra_args: --all-files
 
+      - uses: taiki-e/install-action@v2
+        with:
+          tool: bindgen-cli@0.72.1
+      - name: Check if bindings are up-to-date
+        working-directory: crates/codspeed/src/instrument_hooks
+        run: |
+          ./update-bindings.sh
+
+          if ! git diff --exit-code bindings.rs; then
+            echo "Error: FFI bindings are out of date!"
+            exit 1
+          fi
+
   test-codspeed:
     strategy:
       matrix:
