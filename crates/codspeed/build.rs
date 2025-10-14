@@ -10,6 +10,20 @@ fn main() {
         .flag("-std=c11")
         .file("instrument-hooks/dist/core.c")
         .include("instrument-hooks/includes")
+        // We generated the C code from Zig, which contains some warnings
+        // that can be safely ignored.
+        .flag("-Wno-format")
+        .flag("-Wno-format-security")
+        .flag("-Wno-unused-but-set-variable")
+        .flag("-Wno-unused-const-variable")
+        .flag("-Wno-type-limits")
+        .flag("-Wno-uninitialized")
+        // Ignore warnings when cross-compiling:
+        .flag("-Wno-overflow")
+        .flag("-Wno-unused-function")
+        .flag("-Wno-constant-conversion")
+        .flag("-Wno-incompatible-pointer-types")
+        // Disable warnings, as we will have lots of them
         .warnings(false)
         .extra_warnings(false)
         .cargo_warnings(false);
