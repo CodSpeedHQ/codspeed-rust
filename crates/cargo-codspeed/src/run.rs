@@ -108,7 +108,7 @@ pub fn run_benches(
     let benches =
         package_filters.benches_to_run(metadata, bench_target_filters, codspeed_target_dir)?;
     if benches.is_empty() {
-        bail!("No benchmarks found. Run `cargo codspeed build` first.");
+        bail!("No benchmarks found for the {measurement_mode} mode. Run `cargo codspeed build -m {measurement_mode}` first.");
     }
 
     eprintln!("Collected {} benchmark suite(s) to run", benches.len());
