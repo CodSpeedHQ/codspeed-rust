@@ -15,7 +15,7 @@ fn test_divan_run_without_build() {
         .arg("run")
         .assert()
         .failure()
-        .stderr(contains("Error: No benchmarks found."));
+        .stderr(contains("Error: No benchmarks found for the instrumentation mode. Run `cargo codspeed build -m instrumentation` first."));
     teardown(dir);
 }
 
