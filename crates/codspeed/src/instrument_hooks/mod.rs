@@ -1,9 +1,8 @@
-#[cfg(target_os = "linux")]
+#[cfg(use_instrument_hooks)]
 mod ffi;
 
-#[cfg(target_os = "linux")]
+#[cfg(use_instrument_hooks)]
 mod linux_impl {
-    use nix::sys::time::TimeValLike;
 
     use super::ffi;
     use std::ffi::CString;
@@ -116,9 +115,19 @@ mod linux_impl {
 
         #[inline(always)]
         pub fn current_timestamp() -> u64 {
-            nix::time::clock_gettime(nix::time::ClockId::CLOCK_MONOTONIC)
-                .expect("Failed to get current time")
-                .num_nanoseconds() as u64
+            #[cfg(target_os = "linux")]
+            {
+                use nix::sys::time::TimeValLike;
+
+                nix::time::clock_gettime(nix::time::ClockId::CLOCK_MONOTONIC)
+                    .expect("Failed to get current time")
+                    .num_nanoseconds() as u64
+            }
+
+            #[cfg(not(target_os = "linux"))]
+            unsafe {
+                ffi::instrument_hooks_current_timestamp()
+            }
         }
     }
 
@@ -131,7 +140,7 @@ mod linux_impl {
     }
 }
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(use_instrument_hooks))]
 mod other_impl {
     pub struct InstrumentHooks;
 
@@ -169,10 +178,10 @@ mod other_impl {
     }
 }
 
-#[cfg(target_os = "linux")]
+#[cfg(use_instrument_hooks)]
 pub use linux_impl::InstrumentHooks;
 
-#[cfg(not(target_os = "linux"))]
+#[cfg(not(use_instrument_hooks))]
 pub use other_impl::InstrumentHooks;
 
 #[cfg(test)]

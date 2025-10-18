@@ -1,46 +1,46 @@
-use std::{env, path::PathBuf};
-
 fn main() {
+    println!("cargo:rustc-check-cfg=cfg(use_instrument_hooks)");
+
     println!("cargo:rerun-if-changed=instrument-hooks/dist/core.c");
     println!("cargo:rerun-if-changed=instrument-hooks/includes/core.h");
     println!("cargo:rerun-if-changed=build.rs");
 
-    if cfg!(not(target_os = "linux")) {
-        // The instrument-hooks library is only supported on Linux.
-        return;
-    }
-
     let mut build = cc::Build::new();
     build
-        .flag("-std=gnu17")
+        .flag("-std=c11")
         .file("instrument-hooks/dist/core.c")
         .include("instrument-hooks/includes")
+        // We generated the C code from Zig, which contains some warnings
+        // that can be safely ignored.
+        .flag("-Wno-format")
+        .flag("-Wno-format-security")
+        .flag("-Wno-unused-but-set-variable")
+        .flag("-Wno-unused-const-variable")
+        .flag("-Wno-type-limits")
+        .flag("-Wno-uninitialized")
+        // Ignore warnings when cross-compiling:
+        .flag("-Wno-overflow")
+        .flag("-Wno-unused-function")
+        .flag("-Wno-constant-conversion")
+        .flag("-Wno-incompatible-pointer-types")
+        // Disable warnings, as we will have lots of them
         .warnings(false)
         .extra_warnings(false)
-        .cargo_warnings(false);
+        .cargo_warnings(false)
+        .opt_level(3);
 
     let result = build.try_compile("instrument_hooks");
-    if let Err(e) = result {
-        let compiler = build.try_get_compiler().expect("Failed to get C compiler");
+    match result {
+        Ok(_) => println!("cargo:rustc-cfg=use_instrument_hooks"),
+        Err(e) => {
+            let compiler = build.try_get_compiler().expect("Failed to get C compiler");
 
-        eprintln!("\n\nERROR: Failed to compile instrument-hooks native library with cc-rs. Ensure you have an up-to-date C compiler installed.");
-        eprintln!("Compiler information: {compiler:?}");
-        eprintln!("Compilation error: {e}");
+            eprintln!("\n\nWARNING: Failed to compile instrument-hooks native library with cc-rs.");
+            eprintln!("The library will still compile, but instrument-hooks functionality will be disabled.");
+            eprintln!("Compiler information: {compiler:?}");
+            eprintln!("Compilation error: {e}\n");
 
-        std::process::exit(1);
+            println!("cargo:warning=Failed to compile instrument-hooks native library with cc-rs. Continuing with noop implementation.");
+        }
     }
-
-    let bindings = bindgen::Builder::default()
-        .header("instrument-hooks/includes/core.h")
-        // Tell cargo to invalidate the built crate whenever any of the
-        // included header files changed.
-        .parse_callbacks(Box::new(bindgen::CargoCallbacks::new()))
-        .generate()
-        .expect("Unable to generate bindings");
-
-    // Write the bindings to the $OUT_DIR/bindings.rs file.
-    let out_path = PathBuf::from(env::var("OUT_DIR").unwrap());
-    bindings
-        .write_to_file(out_path.join("bindings.rs"))
-        .expect("Couldn't write bindings!");
 }
