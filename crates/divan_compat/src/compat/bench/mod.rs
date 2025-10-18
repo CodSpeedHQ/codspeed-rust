@@ -51,6 +51,27 @@ impl<'a, 'b> Bencher<'a, 'b> {
             _marker: self._marker,
         }
     }
+
+    /// Add a counter to this benchmark (placeholder implementation).
+    ///
+    /// Note: Counters are not yet supported by codspeed-divan-compat.
+    /// This method is provided for API compatibility but does not affect benchmarking.
+    pub fn counter<C>(self, _counter: C) -> Self {
+        eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+        self
+    }
+
+    /// Add a counter based on input to this benchmark (placeholder implementation).
+    ///
+    /// Note: Counters are not yet supported by codspeed-divan-compat.
+    /// This method is provided for API compatibility but does not affect benchmarking.
+    pub fn input_counter<C, F>(self, _counter_fn: F) -> Self
+    where
+        F: Fn() -> C,
+    {
+        eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+        self
+    }
 }
 
 impl<'a, 'b> Bencher<'a, 'b> {
@@ -73,6 +94,26 @@ impl<'a, 'b, I, GenI> Bencher<'a, 'b, BencherConfig<GenI>>
 where
     GenI: FnMut() -> I,
 {
+    /// Add a counter to this benchmark (placeholder implementation).
+    ///
+    /// Note: Counters are not yet supported by codspeed-divan-compat.
+    /// This method is provided for API compatibility but does not affect benchmarking.
+    pub fn counter<C>(self, _counter: C) -> Self {
+        eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+        self
+    }
+
+    /// Add a counter based on input to this benchmark (placeholder implementation).
+    ///
+    /// Note: Counters are not yet supported by codspeed-divan-compat.
+    /// This method is provided for API compatibility but does not affect benchmarking.
+    pub fn input_counter<C, F>(self, _counter_fn: F) -> Self
+    where
+        F: Fn(&I) -> C,
+    {
+        eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+        self
+    }
     pub fn bench_values<O, B>(self, benched: B)
     where
         B: Fn(I) -> O + Sync,

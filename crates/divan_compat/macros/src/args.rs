@@ -45,6 +45,13 @@ impl AttrOptions {
                     // These arguments are ignored for codspeed runs
                     meta.value()?.parse::<Expr>()?; // Discard the value
                 }
+                "counters" => {
+                    // Counters are not yet supported, but we parse them to avoid errors
+                    eprintln!(
+                        "Warning: Counter feature is not yet supported by codspeed-divan-compat"
+                    );
+                    meta.value()?.parse::<Expr>()?; // Discard the value
+                }
                 _ => {
                     let path = meta.path.clone();
                     let parsed_meta = if meta.input.is_empty() {

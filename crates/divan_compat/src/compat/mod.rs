@@ -20,6 +20,141 @@ mod uri;
 mod util;
 
 pub use bench::*;
+
+// Counter types (placeholder implementations)
+pub mod counter {
+    /// Process N bytes.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct BytesCount {
+        count: u64,
+    }
+
+    /// Process N [`char`s](char).
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct CharsCount {
+        count: u64,
+    }
+
+    /// Process N cycles, displayed as Hertz.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct CyclesCount {
+        count: u64,
+    }
+
+    /// Process N items.
+    #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+    pub struct ItemsCount {
+        count: u64,
+    }
+
+    impl BytesCount {
+        /// Count N bytes.
+        #[inline]
+        pub fn new<N>(count: N) -> Self
+        where
+            N: TryInto<u64>,
+            N::Error: std::fmt::Debug,
+        {
+            eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+            Self {
+                count: count.try_into().unwrap(),
+            }
+        }
+
+        /// Counts the size of a type with [`size_of`].
+        #[inline]
+        pub fn of<T>() -> Self {
+            eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+            Self {
+                count: std::mem::size_of::<T>() as u64,
+            }
+        }
+
+        /// Counts the size of multiple instances of a type with [`size_of`].
+        #[inline]
+        pub fn of_many<T>(n: usize) -> Self {
+            eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+            Self {
+                count: (std::mem::size_of::<T>() * n) as u64,
+            }
+        }
+
+        /// Counts the size of a value with [`size_of_val`].
+        #[inline]
+        pub fn of_val<T: ?Sized>(val: &T) -> Self {
+            eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+            Self {
+                count: std::mem::size_of_val(val) as u64,
+            }
+        }
+
+        /// Counts the bytes of a [`&str`].
+        #[inline]
+        pub fn of_str<S: ?Sized + AsRef<str>>(s: &S) -> Self {
+            eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+            Self::of_val(s.as_ref())
+        }
+
+        /// Counts the bytes of a [slice](prim@slice).
+        #[inline]
+        pub fn of_slice<T, S: ?Sized + AsRef<[T]>>(s: &S) -> Self {
+            eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+            Self::of_val(s.as_ref())
+        }
+    }
+
+    impl CharsCount {
+        /// Count N [`char`s](char).
+        #[inline]
+        pub fn new<N>(count: N) -> Self
+        where
+            N: TryInto<u64>,
+            N::Error: std::fmt::Debug,
+        {
+            eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+            Self {
+                count: count.try_into().unwrap(),
+            }
+        }
+
+        /// Counts the [`char`s](prim@char) of a [`&str`](prim@str).
+        #[inline]
+        pub fn of_str<S: ?Sized + AsRef<str>>(s: &S) -> Self {
+            eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+            Self::new(s.as_ref().chars().count() as u64)
+        }
+    }
+
+    impl CyclesCount {
+        /// Count N cycles.
+        #[inline]
+        pub fn new<N>(count: N) -> Self
+        where
+            N: TryInto<u64>,
+            N::Error: std::fmt::Debug,
+        {
+            eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+            Self {
+                count: count.try_into().unwrap(),
+            }
+        }
+    }
+
+    impl ItemsCount {
+        /// Count N items.
+        #[inline]
+        pub fn new<N>(count: N) -> Self
+        where
+            N: TryInto<u64>,
+            N::Error: std::fmt::Debug,
+        {
+            eprintln!("Warning: Counter feature is not yet supported by codspeed-divan-compat");
+            Self {
+                count: count.try_into().unwrap(),
+            }
+        }
+    }
+}
 use codspeed::codspeed::CodSpeed;
 use config::Filter;
 use entry::AnyBenchEntry;
