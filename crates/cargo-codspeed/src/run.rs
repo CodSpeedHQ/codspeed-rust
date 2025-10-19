@@ -58,7 +58,7 @@ impl PackageFilters {
         let mut benches = vec![];
         for package in packages {
             let package_name = &package.name;
-            let package_target_dir = codspeed_target_dir.join(package_name);
+            let package_target_dir = codspeed_target_dir.join(package_name.to_string());
             let working_directory = package.manifest_path.parent().ok_or_else(|| {
                 Error::msg(format!("Failed to get root dir for package {package_name}"))
             })?;
@@ -79,7 +79,7 @@ impl PackageFilters {
                     }
                     if !bench_path.is_dir() {
                         benches.push(BenchToRun {
-                            package_name: package_name.clone(),
+                            package_name: package_name.to_string(),
                             working_directory: working_directory.into(),
                             bench_path,
                             bench_target_name,

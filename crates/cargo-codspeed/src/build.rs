@@ -96,7 +96,7 @@ impl BuildOptions<'_> {
 
                     if add_bench_to_codspeed_dir {
                         built_benches.push(BuiltBench {
-                            package: package.name.clone(),
+                            package: package.name.to_string(),
                             bench: bench_target_name,
                             executable_path: artifact
                                 .executable

@@ -19,7 +19,7 @@ categories = [
 keywords = ["codspeed", "benchmark", "cargo"]
 
 [dependencies]
-cargo_metadata = "0.19.2"
+cargo_metadata = "0.23.0"
 clap = { version = "=4.5.17", features = ["derive", "env"] }
 termcolor = "1.4"
 anyhow = { workspace = true }
