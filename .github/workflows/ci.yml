@@ -132,6 +132,7 @@ jobs:
           run: cargo codspeed run
           mode: instrumentation
           token: ${{ secrets.CODSPEED_TOKEN }}
+          runner-version: v4.3.0
 
   compat-integration-test-walltime:
     runs-on: codspeed-macro
@@ -166,6 +167,7 @@ jobs:
           run: cargo codspeed run
           mode: walltime
           token: ${{ secrets.CODSPEED_TOKEN }}
+          runner-version: v4.3.0
 
   musl-build-check:
     strategy:
