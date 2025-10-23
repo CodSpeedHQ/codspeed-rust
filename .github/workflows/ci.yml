@@ -125,14 +125,14 @@ jobs:
       - run: cargo codspeed build ${{ matrix.build-args }}
 
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@main
+        uses: CodSpeedHQ/action@chore/runner-branch
         env:
           MY_ENV_VAR: "YES"
         with:
           run: cargo codspeed run
           mode: instrumentation
           token: ${{ secrets.CODSPEED_TOKEN }}
-          runner-version: v4.3.0
+          runner-branch: add-valgrind-args
 
   compat-integration-test-walltime:
     runs-on: codspeed-macro
@@ -160,14 +160,14 @@ jobs:
           cargo codspeed build -p ${{ matrix.package }}
 
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@main
+        uses: CodSpeedHQ/action@chore/runner-branch
         env:
           MY_ENV_VAR: "YES"
         with:
           run: cargo codspeed run
           mode: walltime
           token: ${{ secrets.CODSPEED_TOKEN }}
-          runner-version: v4.3.0
+          runner-branch: add-valgrind-args
 
   musl-build-check:
     strategy:
