@@ -44,3 +44,7 @@ harness = false
 [[bench]]
 name = "counters"
 harness = false
+
+[[bench]]
+name = "parse_pr"
+harness = false
