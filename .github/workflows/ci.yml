@@ -183,6 +183,7 @@ jobs:
         with:
           run: cargo codspeed run
           mode: walltime
+          runner-version: branch:cod-1595-collect-more-data-with-perf
           token: ${{ secrets.CODSPEED_TOKEN }}
 
   musl-build-check:
