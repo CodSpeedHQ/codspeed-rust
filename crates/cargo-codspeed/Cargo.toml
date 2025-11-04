@@ -27,6 +27,7 @@ itertools = { workspace = true }
 anstyle = "1.0.8"
 serde = { workspace = true }
 serde_json = { workspace = true }
+toml = "0.8"
 codspeed = { path = "../codspeed", version = "=4.0.5" }
 
 [dev-dependencies]

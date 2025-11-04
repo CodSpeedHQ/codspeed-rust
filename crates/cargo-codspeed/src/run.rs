@@ -134,7 +134,7 @@ pub fn run_benches(
 
         command
             .status()
-            .map_err(|e| anyhow!("failed to execute the benchmark process: {}", e))
+            .map_err(|e| anyhow!("failed to execute the benchmark process: {e}"))
             .and_then(|status| {
                 if status.success() {
                     Ok(())

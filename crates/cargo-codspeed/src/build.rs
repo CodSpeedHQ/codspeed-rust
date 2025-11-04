@@ -4,7 +4,9 @@ use crate::{
     measurement_mode::MeasurementMode,
     prelude::*,
 };
+use anyhow::Context;
 use cargo_metadata::{camino::Utf8PathBuf, Message, Metadata, TargetKind};
+use std::collections::HashMap;
 use std::process::{exit, Command, Stdio};
 
 struct BuildOptions<'a> {
@@ -29,6 +31,50 @@ pub struct BuildConfig {
     pub quiet: bool,
     pub measurement_mode: MeasurementMode,
     pub passthrough_flags: Vec<String>,
+}
+
+fn get_bench_harness_value(
+    manifest_path: &Utf8PathBuf,
+    bench_name: &str,
+    cache: &mut HashMap<Utf8PathBuf, toml::Table>,
+) -> Result<bool> {
+    let manifest_table = if let Some(table) = cache.get(manifest_path) {
+        table
+    } else {
+        // Read and parse the Cargo.toml file
+        let manifest_content = std::fs::read_to_string(manifest_path)
+            .with_context(|| format!("Failed to read manifest at {manifest_path}"))?;
+        let table: toml::Table = toml::from_str(&manifest_content)
+            .with_context(|| format!("Failed to parse TOML in {manifest_path}"))?;
+        cache.insert(manifest_path.clone(), table);
+        cache.get(manifest_path).unwrap()
+    };
+
+    // Look for [[bench]] sections
+    let Some(benches) = manifest_table.get("bench").and_then(|v| v.as_array()) else {
+        // If no [[bench]] sections, it's not an error, benches present in <root>/benches/<name>.rs
+        // are still collected with harness = true
+        return Ok(true);
+    };
+
+    // Find the bench entry with matching name
+    let matching_bench = benches
+        .iter()
+        .filter_map(|bench| bench.as_table())
+        .find(|bench_table| {
+            bench_table
+                .get("name")
+                .and_then(|v| v.as_str())
+                .is_some_and(|name| name == bench_name)
+        });
+
+    // Check if harness is enabled (defaults to true)
+    let harness_enabled = matching_bench
+        .and_then(|bench_table| bench_table.get("harness"))
+        .and_then(|v| v.as_bool())
+        .unwrap_or(true);
+
+    Ok(harness_enabled)
 }
 
 impl BuildOptions<'_> {
@@ -60,6 +106,8 @@ impl BuildOptions<'_> {
         );
 
         let mut built_benches = Vec::new();
+        let mut bench_targets_with_default_harness = Vec::new();
+        let mut manifest_cache = HashMap::new();
 
         let package_names = self
             .package_filters
@@ -95,6 +143,15 @@ impl BuildOptions<'_> {
                     let add_bench_to_codspeed_dir = package_names.iter().contains(&package.name);
 
                     if add_bench_to_codspeed_dir {
+                        if get_bench_harness_value(
+                            &package.manifest_path,
+                            &bench_target_name,
+                            &mut manifest_cache,
+                        )? {
+                            bench_targets_with_default_harness
+                                .push((package.name.to_string(), bench_target_name.clone()));
+                        }
+
                         built_benches.push(BuiltBench {
                             package: package.name.to_string(),
                             bench: bench_target_name,
@@ -112,6 +169,25 @@ impl BuildOptions<'_> {
 
         if !status.success() {
             exit(status.code().expect("Could not get exit code"));
+        }
+
+        if !bench_targets_with_default_harness.is_empty() {
+            let targets_list = bench_targets_with_default_harness
+                .into_iter()
+                .map(|(package, bench)| format!("  - `{bench}` in package `{package}`"))
+                .join("\n");
+
+            bail!("\
+CodSpeed will not work with the following benchmark targets:
+{targets_list}
+
+CodSpeed requires benchmark targets to disable the default test harness because benchmark frameworks handle harnessing themselves.
+
+Either disable the default harness by adding `harness = false` to the corresponding \
+`[[bench]]` section in the Cargo.toml, or specify which targets to build by using \
+`cargo codspeed build -p package_name --bench first_target --bench second_target`.
+
+See `cargo codspeed build --help` for more information.");
         }
 
         for built_bench in &built_benches {
