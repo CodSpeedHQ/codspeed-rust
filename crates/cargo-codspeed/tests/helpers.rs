@@ -22,6 +22,7 @@ pub enum Project {
     Workspace,
     PackageInDeps,
     CratesWorkingDirectory,
+    DefaultHarnessError,
 }
 
 pub fn setup(dir: &str, project: Project) -> String {
@@ -38,7 +39,7 @@ pub fn setup(dir: &str, project: Project) -> String {
     let package_root = PathBuf::from_str(env!("CARGO_MANIFEST_DIR")).unwrap();
     let workspace_root = package_root.parent().unwrap().parent().unwrap();
     match project {
-        Project::Simple | Project::Features => {
+        Project::Simple | Project::Features | Project::DefaultHarnessError => {
             replace_in_file(
                 tmp_dir.join("Cargo.toml").to_str().unwrap(),
                 "../../..",

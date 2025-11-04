@@ -1,0 +1,18 @@
+[package]
+name = "default-harness-error-test"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+bencher = "0.1.5"
+codspeed = { path = "../../../codspeed" }
+codspeed-bencher-compat = { path = "../../../bencher_compat" }
+
+[[bench]]
+name = "bencher_example"
+# Missing harness = false to trigger error
+
+[[bench]]
+name = "bencher_correct"
+harness = false
