@@ -215,7 +215,7 @@ jobs:
     if: always()
     needs:
       - lint
-      - os-test-codspeed
+      - test-codspeed
       - tests-without-cargo-codspeed
       - test-cargo-codspeed
       - msrv-check
