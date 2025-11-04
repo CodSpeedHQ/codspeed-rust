@@ -10,6 +10,7 @@ use codspeed::walltime_results::WalltimeResults;
 use std::{
     io::{self, Write},
     path::{Path, PathBuf},
+    process::Stdio,
 };
 
 #[cfg(unix)]
@@ -99,6 +100,7 @@ pub fn run_benches(
     package_filters: PackageFilters,
     bench_target_filters: BenchTargetFilters,
     measurement_mode: MeasurementMode,
+    show_details: bool,
 ) -> Result<()> {
     let codspeed_target_dir = get_codspeed_target_dir(metadata, measurement_mode);
     let workspace_root = metadata.workspace_root.as_std_path();
@@ -113,6 +115,8 @@ pub fn run_benches(
 
     eprintln!("Collected {} benchmark suite(s) to run", benches.len());
 
+    let mut total_benchmark_count = 0;
+
     for bench in benches.iter() {
         let bench_target_name = &bench.bench_target_name;
         // workspace_root is needed since file! returns the path relatively to the workspace root
@@ -124,6 +128,11 @@ pub fn run_benches(
             .env("CODSPEED_CARGO_WORKSPACE_ROOT", workspace_root)
             .current_dir(&bench.working_directory);
 
+        if show_details {
+            command.env("CODSPEED_SHOW_DETAILS", "1");
+            command.stdout(Stdio::piped()).stderr(Stdio::inherit());
+        }
+
         if measurement_mode == MeasurementMode::Walltime {
             command.arg("--bench"); // Walltime targets need this additional argument (inherited from running them with `cargo bench`)
         }
@@ -132,33 +141,89 @@ pub fn run_benches(
             command.arg(bench_name_filter);
         }
 
-        command
-            .status()
-            .map_err(|e| anyhow!("failed to execute the benchmark process: {}", e))
-            .and_then(|status| {
-                if status.success() {
-                    Ok(())
-                } else {
-                    #[cfg(unix)]
-                    {
-                        let code = status
-                            .code()
-                            .or(status.signal().map(|s| 128 + s)) // 128+N indicates that a command was interrupted by signal N (see: https://tldp.org/LDP/abs/html/exitcodes.html)
-                            .unwrap_or(1);
+        if show_details {
+            // Only capture and process output when details are requested
+            let output = command
+                .output()
+                .map_err(|e| anyhow!("failed to execute the benchmark process: {}", e))?;
 
-                        eprintln!("failed to execute the benchmark process, exit code: {code}");
+            // Count benchmarks by looking for "Measured:" or "Checked:" lines
+            let stdout = String::from_utf8_lossy(&output.stdout);
+            let benchmark_count = stdout
+                .lines()
+                .filter(|line| {
+                    line.trim_start().starts_with("Measured:")
+                        || line.trim_start().starts_with("Checked:")
+                        || line.trim_start().starts_with("  Checked:")
+                        || line.trim_start().starts_with("  Measured:")
+                })
+                .count();
+            total_benchmark_count += benchmark_count;
 
-                        std::process::exit(code);
-                    }
-                    #[cfg(not(unix))]
-                    {
-                        bail!("failed to execute the benchmark process: {}", status)
-                    }
+            // Print captured output
+            print!("{stdout}");
+            io::stdout().flush().unwrap();
+
+            if !output.status.success() {
+                #[cfg(unix)]
+                {
+                    let code = output
+                        .status
+                        .code()
+                        .or(output.status.signal().map(|s| 128 + s)) // 128+N indicates that a command was interrupted by signal N (see: https://tldp.org/LDP/abs/html/exitcodes.html)
+                        .unwrap_or(1);
+
+                    eprintln!("failed to execute the benchmark process, exit code: {code}");
+
+                    std::process::exit(code);
                 }
-            })?;
-        eprintln!("Done running {bench_target_name}");
+                #[cfg(not(unix))]
+                {
+                    bail!("failed to execute the benchmark process: {}", output.status)
+                }
+            }
+
+            if benchmark_count == 0 && !stdout.is_empty() {
+                eprintln!("Warning: No benchmarks detected in output for {bench_target_name}");
+            }
+            eprintln!("Done running {bench_target_name} ({benchmark_count} benchmarks)");
+        } else {
+            // Fast path: don't capture output when details aren't needed
+            command
+                .status()
+                .map_err(|e| anyhow!("failed to execute the benchmark process: {}", e))
+                .and_then(|status| {
+                    if status.success() {
+                        Ok(())
+                    } else {
+                        #[cfg(unix)]
+                        {
+                            let code = status
+                                .code()
+                                .or(status.signal().map(|s| 128 + s)) // 128+N indicates that a command was interrupted by signal N (see: https://tldp.org/LDP/abs/html/exitcodes.html)
+                                .unwrap_or(1);
+
+                            eprintln!("failed to execute the benchmark process, exit code: {code}");
+
+                            std::process::exit(code);
+                        }
+                        #[cfg(not(unix))]
+                        {
+                            bail!("failed to execute the benchmark process: {}", status)
+                        }
+                    }
+                })?;
+            eprintln!("Done running {bench_target_name}");
+        }
     }
-    eprintln!("Finished running {} benchmark suite(s)", benches.len());
+    if show_details {
+        eprintln!(
+            "Finished running {} benchmark suite(s) ({total_benchmark_count} benchmarks total)",
+            benches.len()
+        );
+    } else {
+        eprintln!("Finished running {} benchmark suite(s)", benches.len());
+    }
 
     if measurement_mode == MeasurementMode::Walltime {
         aggregate_raw_walltime_data(workspace_root)?;
