@@ -25,7 +25,7 @@ regex = { version = "1.5", default-features = false, features = ["std"] }
 
 futures = { version = "0.3", default-features = false, optional = true }
 smol = { version = "2.0", default-features = false, optional = true }
-tokio = { version = "1.39", default-features = false, features = [
+tokio = { version = "1.44", default-features = false, features = [
   "rt",
 ], optional = true }
 async-std = { version = "1.12", optional = true }
