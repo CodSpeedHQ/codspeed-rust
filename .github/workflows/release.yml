@@ -25,9 +25,10 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
-      - uses: moonrepo/setup-rust@v1
+      - uses: GuillaumeLagrange/setup-rust@feat/cache-extra-identifier
         with:
           targets: ${{ matrix.target }}
+          cache-extra-identifier: ${{ matrix.runner }}-${{ matrix.target }}
 
       - name: Install musl tools
         run: sudo apt-get update && sudo apt-get install -y musl-tools
@@ -49,7 +50,7 @@ jobs:
         with:
           submodules: true
           fetch-depth: 0
-      - uses: moonrepo/setup-rust@v0
+      - uses: GuillaumeLagrange/setup-rust@feat/cache-extra-identifier
         with:
           cache-target: release
           bins: cargo-workspaces
