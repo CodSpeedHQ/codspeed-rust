@@ -12,3 +12,7 @@ codspeed-bencher-compat = { path = "../../../../bencher_compat" }
 [[bench]]
 name = "bencher_example"
 harness = false
+
+[[bench]]
+name = "another_bencher_example"
+harness = false
