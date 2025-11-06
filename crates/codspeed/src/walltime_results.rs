@@ -7,6 +7,8 @@ use std::{
 use serde::{Deserialize, Serialize};
 use statrs::statistics::{Data, Distribution, Max, Min, OrderStatistics};
 
+use crate::utils::generate_unique_id;
+
 const IQR_OUTLIER_FACTOR: f64 = 1.5;
 const STDEV_OUTLIER_FACTOR: f64 = 3.0;
 
@@ -191,7 +193,7 @@ impl WalltimeBenchmark {
     fn dump_to_results(&self, workspace_root: &Path, scope: &str) {
         let output_dir = result_dir_from_workspace_root(workspace_root).join(scope);
         std::fs::create_dir_all(&output_dir).unwrap();
-        let bench_id = uuid::Uuid::new_v4().to_string();
+        let bench_id = generate_unique_id();
         let output_path = output_dir.join(format!("{bench_id}.json"));
         let mut writer = std::fs::File::create(&output_path).expect("Failed to create the file");
         serde_json::to_writer_pretty(&mut writer, self).expect("Failed to write the data");

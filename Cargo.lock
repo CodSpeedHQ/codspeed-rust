@@ -460,7 +460,6 @@ dependencies = [
  "serde_json",
  "termcolor",
  "toml",
- "uuid",
 ]
 
 [[package]]
@@ -589,6 +588,7 @@ dependencies = [
  "anyhow",
  "cc",
  "colored",
+ "getrandom",
  "glob",
  "libc",
  "nix",
@@ -596,7 +596,6 @@ dependencies = [
  "serde_json",
  "statrs",
  "tempfile",
- "uuid",
 ]
 
 [[package]]
@@ -1913,15 +1912,6 @@ name = "utf8parse"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06abde3611657adf66d383f00b093d7faecc7fa57071cce2578660c9f1010821"
-
-[[package]]
-name = "uuid"
-version = "1.12.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b3758f5e68192bb96cc8f9b7e2c2cfdabb435499a28499a42f8f984092adad4b"
-dependencies = [
- "getrandom",
-]
 
 [[package]]
 name = "value-bag"

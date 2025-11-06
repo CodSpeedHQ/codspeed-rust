@@ -7,7 +7,6 @@ use assert_cmd::Command;
 use fs_extra::dir::copy;
 use fs_extra::dir::create;
 use fs_extra::dir::remove;
-use uuid::Uuid;
 
 fn replace_in_file(path: &str, from: &str, to: &str) {
     let mut contents = std::fs::read_to_string(path).unwrap();
@@ -27,7 +26,8 @@ pub enum Project {
 
 pub fn setup(dir: &str, project: Project) -> String {
     //Create a new unique named temp directory
-    let tmp_dir = temp_dir().join(format!("cargo-codspeed-test-{}", Uuid::new_v4()));
+    let unique_id = codspeed::utils::generate_unique_id();
+    let tmp_dir = temp_dir().join(format!("cargo-codspeed-test-{unique_id}"));
     create(&tmp_dir, false).unwrap();
     let mut copy_opts = fs_extra::dir::CopyOptions::new();
     copy_opts.content_only = true;
