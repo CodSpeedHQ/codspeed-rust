@@ -46,6 +46,29 @@ pub fn is_perf_enabled() -> bool {
     std::env::var("CODSPEED_PERF_ENABLED").is_ok()
 }
 
+/// Generate a statistically unique ID in a format resembling UUID v4.
+pub fn generate_unique_id() -> String {
+    // Generate random bytes for UUID v4
+    let mut bytes = [0u8; 16];
+    getrandom::getrandom(&mut bytes).expect("Failed to generate random bytes");
+
+    // Extract values from bytes
+    let r1 = u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
+    let r2 = u16::from_be_bytes([bytes[4], bytes[5]]);
+    let r3 = u16::from_be_bytes([bytes[6], bytes[7]]);
+    let r4 = u16::from_be_bytes([bytes[8], bytes[9]]);
+    let r5 = u32::from_be_bytes([bytes[10], bytes[11], bytes[12], bytes[13]]);
+    let r6 = u16::from_be_bytes([bytes[14], bytes[15]]);
+
+    // Set version (4) and variant bits according to UUID v4 spec
+    let r3_v4 = (r3 & 0x0fff) | 0x4000; // Version 4
+    let r4_variant = (r4 & 0x3fff) | 0x8000; // Variant 10
+
+    // Format as standard UUID: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+    // where y is one of 8, 9, A, or B
+    format!("{r1:08x}-{r2:04x}-{r3_v4:04x}-{r4_variant:04x}-{r5:08x}{r6:04x}")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
