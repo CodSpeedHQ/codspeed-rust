@@ -19,7 +19,7 @@ keywords = ["codspeed", "benchmark", "criterion"]
 [dependencies]
 criterion = { package = "codspeed-criterion-compat-walltime", path = "./criterion_fork", version = "=4.0.5", default-features = false }
 codspeed = { path = "../codspeed", version = "=4.0.5" }
-colored = "2.1.0"
+colored = "3.0.0"
 clap = { version = "4", default-features = false, features = ["std"] }
 regex = { version = "1.5", default-features = false, features = ["std"] }
 
