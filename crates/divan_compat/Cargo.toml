@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-divan-compat"
-version = "4.0.5"
+version = "4.1.0"
 rust-version = "1.80"
 edition = "2021"
 description = "Divan compatibility layer for CodSpeed"
@@ -18,9 +18,9 @@ categories = [
 keywords = ["codspeed", "benchmark", "divan"]
 
 [dependencies]
-codspeed = { path = "../codspeed", version = "=4.0.5" }
-divan = { package = "codspeed-divan-compat-walltime", path = "./divan_fork", version = "=4.0.5" }
-codspeed-divan-compat-macros = { version = "=4.0.5", path = './macros' }
+codspeed = { path = "../codspeed", version = "=4.1.0" }
+divan = { package = "codspeed-divan-compat-walltime", path = "./divan_fork", version = "=4.1.0" }
+codspeed-divan-compat-macros = { version = "=4.1.0", path = './macros' }
 regex = "1.11.3"
 clap = { version = "4", default-features = false, features = ["std", "env"] }
 
