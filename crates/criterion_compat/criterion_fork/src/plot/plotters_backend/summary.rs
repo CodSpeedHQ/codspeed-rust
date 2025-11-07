@@ -28,12 +28,44 @@ pub fn line_comparison(
     value_type: ValueType,
     axis_scale: AxisScale,
 ) {
+    eprintln!("[DIAG] line_comparison: title = {}", title);
     let (unit, series_data) = line_comparison_series_data(formatter, all_curves);
+
+    eprintln!(
+        "[DIAG] line_comparison: series_data count = {}",
+        series_data.len()
+    );
+    for (i, (name, xs, ys)) in series_data.iter().enumerate() {
+        eprintln!(
+            "[DIAG] line_comparison: series[{}] name={:?}, xs len={}, ys len={}",
+            i,
+            name,
+            xs.len(),
+            ys.len()
+        );
+        if ys.iter().any(|y| !y.is_finite()) {
+            eprintln!(
+                "[DIAG] line_comparison: WARNING - series[{}] has non-finite y values!",
+                i
+            );
+        }
+    }
 
     let x_range =
         plotters::data::fitting_range(series_data.iter().flat_map(|(_, xs, _)| xs.iter()));
     let y_range =
         plotters::data::fitting_range(series_data.iter().flat_map(|(_, _, ys)| ys.iter()));
+
+    eprintln!(
+        "[DIAG] line_comparison: x_range = {:?}, y_range = {:?}",
+        x_range, y_range
+    );
+    eprintln!(
+        "[DIAG] line_comparison: x_range.is_finite = {}, y_range.is_finite = {}",
+        x_range.start.is_finite() && x_range.end.is_finite(),
+        y_range.start.is_finite() && y_range.end.is_finite()
+    );
+
     let root_area = SVGBackend::new(&path, SIZE)
         .into_drawing_area()
         .titled(&format!("{}: Comparison", title), (DEFAULT_FONT, 20))
@@ -118,13 +150,41 @@ fn line_comparison_series_data<'a>(
     formatter: &dyn ValueFormatter,
     all_curves: &[&(&'a BenchmarkId, Vec<f64>)],
 ) -> (&'static str, Vec<(Option<&'a String>, Vec<f64>, Vec<f64>)>) {
-    let max = all_curves
+    eprintln!(
+        "[DIAG] line_comparison_series_data: Processing {} curves",
+        all_curves.len()
+    );
+
+    let means: Vec<f64> = all_curves
         .iter()
-        .map(|&(_, data)| Sample::new(data).mean())
-        .fold(::std::f64::NAN, f64::max);
+        .enumerate()
+        .map(|(i, &(id, data))| {
+            let mean = Sample::new(data).mean();
+            if !mean.is_finite() {
+                eprintln!("[DIAG] line_comparison_series_data: Curve {} (id={}) has non-finite mean: {}, data len: {}",
+                    i, id.as_title(), mean, data.len());
+            }
+            mean
+        })
+        .collect();
+
+    let max = means.iter().fold(::std::f64::NAN, |acc, &x| acc.max(x));
+
+    eprintln!(
+        "[DIAG] line_comparison_series_data: max = {}, is_finite = {}",
+        max,
+        max.is_finite()
+    );
+    if !max.is_finite() {
+        eprintln!("[DIAG] line_comparison_series_data: All means: {:?}", means);
+    }
 
     let mut dummy = [1.0];
     let unit = formatter.scale_values(max, &mut dummy);
+    eprintln!(
+        "[DIAG] line_comparison_series_data: unit = {}, dummy after scale = {:?}",
+        unit, dummy
+    );
 
     let mut series_data = vec![];
 
@@ -158,14 +218,57 @@ pub fn violin(
     path: &Path,
     axis_scale: AxisScale,
 ) {
+    eprintln!(
+        "[DIAG] violin: title = {}, processing {} curves",
+        title,
+        all_curves.len()
+    );
     let all_curves_vec = all_curves.iter().rev().cloned().collect::<Vec<_>>();
     let all_curves: &[&(&BenchmarkId, Vec<f64>)] = &all_curves_vec;
 
     let mut kdes = all_curves
         .iter()
-        .map(|&&(id, ref sample)| {
-            let (x, mut y) = kde::sweep(Sample::new(sample), KDE_POINTS, None);
+        .enumerate()
+        .map(|(i, &&(id, ref sample))| {
+            eprintln!(
+                "[DIAG] violin: Curve {} (id={}): sample len = {}",
+                i,
+                id.as_title(),
+                sample.len()
+            );
+            let sample_obj = Sample::new(sample);
+            eprintln!(
+                "[DIAG] violin: Curve {} min={}, max={}, mean={}",
+                i,
+                sample_obj.min(),
+                sample_obj.max(),
+                sample_obj.mean()
+            );
+
+            let (x, mut y) = kde::sweep(sample_obj, KDE_POINTS, None);
+            eprintln!(
+                "[DIAG] violin: Curve {} KDE produced {} x-points and {} y-points",
+                i,
+                x.len(),
+                y.len()
+            );
+
             let y_max = Sample::new(&y).max();
+            eprintln!(
+                "[DIAG] violin: Curve {} y_max = {}, is_finite = {}",
+                i,
+                y_max,
+                y_max.is_finite()
+            );
+
+            if !y_max.is_finite() || y_max == 0.0 {
+                eprintln!(
+                    "[DIAG] violin: WARNING - Curve {} has problematic y_max! y values: {:?}",
+                    i,
+                    &y[..y.len().min(10)]
+                );
+            }
+
             for y in y.iter_mut() {
                 *y /= y_max;
             }
@@ -189,8 +292,15 @@ pub fn violin(
             max = e;
         }
     }
+    eprintln!("[DIAG] violin: x min={}, max={}", min, max);
+
     let mut dummy = [1.0];
     let unit = formatter.scale_values(max, &mut dummy);
+    eprintln!(
+        "[DIAG] violin: unit={}, dummy after scale={:?}",
+        unit, dummy
+    );
+
     kdes.iter_mut().for_each(|&mut (_, ref mut xs, _)| {
         formatter.scale_values(max, xs);
     });
@@ -198,6 +308,16 @@ pub fn violin(
     let mut x_range = plotters::data::fitting_range(kdes.iter().flat_map(|(_, xs, _)| xs.iter()));
     x_range.start = 0.0;
     let y_range = -0.5..all_curves.len() as f64 - 0.5;
+
+    eprintln!(
+        "[DIAG] violin: x_range = {:?}, y_range = {:?}",
+        x_range, y_range
+    );
+    eprintln!(
+        "[DIAG] violin: x_range.is_finite = {}, y_range.is_finite = {}",
+        x_range.start.is_finite() && x_range.end.is_finite(),
+        y_range.start.is_finite() && y_range.end.is_finite()
+    );
 
     let size = (960, 150 + (18 * all_curves.len() as u32));
 
