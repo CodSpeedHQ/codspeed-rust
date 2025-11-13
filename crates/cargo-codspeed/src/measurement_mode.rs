@@ -6,7 +6,8 @@ use std::fmt;
 #[serde(rename_all = "lowercase")]
 pub enum MeasurementMode {
     #[default]
-    Instrumentation,
+    #[value(alias = "instrumentation")]
+    Simulation,
     Walltime,
 }
 
@@ -16,7 +17,7 @@ impl fmt::Display for MeasurementMode {
             f,
             "{}",
             match self {
-                MeasurementMode::Instrumentation => "instrumentation",
+                MeasurementMode::Simulation => "simulation",
                 MeasurementMode::Walltime => "walltime",
             }
         )
