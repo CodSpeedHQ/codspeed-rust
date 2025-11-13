@@ -13,7 +13,7 @@ fn test_simple_run_without_build() {
         .arg("run")
         .assert()
         .failure()
-        .stderr(contains("Error: No benchmarks found for the instrumentation mode. Run `cargo codspeed build -m instrumentation` first."));
+        .stderr(contains("Error: No benchmarks found for the simulation mode. Run `cargo codspeed build -m simulation` first."));
     teardown(dir);
 }
 
