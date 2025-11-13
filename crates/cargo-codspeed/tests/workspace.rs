@@ -12,7 +12,7 @@ fn test_workspace_run_without_build() {
         .arg("run")
         .assert()
         .failure()
-        .stderr(contains("Error: No benchmarks found for the instrumentation mode. Run `cargo codspeed build -m instrumentation` first."));
+        .stderr(contains("Error: No benchmarks found for the simulation mode. Run `cargo codspeed build -m simulation` first."));
     teardown(dir);
 }
 
@@ -62,7 +62,7 @@ fn test_workspace_build_subpackage_and_run_other() {
         .args(["--package", "package-b"])
         .assert()
         .failure()
-        .stderr(contains("Error: No benchmarks found for the instrumentation mode. Run `cargo codspeed build -m instrumentation` first."));
+        .stderr(contains("Error: No benchmarks found for the simulation mode. Run `cargo codspeed build -m simulation` first."));
     teardown(dir);
 }
 
