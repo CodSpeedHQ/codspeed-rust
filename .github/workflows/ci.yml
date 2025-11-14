@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: GuillaumeLagrange/setup-rust@feat/cache-extra-identifier
         with:
           components: rustfmt, clippy
         env:
@@ -56,9 +56,10 @@ jobs:
         with:
           submodules: true
 
-      - uses: moonrepo/setup-rust@v1
+      - uses: GuillaumeLagrange/setup-rust@feat/cache-extra-identifier
         with:
           targets: ${{ matrix.job.target }}
+          cache-extra-identifier: ${{ matrix.job.os }}-${{ matrix.job.target }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -75,7 +76,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: GuillaumeLagrange/setup-rust@feat/cache-extra-identifier
         with:
           bins: cargo-msrv
         env:
@@ -95,7 +96,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: GuillaumeLagrange/setup-rust@feat/cache-extra-identifier
         with:
           bins: cargo-nextest
         env:
@@ -111,9 +112,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: GuillaumeLagrange/setup-rust@feat/cache-extra-identifier
         with:
           bins: cargo-nextest
+          cache-extra-identifier: partition-${{ matrix.partition }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: cargo nextest run -p cargo-codspeed --partition hash:${{ matrix.partition }}/5
@@ -132,9 +134,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: GuillaumeLagrange/setup-rust@feat/cache-extra-identifier
         with:
           cache-target: release
+          cache-extra-identifier: ${{ matrix.build-args }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -163,9 +166,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: GuillaumeLagrange/setup-rust@feat/cache-extra-identifier
         with:
           cache-target: release
+          cache-extra-identifier: walltime-${{ matrix.package }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -199,9 +203,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: GuillaumeLagrange/setup-rust@feat/cache-extra-identifier
         with:
           targets: ${{ matrix.target }}
+          cache-extra-identifier: ${{ matrix.runner }}-${{ matrix.target }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
