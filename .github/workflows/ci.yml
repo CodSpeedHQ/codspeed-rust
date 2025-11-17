@@ -59,8 +59,17 @@ jobs:
       - uses: moonrepo/setup-rust@v1
         with:
           targets: ${{ matrix.job.target }}
+          # moonrepo/setup-rust does not allow for different cache keys per matrix job
+          # This causes cache to be shared between `linux-gnu` and `linux-musl` builds which can cause build failures for native dependencies
+          # We disable the cache here and use Swatinem/rust-cache instead
+          cache: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Use this in place of the moonrepo/setup-rust cache, see above for explanation
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: ${{ matrix.job.target }}
 
       - uses: taiki-e/install-action@v2
         with:
