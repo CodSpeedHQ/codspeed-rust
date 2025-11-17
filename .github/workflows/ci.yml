@@ -87,7 +87,7 @@ jobs:
           tool: cross@0.2.5
 
       - name: Build codspeed
-        run: cross build -p codspeed --target ${{ matrix.job.target }}
+        run: cross clean && cross build -p codspeed --target ${{ matrix.job.target }}
   #
   # msrv-check:
   #   runs-on: ubuntu-latest
