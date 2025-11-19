@@ -1,4 +1,4 @@
-use crate::measurement;
+use crate::{instrument_hooks::InstrumentHooks, measurement};
 use colored::Colorize;
 use std::ffi::CString;
 
@@ -19,7 +19,8 @@ pub struct CodSpeed {
 
 impl CodSpeed {
     pub fn new() -> Self {
-        let is_instrumented = measurement::is_instrumented();
+        let hooks_instance = InstrumentHooks::instance();
+        let is_instrumented = hooks_instance.is_instrumented();
         if !is_instrumented {
             println!(
                 "{} codspeed is enabled, but no performance measurement will be made since it's running in an unknown environment.",
@@ -46,12 +47,16 @@ impl CodSpeed {
     #[inline(always)]
     pub fn start_benchmark(&mut self, name: &str) {
         self.current_benchmark = CString::new(name).expect("CString::new failed");
+        let _ = InstrumentHooks::instance().start_benchmark();
         measurement::start();
     }
 
     #[inline(always)]
     pub fn end_benchmark(&mut self) {
         measurement::stop(&self.current_benchmark);
+        let _ = InstrumentHooks::instance().stop_benchmark();
+        let _ = InstrumentHooks::instance()
+            .set_executed_benchmark(&self.current_benchmark.to_string_lossy());
         self.benchmarked
             .push(self.current_benchmark.to_str().unwrap().to_string());
         let action_str = if self.is_instrumented {
