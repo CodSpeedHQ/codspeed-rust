@@ -3,17 +3,6 @@ use std::ffi::CString;
 use crate::request::{send_client_request, ClientRequest, Value};
 
 #[inline(always)]
-pub fn is_instrumented() -> bool {
-    let valgrind_depth = unsafe {
-        send_client_request(
-            0,
-            &[ClientRequest::RunningOnValgrind as Value, 0, 0, 0, 0, 0],
-        )
-    };
-    valgrind_depth > 0
-}
-
-#[inline(always)]
 pub fn set_metadata() {
     let full_metadata = CString::new(format!(
         "Metadata: codspeed-rust {}",

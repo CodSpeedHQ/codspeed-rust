@@ -34,6 +34,9 @@ mod linux_impl {
                 instance
                     .set_integration("codspeed-rust", env!("CARGO_PKG_VERSION"))
                     .expect("Failed to set integration");
+                // We're using inline assembly to control callgrind, so we shouldn't do it in
+                // instrument-hooks to avoid sending the same events twice.
+                InstrumentHooks::disable_callgrind_markers();
                 instance
             })
         }
@@ -129,6 +132,15 @@ mod linux_impl {
                 ffi::instrument_hooks_current_timestamp()
             }
         }
+
+        pub fn disable_callgrind_markers() {
+            unsafe {
+                ffi::instrument_hooks_set_feature(
+                    ffi::instrument_hooks_feature_t_FEATURE_DISABLE_CALLGRIND_MARKERS,
+                    true,
+                )
+            };
+        }
     }
 
     impl Drop for InstrumentHooks {
@@ -175,6 +187,8 @@ mod other_impl {
         pub fn current_timestamp() -> u64 {
             0
         }
+
+        pub fn disable_callgrind_markers() {}
     }
 }
 
