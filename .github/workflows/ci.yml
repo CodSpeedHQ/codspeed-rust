@@ -194,6 +194,43 @@ jobs:
           mode: walltime
           token: ${{ secrets.CODSPEED_TOKEN }}
 
+
+  compat-integration-test-memory:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package:
+          - codspeed-divan-compat
+          - codspeed-divan-compat-examples
+          - codspeed-criterion-compat
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: moonrepo/setup-rust@v1
+        with:
+          cache-target: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: cargo install --path crates/cargo-codspeed --locked
+
+      - run: |
+          # Remove the cargo config else it forces instrumentation mode
+          rm -f .cargo/config.toml
+          cargo codspeed build -p ${{ matrix.package }} -m instrumentation
+
+      # TODO: Enable once we can upload it
+      # - name: Run the benchmarks
+      #   uses: CodSpeedHQ/action@chore/runner-branch
+      #   env:
+      #     MY_ENV_VAR: "YES"
+      #   with:
+      #     runner-branch: cod-1670-runner-profile-memory-of-command
+      #     run: cargo codspeed run
+      #     mode: memory
+      #     token: ${{ secrets.CODSPEED_TOKEN }}
+
   musl-build-check:
     strategy:
       matrix:
