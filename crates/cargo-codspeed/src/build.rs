@@ -226,7 +226,9 @@ See `cargo codspeed build --help` for more information.");
         ];
 
         // Add the codspeed cfg flag if simulation mode is enabled
-        if measurement_mode == MeasurementMode::Simulation {
+        if measurement_mode == MeasurementMode::Simulation
+            || measurement_mode == MeasurementMode::Analysis
+        {
             flags.push("--cfg=codspeed".to_owned());
         }
 
