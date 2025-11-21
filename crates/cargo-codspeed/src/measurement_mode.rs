@@ -9,6 +9,7 @@ pub enum MeasurementMode {
     #[value(alias = "instrumentation")]
     Simulation,
     Walltime,
+    Analysis,
 }
 
 impl fmt::Display for MeasurementMode {
@@ -19,6 +20,7 @@ impl fmt::Display for MeasurementMode {
             match self {
                 MeasurementMode::Simulation => "simulation",
                 MeasurementMode::Walltime => "walltime",
+                MeasurementMode::Analysis => "analysis",
             }
         )
     }
