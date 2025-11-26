@@ -5,6 +5,7 @@ mod ffi;
 mod linux_impl {
 
     use super::ffi;
+    use libc::pid_t;
     use std::ffi::CString;
     use std::sync::OnceLock;
 
@@ -65,7 +66,12 @@ mod linux_impl {
 
         #[inline(always)]
         pub fn set_executed_benchmark(&self, uri: &str) -> Result<(), u8> {
-            let pid = std::process::id() as i32;
+            let pid = std::process::id() as pid_t;
+            self.set_executed_benchmark_with_pid(uri, pid)
+        }
+
+        #[inline(always)]
+        pub fn set_executed_benchmark_with_pid(&self, uri: &str, pid: pid_t) -> Result<(), u8> {
             let c_uri = CString::new(uri).map_err(|_| 1u8)?;
             let result = unsafe {
                 ffi::instrument_hooks_set_executed_benchmark(self.0, pid, c_uri.as_ptr())
