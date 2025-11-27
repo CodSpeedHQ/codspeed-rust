@@ -5,6 +5,10 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -171,7 +175,6 @@ jobs:
         with:
           run: cargo codspeed run
           mode: ${{ matrix.mode }}
-          token: ${{ secrets.CODSPEED_TOKEN }}
 
   musl-build-check:
     strategy:
