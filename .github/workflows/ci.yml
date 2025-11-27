@@ -137,7 +137,7 @@ jobs:
         mode:
           - walltime
           - instrumentation
-          - memory
+          # - memory
     runs-on: ${{ matrix.mode == 'walltime' && 'codspeed-macro' || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
