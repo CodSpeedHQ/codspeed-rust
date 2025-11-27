@@ -135,6 +135,8 @@ jobs:
     strategy:
       matrix:
         package:
+          - codspeed
+          - codspeed-bencher-compat
           - codspeed-divan-compat
           - codspeed-divan-compat-examples
           - codspeed-criterion-compat
