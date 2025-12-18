@@ -145,6 +145,8 @@ jobs:
           - instrumentation
           - memory
     runs-on: ${{ matrix.mode == 'walltime' && 'codspeed-macro' || 'ubuntu-latest' }}
+    env:
+      CODSPEED_RUNNER_MODE: ${{ matrix.mode == 'memory' && 'analysis' || matrix.mode }}
     steps:
       - uses: actions/checkout@v4
         with:
