@@ -171,14 +171,14 @@ jobs:
           fi
 
       - name: Install memtrack (temp until runner is released)
-        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/CodSpeedHQ/runner/releases/download/memtrack-v1.0.1-alpha.1/memtrack-installer.sh | sh
+        run: curl --proto '=https' --tlsv1.2 -LsSf https://github.com/CodSpeedHQ/runner/releases/download/memtrack-v1.0.1-alpha.3/memtrack-installer.sh | sh
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@main
         env:
           MY_ENV_VAR: "YES"
         with:
-          runner-version: branch:main
+          runner-version: 4.4.2-alpha.3
           run: cargo codspeed run
           mode: ${{ matrix.mode }}
           upload-url: https://api.staging.preview.codspeed.io/upload
