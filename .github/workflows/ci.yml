@@ -131,7 +131,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: cargo nextest run -p cargo-codspeed --partition hash:${{ matrix.partition }}/5
 
-  compat-integration-test:
+  analysis-integration-test:
     strategy:
       matrix:
         package:
@@ -141,10 +141,12 @@ jobs:
           - codspeed-divan-compat-examples
           - codspeed-criterion-compat
         mode:
-          - walltime
-          - instrumentation
           - memory
-    runs-on: ${{ matrix.mode == 'walltime' && 'codspeed-macro' || 'ubuntu-latest' }}
+          - simulation
+        include:
+          - package: codspeed-criterion-compat
+            features: async_futures
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
@@ -157,16 +159,11 @@ jobs:
 
       - run: cargo install --path crates/cargo-codspeed --locked
 
-      - name: Remove .cargo/config.toml to not force instrumentation mode
-        if: ${{ matrix.mode != 'instrumentation' }}
-        run: rm -f .cargo/config.toml
-
-      - run: |
-          if [ "${{ matrix.package }}" = "codspeed-criterion-compat" ]; then
-            cargo codspeed build -p ${{ matrix.package }} --features async_futures
-          else
-            cargo codspeed build -p ${{ matrix.package }}
-          fi
+      - name: Build the benchmarks
+        run: |
+          # Remove the cargo config else it forces instrumentation mode
+          rm -f .cargo/config.toml
+          cargo codspeed build -m ${{matrix.mode}} -p ${{ matrix.package }} ${{ matrix.features && format('--features {0}', matrix.features) || '' }}
 
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@main
@@ -175,6 +172,40 @@ jobs:
         with:
           run: cargo codspeed run
           mode: ${{ matrix.mode }}
+
+  walltime-integration-test:
+    runs-on: codspeed-macro
+    strategy:
+      matrix:
+        package:
+          - codspeed-divan-compat
+          - codspeed-divan-compat-examples
+          - codspeed-criterion-compat
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: moonrepo/setup-rust@v1
+        with:
+          cache-target: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: cargo install --path crates/cargo-codspeed --locked
+
+      - name: Build the benchmarks
+        run: |
+          # Remove the cargo config else it forces instrumentation mode
+          rm -f .cargo/config.toml
+          cargo codspeed build -p ${{ matrix.package }}
+
+      - name: Run the benchmarks
+        uses: CodSpeedHQ/action@main
+        env:
+          MY_ENV_VAR: "YES"
+        with:
+          run: cargo codspeed run
+          mode: walltime
 
   musl-build-check:
     strategy:
@@ -210,7 +241,8 @@ jobs:
       - tests-without-cargo-codspeed
       - test-cargo-codspeed
       - msrv-check
-      - compat-integration-test
+      - analysis-integration-test
+      - walltime-integration-test
       - musl-build-check
     steps:
       - uses: re-actors/alls-green@release/v1
