@@ -185,9 +185,11 @@ jobs:
     strategy:
       matrix:
         package:
-          - codspeed-divan-compat
-          - codspeed-divan-compat-examples
-          - codspeed-criterion-compat
+          # TODO: DONT MERGE THIS
+          - codspeed-bencher-compat
+          # - codspeed-divan-compat
+          # - codspeed-divan-compat-examples
+          # - codspeed-criterion-compat
     steps:
       - uses: actions/checkout@v4
         with:
@@ -206,7 +208,9 @@ jobs:
           cargo codspeed build -p ${{ matrix.package }}
 
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@main
+        # uses: CodSpeedHQ/action@main
+        # TODO: DONT MERGE THIS
+        uses: CodSpeedHQ/action@3d6a1d9bdf2d844aec73f651d82e7672da7756fb
         env:
           MY_ENV_VAR: "YES"
         with:
