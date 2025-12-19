@@ -8,6 +8,7 @@ mod linux_impl {
     use std::ffi::CString;
     use std::sync::OnceLock;
 
+    #[derive(PartialEq)]
     pub struct InstrumentHooks(*mut ffi::InstrumentHooks);
 
     unsafe impl Send for InstrumentHooks {}
@@ -34,9 +35,6 @@ mod linux_impl {
                 instance
                     .set_integration("codspeed-rust", env!("CARGO_PKG_VERSION"))
                     .expect("Failed to set integration");
-                // We're using inline assembly to control callgrind, so we shouldn't do it in
-                // instrument-hooks to avoid sending the same events twice.
-                InstrumentHooks::disable_callgrind_markers();
                 instance
             })
         }
@@ -154,6 +152,7 @@ mod linux_impl {
 
 #[cfg(not(use_instrument_hooks))]
 mod other_impl {
+    #[derive(PartialEq)]
     pub struct InstrumentHooks;
 
     impl InstrumentHooks {
