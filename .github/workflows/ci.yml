@@ -191,6 +191,7 @@ jobs:
           MY_ENV_VAR: "YES"
         with:
           run: cargo codspeed run
+          # Hello world
           mode: walltime
           token: ${{ secrets.CODSPEED_TOKEN }}
 
