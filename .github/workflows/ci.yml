@@ -178,9 +178,9 @@ jobs:
     strategy:
       matrix:
         package:
-          - codspeed-divan-compat
+          # - codspeed-divan-compat
           - codspeed-divan-compat-examples
-          - codspeed-criterion-compat
+          # - codspeed-criterion-compat
     steps:
       - uses: actions/checkout@v4
         with:
@@ -205,6 +205,7 @@ jobs:
           MY_ENV_VAR: "YES"
         with:
           run: cargo codspeed run
+          runner-version: 'branch:events-no-compression'
           mode: walltime
 
   musl-build-check:
