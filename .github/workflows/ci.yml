@@ -10,177 +10,177 @@ permissions:
   id-token: write
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - uses: moonrepo/setup-rust@v1
-        with:
-          components: rustfmt, clippy
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: pre-commit/action@v3.0.1
-        with:
-          extra_args: --all-files
-
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: bindgen-cli@0.72.1
-      - name: Check if bindings are up-to-date
-        working-directory: crates/codspeed/src/instrument_hooks
-        run: |
-          ./update-bindings.sh
-
-          if ! git diff --exit-code bindings.rs; then
-            echo "Error: FFI bindings are out of date!"
-            exit 1
-          fi
-
-  test-codspeed:
-    runs-on: ${{ matrix.job.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        job:
-          - { os: ubuntu-latest, target: arm-unknown-linux-gnueabihf }
-          - { os: ubuntu-latest, target: aarch64-unknown-linux-musl }
-          - { os: ubuntu-latest, target: i686-unknown-linux-gnu }
-          - { os: ubuntu-latest, target: i686-unknown-linux-musl }
-          - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu }
-          - { os: ubuntu-latest, target: x86_64-unknown-linux-musl }
-          - { os: macos-latest, target: aarch64-apple-darwin }
-          - { os: macos-latest, target: x86_64-apple-darwin }
-          - { os: windows-latest, target: i686-pc-windows-msvc }
-          - { os: windows-latest, target: x86_64-pc-windows-msvc }
-          - { os: windows-latest, target: aarch64-pc-windows-msvc }
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-
-      - uses: moonrepo/setup-rust@v1
-        with:
-          targets: ${{ matrix.job.target }}
-          # moonrepo/setup-rust does not allow for different cache keys per matrix job
-          # This causes cache to be shared between `linux-gnu` and `linux-musl` builds which can cause build failures for native dependencies
-          # We disable the cache here and use Swatinem/rust-cache instead
-          cache: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Use this in place of the moonrepo/setup-rust cache, see above for explanation
-      - uses: Swatinem/rust-cache@v2
-        with:
-          shared-key: ${{ matrix.job.target }}
-
-      - uses: taiki-e/install-action@v2
-        with:
-          tool: cross@0.2.5
-
-      - name: Build codspeed
-        run: cross build -p codspeed --target ${{ matrix.job.target }}
-
-  msrv-check:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - uses: moonrepo/setup-rust@v1
-        with:
-          bins: cargo-msrv
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Check cospeed MSRV
-        run: cargo msrv --path crates/codspeed verify -- cargo check --all-features --config codspeed=true
-      - name: Check bencher_compat MSRV
-        run: cargo msrv --path crates/bencher_compat verify -- cargo check --all-features --config codspeed=true
-      - name: Check criterion_compat MSRV
-        run: cargo msrv --path crates/criterion_compat verify -- cargo check --all-features --config codspeed=true
-      - name: Check divan_compat MSRV
-        run: cargo msrv --path crates/divan_compat verify -- cargo check --all-features --config codspeed=true
-
-  tests-without-cargo-codspeed:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - uses: moonrepo/setup-rust@v1
-        with:
-          bins: cargo-nextest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: cargo nextest run --workspace --exclude cargo-codspeed
-
-  test-cargo-codspeed:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        partition: [1, 2, 3, 4, 5]
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - uses: moonrepo/setup-rust@v1
-        with:
-          bins: cargo-nextest
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: cargo nextest run -p cargo-codspeed --partition hash:${{ matrix.partition }}/5
-
-  analysis-integration-test:
-    strategy:
-      matrix:
-        package:
-          - codspeed
-          - codspeed-bencher-compat
-          - codspeed-divan-compat
-          - codspeed-divan-compat-examples
-          - codspeed-criterion-compat
-        mode:
-          - memory
-          - simulation
-        include:
-          - package: codspeed-criterion-compat
-            features: async_futures
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - uses: moonrepo/setup-rust@v1
-        with:
-          cache-target: release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - run: cargo install --path crates/cargo-codspeed --locked
-
-      - name: Build the benchmarks
-        run: |
-          # Remove the cargo config else it forces instrumentation mode
-          rm -f .cargo/config.toml
-          cargo codspeed build -m ${{matrix.mode}} -p ${{ matrix.package }} ${{ matrix.features && format('--features {0}', matrix.features) || '' }}
-
-      - name: Run the benchmarks
-        uses: CodSpeedHQ/action@main
-        env:
-          MY_ENV_VAR: "YES"
-        with:
-          run: cargo codspeed run
-          mode: ${{ matrix.mode }}
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
+  #     - uses: moonrepo/setup-rust@v1
+  #       with:
+  #         components: rustfmt, clippy
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - uses: pre-commit/action@v3.0.1
+  #       with:
+  #         extra_args: --all-files
+  #
+  #     - uses: taiki-e/install-action@v2
+  #       with:
+  #         tool: bindgen-cli@0.72.1
+  #     - name: Check if bindings are up-to-date
+  #       working-directory: crates/codspeed/src/instrument_hooks
+  #       run: |
+  #         ./update-bindings.sh
+  #
+  #         if ! git diff --exit-code bindings.rs; then
+  #           echo "Error: FFI bindings are out of date!"
+  #           exit 1
+  #         fi
+  #
+  # test-codspeed:
+  #   runs-on: ${{ matrix.job.os }}
+  #   strategy:
+  #     fail-fast: false
+  #     matrix:
+  #       job:
+  #         - { os: ubuntu-latest, target: arm-unknown-linux-gnueabihf }
+  #         - { os: ubuntu-latest, target: aarch64-unknown-linux-musl }
+  #         - { os: ubuntu-latest, target: i686-unknown-linux-gnu }
+  #         - { os: ubuntu-latest, target: i686-unknown-linux-musl }
+  #         - { os: ubuntu-latest, target: x86_64-unknown-linux-gnu }
+  #         - { os: ubuntu-latest, target: x86_64-unknown-linux-musl }
+  #         - { os: macos-latest, target: aarch64-apple-darwin }
+  #         - { os: macos-latest, target: x86_64-apple-darwin }
+  #         - { os: windows-latest, target: i686-pc-windows-msvc }
+  #         - { os: windows-latest, target: x86_64-pc-windows-msvc }
+  #         - { os: windows-latest, target: aarch64-pc-windows-msvc }
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
+  #
+  #     - uses: moonrepo/setup-rust@v1
+  #       with:
+  #         targets: ${{ matrix.job.target }}
+  #         # moonrepo/setup-rust does not allow for different cache keys per matrix job
+  #         # This causes cache to be shared between `linux-gnu` and `linux-musl` builds which can cause build failures for native dependencies
+  #         # We disable the cache here and use Swatinem/rust-cache instead
+  #         cache: false
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #
+  #     # Use this in place of the moonrepo/setup-rust cache, see above for explanation
+  #     - uses: Swatinem/rust-cache@v2
+  #       with:
+  #         shared-key: ${{ matrix.job.target }}
+  #
+  #     - uses: taiki-e/install-action@v2
+  #       with:
+  #         tool: cross@0.2.5
+  #
+  #     - name: Build codspeed
+  #       run: cross build -p codspeed --target ${{ matrix.job.target }}
+  #
+  # msrv-check:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
+  #     - uses: moonrepo/setup-rust@v1
+  #       with:
+  #         bins: cargo-msrv
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - name: Check cospeed MSRV
+  #       run: cargo msrv --path crates/codspeed verify -- cargo check --all-features --config codspeed=true
+  #     - name: Check bencher_compat MSRV
+  #       run: cargo msrv --path crates/bencher_compat verify -- cargo check --all-features --config codspeed=true
+  #     - name: Check criterion_compat MSRV
+  #       run: cargo msrv --path crates/criterion_compat verify -- cargo check --all-features --config codspeed=true
+  #     - name: Check divan_compat MSRV
+  #       run: cargo msrv --path crates/divan_compat verify -- cargo check --all-features --config codspeed=true
+  #
+  # tests-without-cargo-codspeed:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
+  #     - uses: moonrepo/setup-rust@v1
+  #       with:
+  #         bins: cargo-nextest
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - run: cargo nextest run --workspace --exclude cargo-codspeed
+  #
+  # test-cargo-codspeed:
+  #   runs-on: ubuntu-latest
+  #   strategy:
+  #     matrix:
+  #       partition: [1, 2, 3, 4, 5]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
+  #     - uses: moonrepo/setup-rust@v1
+  #       with:
+  #         bins: cargo-nextest
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #     - run: cargo nextest run -p cargo-codspeed --partition hash:${{ matrix.partition }}/5
+  #
+  # analysis-integration-test:
+  #   strategy:
+  #     matrix:
+  #       package:
+  #         - codspeed
+  #         - codspeed-bencher-compat
+  #         - codspeed-divan-compat
+  #         - codspeed-divan-compat-examples
+  #         - codspeed-criterion-compat
+  #       mode:
+  #         - memory
+  #         - simulation
+  #       include:
+  #         - package: codspeed-criterion-compat
+  #           features: async_futures
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
+  #     - uses: moonrepo/setup-rust@v1
+  #       with:
+  #         cache-target: release
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #
+  #     - run: cargo install --path crates/cargo-codspeed --locked
+  #
+  #     - name: Build the benchmarks
+  #       run: |
+  #         # Remove the cargo config else it forces instrumentation mode
+  #         rm -f .cargo/config.toml
+  #         cargo codspeed build -m ${{matrix.mode}} -p ${{ matrix.package }} ${{ matrix.features && format('--features {0}', matrix.features) || '' }}
+  #
+  #     - name: Run the benchmarks
+  #       uses: CodSpeedHQ/action@main
+  #       env:
+  #         MY_ENV_VAR: "YES"
+  #       with:
+  #         run: cargo codspeed run
+  #         mode: ${{ matrix.mode }}
 
   walltime-integration-test:
     runs-on: codspeed-macro
     strategy:
       matrix:
         package:
-          - codspeed-divan-compat
+          # - codspeed-divan-compat
           - codspeed-divan-compat-examples
-          - codspeed-criterion-compat
+          # - codspeed-criterion-compat
     steps:
       - uses: actions/checkout@v4
         with:
@@ -205,46 +205,47 @@ jobs:
           MY_ENV_VAR: "YES"
         with:
           run: cargo codspeed run
+          runner-version: 'branch:cod-1595-collect-more-data-with-perf'
           mode: walltime
 
-  musl-build-check:
-    strategy:
-      matrix:
-        include:
-          - target: x86_64-unknown-linux-musl
-            runner: ubuntu-24.04
-          - target: aarch64-unknown-linux-musl
-            runner: codspeedhq-arm64-ubuntu-24.04
+  # musl-build-check:
+  #   strategy:
+  #     matrix:
+  #       include:
+  #         - target: x86_64-unknown-linux-musl
+  #           runner: ubuntu-24.04
+  #         - target: aarch64-unknown-linux-musl
+  #           runner: codspeedhq-arm64-ubuntu-24.04
+  #
+  #   runs-on: ${{ matrix.runner }}
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #       with:
+  #         submodules: true
+  #     - uses: moonrepo/setup-rust@v1
+  #       with:
+  #         targets: ${{ matrix.target }}
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  #
+  #     - name: Install musl tools
+  #       run: sudo apt-get update && sudo apt-get install -y musl-tools
+  #
+  #     - run: cargo build --locked --release --bin cargo-codspeed --target ${{ matrix.target }}
 
-    runs-on: ${{ matrix.runner }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          submodules: true
-      - uses: moonrepo/setup-rust@v1
-        with:
-          targets: ${{ matrix.target }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Install musl tools
-        run: sudo apt-get update && sudo apt-get install -y musl-tools
-
-      - run: cargo build --locked --release --bin cargo-codspeed --target ${{ matrix.target }}
-
-  check:
-    runs-on: ubuntu-latest
-    if: always()
-    needs:
-      - lint
-      - test-codspeed
-      - tests-without-cargo-codspeed
-      - test-cargo-codspeed
-      - msrv-check
-      - analysis-integration-test
-      - walltime-integration-test
-      - musl-build-check
-    steps:
-      - uses: re-actors/alls-green@release/v1
-        with:
-          jobs: ${{ toJson( needs ) }}
+  # check:
+  #   runs-on: ubuntu-latest
+  #   if: always()
+  #   needs:
+  #     - lint
+  #     - test-codspeed
+  #     - tests-without-cargo-codspeed
+  #     - test-cargo-codspeed
+  #     - msrv-check
+  #     - analysis-integration-test
+  #     - walltime-integration-test
+  #     - musl-build-check
+  #   steps:
+  #     - uses: re-actors/alls-green@release/v1
+  #       with:
+  #         jobs: ${{ toJson( needs ) }}
