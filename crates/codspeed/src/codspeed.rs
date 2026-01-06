@@ -7,7 +7,7 @@ pub use std::hint::black_box;
 pub const WARMUP_RUNS: u32 = 5;
 
 pub fn display_native_harness() {
-    println!("Harness: codspeed v{}", env!("CARGO_PKG_VERSION"),);
+    eprintln!("Harness: codspeed v{}", env!("CARGO_PKG_VERSION"),);
 }
 
 #[derive(PartialEq)]
@@ -53,7 +53,7 @@ impl CodSpeed {
         };
 
         if !instrumentation_status.is_instrumented() {
-            println!(
+            eprintln!(
                 "{} codspeed is enabled, but no performance measurement will be made since it's running in an unknown environment.",
                 "NOTICE:".to_string().bold()
             );
