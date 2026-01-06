@@ -52,7 +52,7 @@ impl CodSpeed {
             }
         };
 
-        if instrumentation_status.is_instrumented() {
+        if !instrumentation_status.is_instrumented() {
             println!(
                 "{} codspeed is enabled, but no performance measurement will be made since it's running in an unknown environment.",
                 "NOTICE:".to_string().bold()
