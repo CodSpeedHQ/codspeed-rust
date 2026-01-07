@@ -205,7 +205,7 @@ jobs:
           MY_ENV_VAR: "YES"
         with:
           run: cargo codspeed run
-          runner-version: 'branch:cod-1595-collect-more-data-with-perf'
+          runner-version: branch:l2-cache-events
           mode: walltime
 
   # musl-build-check:
