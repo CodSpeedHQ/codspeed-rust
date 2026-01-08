@@ -1,7 +1,7 @@
 use crate::{
     app::{BenchTargetFilters, PackageFilters},
     helpers::get_codspeed_target_dir,
-    measurement_mode::MeasurementMode,
+    measurement_mode::{BuildMode, MeasurementMode},
     prelude::*,
 };
 use anyhow::Context;
@@ -100,9 +100,10 @@ pub fn run_benches(
     bench_target_filters: BenchTargetFilters,
     measurement_mode: MeasurementMode,
 ) -> Result<()> {
-    let codspeed_target_dir = get_codspeed_target_dir(metadata, measurement_mode);
+    let build_mode = measurement_mode.into();
+    let codspeed_target_dir = get_codspeed_target_dir(metadata, build_mode);
     let workspace_root = metadata.workspace_root.as_std_path();
-    if measurement_mode == MeasurementMode::Walltime {
+    if build_mode == BuildMode::Walltime {
         WalltimeResults::clear(workspace_root)?;
     }
     let benches =
@@ -124,7 +125,7 @@ pub fn run_benches(
             .env("CODSPEED_CARGO_WORKSPACE_ROOT", workspace_root)
             .current_dir(&bench.working_directory);
 
-        if measurement_mode == MeasurementMode::Walltime {
+        if build_mode == BuildMode::Walltime {
             command.arg("--bench"); // Walltime targets need this additional argument (inherited from running them with `cargo bench`)
         }
 
@@ -160,7 +161,7 @@ pub fn run_benches(
     }
     eprintln!("Finished running {} benchmark suite(s)", benches.len());
 
-    if measurement_mode == MeasurementMode::Walltime {
+    if build_mode == BuildMode::Walltime {
         aggregate_raw_walltime_data(workspace_root)?;
     }
 

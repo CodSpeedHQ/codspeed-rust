@@ -1,12 +1,12 @@
-use crate::{measurement_mode::MeasurementMode, prelude::*};
+use crate::{measurement_mode::BuildMode, prelude::*};
 use cargo_metadata::Metadata;
 use std::path::{Path, PathBuf};
 
-pub fn get_codspeed_target_dir(metadata: &Metadata, measurement_mode: MeasurementMode) -> PathBuf {
+pub fn get_codspeed_target_dir(metadata: &Metadata, build_mode: BuildMode) -> PathBuf {
     metadata
         .target_directory
         .join("codspeed")
-        .join(measurement_mode.to_string())
+        .join(build_mode.to_string())
         .into()
 }
 

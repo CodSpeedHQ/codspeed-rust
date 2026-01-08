@@ -1,7 +1,7 @@
 use crate::{
     app::{BenchTargetFilters, PackageFilters},
     helpers::{clear_dir, get_codspeed_target_dir},
-    measurement_mode::MeasurementMode,
+    measurement_mode::{BuildMode, MeasurementMode},
     prelude::*,
 };
 use anyhow::Context;
@@ -84,11 +84,11 @@ impl BuildOptions<'_> {
         &self,
         metadata: &Metadata,
         quiet: bool,
-        measurement_mode: MeasurementMode,
+        build_mode: BuildMode,
     ) -> Result<Vec<BuiltBench>> {
         let workspace_packages = metadata.workspace_packages();
 
-        let mut cargo = self.build_command(measurement_mode);
+        let mut cargo = self.build_command(build_mode);
         if quiet {
             cargo.arg("--quiet");
         }
@@ -211,7 +211,7 @@ See `cargo codspeed build --help` for more information.");
     /// completely overrides rustflags from cargo config
     /// We use the cargo built-in config mechanism to set the flags if the user has not set
     /// `RUSTFLAGS`.
-    fn add_rust_flags(&self, cargo: &mut Command, measurement_mode: MeasurementMode) {
+    fn add_rust_flags(&self, cargo: &mut Command, build_mode: BuildMode) {
         let mut flags = vec![
             // Add debug info (equivalent to -g)
             "-Cdebuginfo=2".to_owned(),
@@ -226,9 +226,7 @@ See `cargo codspeed build --help` for more information.");
         ];
 
         // Add the codspeed cfg flag if the benchmark should only run once
-        if measurement_mode == MeasurementMode::Simulation
-            || measurement_mode == MeasurementMode::Analysis
-        {
+        if build_mode == BuildMode::Analysis {
             flags.push("--cfg=codspeed".to_owned());
         }
 
@@ -254,7 +252,7 @@ See `cargo codspeed build --help` for more information.");
 
     /// Generates a subcommand to build the benchmarks by invoking cargo and forwarding the filters
     /// This command explicitly ignores the `self.benches`: all benches are built
-    fn build_command(&self, measurement_mode: MeasurementMode) -> Command {
+    fn build_command(&self, build_mode: BuildMode) -> Command {
         let mut cargo = Command::new("cargo");
         cargo.arg("build");
 
@@ -266,7 +264,7 @@ See `cargo codspeed build --help` for more information.");
             cargo.args(["--benches"]);
         }
 
-        self.add_rust_flags(&mut cargo, measurement_mode);
+        self.add_rust_flags(&mut cargo, build_mode);
 
         if let Some(features) = self.features {
             cargo.arg("--features").arg(features.join(","));
@@ -303,6 +301,7 @@ impl PackageFilters {
 }
 
 pub fn build_benches(metadata: &Metadata, config: BuildConfig) -> Result<()> {
+    let build_mode = config.measurement_mode.into();
     let built_benches = BuildOptions {
         bench_target_filters: config.bench_target_filters,
         package_filters: config.package_filters,
@@ -310,7 +309,7 @@ pub fn build_benches(metadata: &Metadata, config: BuildConfig) -> Result<()> {
         profile: &config.profile,
         passthrough_flags: &config.passthrough_flags,
     }
-    .build(metadata, config.quiet, config.measurement_mode)?;
+    .build(metadata, config.quiet, build_mode)?;
 
     if built_benches.is_empty() {
         bail!(
@@ -319,7 +318,7 @@ pub fn build_benches(metadata: &Metadata, config: BuildConfig) -> Result<()> {
         );
     }
 
-    let codspeed_target_dir = get_codspeed_target_dir(metadata, config.measurement_mode);
+    let codspeed_target_dir = get_codspeed_target_dir(metadata, build_mode);
     let built_bench_count = built_benches.len();
 
     // Create and clear packages codspeed target directories
