@@ -100,7 +100,7 @@ mod linux_impl {
                 ffi::instrument_hooks_add_marker(
                     self.0,
                     pid,
-                    ffi::MARKER_TYPE_BENCHMARK_START as u8,
+                    ffi::MARKER_TYPE_SAMPLE_START as u8,
                     start,
                 )
             };
@@ -108,7 +108,7 @@ mod linux_impl {
                 ffi::instrument_hooks_add_marker(
                     self.0,
                     pid,
-                    ffi::MARKER_TYPE_BENCHMARK_END as u8,
+                    ffi::MARKER_TYPE_SAMPLE_END as u8,
                     end,
                 )
             };
