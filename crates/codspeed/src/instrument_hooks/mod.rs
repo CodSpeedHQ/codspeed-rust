@@ -100,10 +100,33 @@ mod linux_impl {
                 ffi::instrument_hooks_add_marker(
                     self.0,
                     pid,
+                    ffi::MARKER_TYPE_BENCHMARK_START as u8,
+                    start,
+                )
+            };
+            unsafe {
+                ffi::instrument_hooks_add_marker(
+                    self.0,
+                    pid,
+                    ffi::MARKER_TYPE_BENCHMARK_END as u8,
+                    end,
+                )
+            };
+        }
+
+        #[inline(always)]
+        pub fn add_sample_timestamps(&self, start: u64, end: u64) {
+            let pid = std::process::id();
+
+            unsafe {
+                ffi::instrument_hooks_add_marker(
+                    self.0,
+                    pid,
                     ffi::MARKER_TYPE_SAMPLE_START as u8,
                     start,
                 )
             };
+
             unsafe {
                 ffi::instrument_hooks_add_marker(
                     self.0,
@@ -112,13 +135,6 @@ mod linux_impl {
                     end,
                 )
             };
-        }
-
-        #[inline(always)]
-        pub fn add_marker(&self, marker_type: u8, timestamp: u64) {
-            let pid = std::process::id();
-
-            unsafe { ffi::instrument_hooks_add_marker(self.0, pid, marker_type, timestamp) };
         }
 
         #[inline(always)]
