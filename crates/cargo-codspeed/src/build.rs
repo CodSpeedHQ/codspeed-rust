@@ -1,7 +1,7 @@
 use crate::{
     app::{BenchTargetFilters, PackageFilters},
     helpers::{clear_dir, get_codspeed_target_dir},
-    measurement_mode::{BuildMode, MeasurementMode},
+    measurement_mode::BuildMode,
     prelude::*,
 };
 use anyhow::Context;
@@ -23,13 +23,14 @@ struct BuiltBench {
     executable_path: Utf8PathBuf,
 }
 
+#[derive(Clone)]
 pub struct BuildConfig {
     pub package_filters: PackageFilters,
     pub bench_target_filters: BenchTargetFilters,
     pub features: Option<Vec<String>>,
     pub profile: String,
     pub quiet: bool,
-    pub measurement_mode: MeasurementMode,
+    pub build_mode: BuildMode,
     pub passthrough_flags: Vec<String>,
 }
 
@@ -301,7 +302,7 @@ impl PackageFilters {
 }
 
 pub fn build_benches(metadata: &Metadata, config: BuildConfig) -> Result<()> {
-    let build_mode = config.measurement_mode.into();
+    let build_mode = config.build_mode;
     let built_benches = BuildOptions {
         bench_target_filters: config.bench_target_filters,
         package_filters: config.package_filters,

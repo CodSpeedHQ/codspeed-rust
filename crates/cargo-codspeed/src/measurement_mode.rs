@@ -2,8 +2,9 @@ use clap::ValueEnum;
 use serde::Serialize;
 use std::fmt;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum BuildMode {
+    #[default]
     Analysis,
     Walltime,
 }
