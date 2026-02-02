@@ -11,6 +11,7 @@ pub use self::{
 };
 
 use ::codspeed::codspeed::CodSpeed;
+use ::codspeed::compat_utils;
 use ::codspeed::instrument_hooks::InstrumentHooks;
 use std::cell::RefCell;
 
@@ -138,7 +139,7 @@ where
         let mut codspeed = self.codspeed.borrow_mut();
         let mut gen_input = self.config.gen_input.borrow_mut();
 
-        codspeed::run_rounds(&mut codspeed, self.uri.as_str(), || {
+        compat_utils::run_rounds(&mut codspeed, self.uri.as_str(), || {
             // FIXME: We could also run multiple rounds here
             let input = gen_input();
             InstrumentHooks::toggle_collect();
@@ -155,7 +156,7 @@ where
         let mut codspeed = self.codspeed.borrow_mut();
         let mut gen_input = self.config.gen_input.borrow_mut();
 
-        codspeed::run_rounds(&mut codspeed, self.uri.as_str(), || {
+        compat_utils::run_rounds(&mut codspeed, self.uri.as_str(), || {
             let mut input = gen_input();
             InstrumentHooks::toggle_collect();
             let output = benched(&mut input);
@@ -163,40 +164,5 @@ where
             divan::black_box(input);
             divan::black_box(output);
         });
-    }
-}
-
-mod codspeed {
-    use super::*;
-    use std::time::{Duration, Instant};
-
-    pub fn run_rounds(codspeed: &mut CodSpeed, uri: &str, mut run_iteration: impl FnMut()) {
-        // FIXME: Maybe move this to codspeed
-        let (max_rounds, max_duration) = match std::env::var("CODSPEED_RUNNER_MODE").as_deref() {
-            Ok("simulation") | Ok("instrumentation") => (None, Some(Duration::from_millis(100))),
-            Ok("memory") => (Some(1), None),
-            Ok(m) => unreachable!("Invalid runner mode: {m}"),
-            Err(err) => panic!("Failed to get runner mode: {err}"),
-        };
-        let mut rounds = 0;
-        let rounds_start_time = Instant::now();
-
-        codspeed.start_benchmark(uri);
-        InstrumentHooks::toggle_collect(); // Pause collection
-
-        loop {
-            rounds += 1;
-
-            run_iteration();
-
-            let within_rounds = max_rounds.map_or(true, |max| rounds < max);
-            let within_duration =
-                max_duration.map_or(true, |max| rounds_start_time.elapsed() < max);
-            if !(within_rounds && within_duration) {
-                break;
-            }
-        }
-
-        codspeed.end_benchmark();
     }
 }
