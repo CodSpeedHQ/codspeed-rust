@@ -1,4 +1,6 @@
 use codspeed::codspeed::{black_box, CodSpeed};
+use codspeed::compat_utils;
+use codspeed::instrument_hooks::InstrumentHooks;
 use colored::Colorize;
 use criterion::BatchSize;
 
@@ -25,15 +27,19 @@ impl<'a> Bencher<'a> {
     {
         // NOTE: this structure hardens our benchmark against dead code elimination
         // https://godbolt.org/z/KnYeKMd1o
-        for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
-            if i < codspeed::codspeed::WARMUP_RUNS {
-                black_box(routine());
-            } else {
-                self.codspeed.start_benchmark(self.uri.as_str());
-                black_box(routine());
-                self.codspeed.end_benchmark();
-            }
+
+        // Warmup runs
+        for _ in 0..codspeed::codspeed::WARMUP_RUNS {
+            black_box(routine());
         }
+
+        // Multiple measured rounds
+        compat_utils::run_rounds(self.codspeed, self.uri.as_str(), || {
+            InstrumentHooks::toggle_collect(); // Resume collection
+            let output = routine();
+            InstrumentHooks::toggle_collect(); // Pause collection
+            black_box(output);
+        });
     }
 
     #[inline(never)]
@@ -54,19 +60,21 @@ impl<'a> Bencher<'a> {
         S: FnMut() -> I,
         R: FnMut(I) -> O,
     {
-        for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
+        // Warmup runs
+        for _ in 0..codspeed::codspeed::WARMUP_RUNS {
             let input = black_box(setup());
-            let output = if i < codspeed::codspeed::WARMUP_RUNS {
-                routine(input)
-            } else {
-                let input = black_box(setup());
-                self.codspeed.start_benchmark(self.uri.as_str());
-                let output = routine(input);
-                self.codspeed.end_benchmark();
-                output
-            };
+            let output = routine(input);
             drop(black_box(output));
         }
+
+        // Multiple measured rounds
+        compat_utils::run_rounds(self.codspeed, self.uri.as_str(), || {
+            let input = setup(); // Setup runs while collection is paused
+            InstrumentHooks::toggle_collect(); // Resume collection
+            let output = routine(input);
+            InstrumentHooks::toggle_collect(); // Pause collection
+            black_box(output);
+        });
     }
 
     pub fn iter_with_setup<I, O, S, R>(&mut self, setup: S, routine: R)
@@ -98,19 +106,23 @@ impl<'a> Bencher<'a> {
         S: FnMut() -> I,
         R: FnMut(&mut I) -> O,
     {
-        for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
+        // Warmup runs
+        for _ in 0..codspeed::codspeed::WARMUP_RUNS {
             let mut input = black_box(setup());
-            let output = if i < codspeed::codspeed::WARMUP_RUNS {
-                black_box(routine(&mut input))
-            } else {
-                self.codspeed.start_benchmark(self.uri.as_str());
-                let output = black_box(routine(&mut input));
-                self.codspeed.end_benchmark();
-                output
-            };
+            let output = black_box(routine(&mut input));
             drop(black_box(output));
             drop(black_box(input));
         }
+
+        // Multiple measured rounds
+        compat_utils::run_rounds(self.codspeed, self.uri.as_str(), || {
+            let mut input = setup(); // Setup runs while collection is paused
+            InstrumentHooks::toggle_collect(); // Resume collection
+            let output = routine(&mut input);
+            InstrumentHooks::toggle_collect(); // Pause collection
+            black_box(input);
+            black_box(output);
+        });
     }
 
     #[cfg(feature = "async")]
@@ -135,17 +147,52 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
         R: FnMut() -> F,
         F: Future<Output = O>,
     {
+        use std::time::{Duration, Instant};
+
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
-            for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
-                if i < codspeed::codspeed::WARMUP_RUNS {
-                    black_box(routine().await);
-                } else {
-                    b.codspeed.start_benchmark(b.uri.as_str());
-                    black_box(routine().await);
-                    b.codspeed.end_benchmark();
+            // Warmup runs
+            for _ in 0..codspeed::codspeed::WARMUP_RUNS {
+                black_box(routine().await);
+            }
+
+            // Multiple measured rounds
+            let (max_rounds, max_duration) = match std::env::var("CODSPEED_RUNNER_MODE").as_deref()
+            {
+                Ok("simulation") | Ok("instrumentation") => {
+                    (None, Some(Duration::from_millis(100)))
+                }
+                Ok("memory") => (Some(1), None),
+                Ok(m) => unreachable!("Invalid runner mode: {m}"),
+                Err(err) => panic!("Failed to get runner mode: {err}"),
+            };
+
+            let mut rounds = 0;
+            let rounds_start_time = Instant::now();
+
+            // Start benchmark ONCE - this clears CPU caches
+            b.codspeed.start_benchmark(b.uri.as_str());
+            InstrumentHooks::toggle_collect(); // Pause collection before first iteration
+
+            loop {
+                rounds += 1;
+
+                InstrumentHooks::toggle_collect(); // Resume collection
+                let output = routine().await;
+                InstrumentHooks::toggle_collect(); // Pause collection
+                black_box(output);
+
+                let within_rounds = max_rounds.map_or(true, |max| rounds < max);
+                let within_duration =
+                    max_duration.map_or(true, |max| rounds_start_time.elapsed() < max);
+
+                if !(within_rounds && within_duration) {
+                    break;
                 }
             }
+
+            // End benchmark ONCE
+            b.codspeed.end_benchmark();
         });
     }
 
@@ -199,20 +246,55 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
         R: FnMut(I) -> F,
         F: Future<Output = O>,
     {
+        use std::time::{Duration, Instant};
+
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
-            for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
+            // Warmup runs
+            for _ in 0..codspeed::codspeed::WARMUP_RUNS {
                 let input = black_box(setup());
-                let output = if i < codspeed::codspeed::WARMUP_RUNS {
-                    routine(input).await
-                } else {
-                    b.codspeed.start_benchmark(b.uri.as_str());
-                    let output = routine(input).await;
-                    b.codspeed.end_benchmark();
-                    output
-                };
+                let output = routine(input).await;
                 drop(black_box(output));
             }
+
+            // Multiple measured rounds
+            let (max_rounds, max_duration) = match std::env::var("CODSPEED_RUNNER_MODE").as_deref()
+            {
+                Ok("simulation") | Ok("instrumentation") => {
+                    (None, Some(Duration::from_millis(100)))
+                }
+                Ok("memory") => (Some(1), None),
+                Ok(m) => unreachable!("Invalid runner mode: {m}"),
+                Err(err) => panic!("Failed to get runner mode: {err}"),
+            };
+
+            let mut rounds = 0;
+            let rounds_start_time = Instant::now();
+
+            // Start benchmark ONCE - this clears CPU caches
+            b.codspeed.start_benchmark(b.uri.as_str());
+            InstrumentHooks::toggle_collect(); // Pause collection before first iteration
+
+            loop {
+                rounds += 1;
+
+                let input = setup(); // Setup runs while collection is paused
+                InstrumentHooks::toggle_collect(); // Resume collection
+                let output = routine(input).await;
+                InstrumentHooks::toggle_collect(); // Pause collection
+                black_box(output);
+
+                let within_rounds = max_rounds.map_or(true, |max| rounds < max);
+                let within_duration =
+                    max_duration.map_or(true, |max| rounds_start_time.elapsed() < max);
+
+                if !(within_rounds && within_duration) {
+                    break;
+                }
+            }
+
+            // End benchmark ONCE
+            b.codspeed.end_benchmark();
         })
     }
 
@@ -228,21 +310,57 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
         R: FnMut(&mut I) -> F,
         F: Future<Output = O>,
     {
+        use std::time::{Duration, Instant};
+
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
-            for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
+            // Warmup runs
+            for _ in 0..codspeed::codspeed::WARMUP_RUNS {
                 let mut input = black_box(setup());
-                let output = if i < codspeed::codspeed::WARMUP_RUNS {
-                    black_box(routine(&mut input).await)
-                } else {
-                    b.codspeed.start_benchmark(b.uri.as_str());
-                    let output = black_box(routine(&mut input).await);
-                    b.codspeed.end_benchmark();
-                    output
-                };
+                let output = black_box(routine(&mut input).await);
                 drop(black_box(output));
                 drop(black_box(input));
             }
+
+            // Multiple measured rounds
+            let (max_rounds, max_duration) = match std::env::var("CODSPEED_RUNNER_MODE").as_deref()
+            {
+                Ok("simulation") | Ok("instrumentation") => {
+                    (None, Some(Duration::from_millis(100)))
+                }
+                Ok("memory") => (Some(1), None),
+                Ok(m) => unreachable!("Invalid runner mode: {m}"),
+                Err(err) => panic!("Failed to get runner mode: {err}"),
+            };
+
+            let mut rounds = 0;
+            let rounds_start_time = Instant::now();
+
+            // Start benchmark ONCE - this clears CPU caches
+            b.codspeed.start_benchmark(b.uri.as_str());
+            InstrumentHooks::toggle_collect(); // Pause collection before first iteration
+
+            loop {
+                rounds += 1;
+
+                let mut input = setup(); // Setup runs while collection is paused
+                InstrumentHooks::toggle_collect(); // Resume collection
+                let output = routine(&mut input).await;
+                InstrumentHooks::toggle_collect(); // Pause collection
+                black_box(input);
+                black_box(output);
+
+                let within_rounds = max_rounds.map_or(true, |max| rounds < max);
+                let within_duration =
+                    max_duration.map_or(true, |max| rounds_start_time.elapsed() < max);
+
+                if !(within_rounds && within_duration) {
+                    break;
+                }
+            }
+
+            // End benchmark ONCE
+            b.codspeed.end_benchmark();
         });
     }
 }
