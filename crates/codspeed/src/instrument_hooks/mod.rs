@@ -3,8 +3,8 @@ mod ffi;
 
 #[cfg(use_instrument_hooks)]
 mod linux_impl {
-
     use super::ffi;
+    use crate::measurement;
     use std::ffi::CString;
     use std::sync::OnceLock;
 
@@ -42,6 +42,12 @@ mod linux_impl {
         #[inline(always)]
         pub fn is_instrumented(&self) -> bool {
             unsafe { ffi::instrument_hooks_is_instrumented(self.0) }
+        }
+
+        // FIXME: Should we move this to instrument-hooks native library?
+        #[inline(always)]
+        pub fn toggle_collect() {
+            measurement::toggle_collect();
         }
 
         #[inline(always)]
@@ -164,6 +170,9 @@ mod other_impl {
         pub fn is_instrumented(&self) -> bool {
             false
         }
+
+        #[inline(always)]
+        pub fn toggle_collect() {}
 
         pub fn start_benchmark(&self) -> Result<(), u8> {
             Ok(())
