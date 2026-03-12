@@ -5,9 +5,9 @@ edition = "2021"
 authors = ["Nikolai Vazquez"]
 license = "MIT OR Apache-2.0"
 description = "Macros for Divan, a statistically-comfy benchmarking library."
-repository = "https://github.com/nvzqz/divan"
-homepage = "https://github.com/nvzqz/divan"
-documentation = "https://docs.rs/divan-macros"
+repository = "https://github.com/CodSpeedHQ/codspeed-rust"
+homepage = "https://codspeed.io"
+documentation = "https://codspeed.io/docs/reference/codspeed-rust/criterion"
 categories = ["development-tools::profiling"]
 keywords = ["benchmark", "criterion", "instrument", "measure", "performance"]
 readme = "../README.md"
@@ -19,7 +19,13 @@ proc-macro = true
 proc-macro2 = "1"
 quote = { version = "1", default-features = false }
 # Versions prior to *.18 fail to parse empty attribute metadata.
-syn = { version = "^2.0.18", default-features = false, features = ["full", "clone-impls", "parsing", "printing", "proc-macro"] }
+syn = { version = "^2.0.18", default-features = false, features = [
+    "full",
+    "clone-impls",
+    "parsing",
+    "printing",
+    "proc-macro",
+] }
 
 [dev-dependencies]
 divan = { workspace = true }
