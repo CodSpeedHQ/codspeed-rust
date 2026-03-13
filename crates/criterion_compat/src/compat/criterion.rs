@@ -92,19 +92,23 @@ impl<M: Measurement> Criterion<M> {
         self.macro_group = macro_group.into();
     }
 
+    #[track_caller]
     pub fn bench_function<F>(&mut self, id: &str, f: F) -> &mut Criterion<M>
     where
         F: FnMut(&mut Bencher),
     {
+        self.fill_missing_file_from_caller();
         self.benchmark_group(id)
             .bench_function(BenchmarkId::no_function(), f);
         self
     }
 
+    #[track_caller]
     pub fn bench_with_input<F, I>(&mut self, id: BenchmarkId, input: &I, f: F) -> &mut Criterion<M>
     where
         F: FnMut(&mut Bencher, &I),
     {
+        self.fill_missing_file_from_caller();
         let group_name = id.function_name.expect(
             "Cannot use BenchmarkId::from_parameter with Criterion::bench_with_input. \
                  Consider using a BenchmarkGroup or BenchmarkId::new instead.",
@@ -118,8 +122,27 @@ impl<M: Measurement> Criterion<M> {
         self
     }
 
+    #[track_caller]
     pub fn benchmark_group<S: Into<String>>(&mut self, group_name: S) -> BenchmarkGroup<M> {
+        self.fill_missing_file_from_caller();
         BenchmarkGroup::<M>::new(self, group_name.into())
+    }
+
+    /// When `current_file` wasn't set by `criterion_group!`, derive it from the caller location.
+    #[track_caller]
+    fn fill_missing_file_from_caller(&mut self) {
+        if !self.current_file.is_empty() {
+            return;
+        }
+        let caller = std::panic::Location::caller();
+        if let Ok(workspace_root) = std::env::var("CODSPEED_CARGO_WORKSPACE_ROOT") {
+            self.current_file = std::path::PathBuf::from(workspace_root)
+                .join(caller.file())
+                .to_string_lossy()
+                .into_owned();
+        } else {
+            self.current_file = caller.file().to_string();
+        }
     }
 }
 

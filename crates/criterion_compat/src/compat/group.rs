@@ -62,13 +62,21 @@ impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
         F: FnMut(&mut Bencher, &I),
         I: ?Sized,
     {
-        let git_relative_file_path = get_git_relative_path(&self.current_file);
-        let mut uri = format!(
-            "{}::{}::{}",
-            git_relative_file_path.to_string_lossy(),
-            self.macro_group,
-            self.group_name,
-        );
+        let mut uri_parts: Vec<String> = Vec::new();
+
+        if !self.current_file.is_empty() {
+            let git_relative_file_path = get_git_relative_path(&self.current_file);
+            let file_str = git_relative_file_path.to_string_lossy();
+            if !file_str.is_empty() {
+                uri_parts.push(file_str.into_owned());
+            }
+        }
+        if !self.macro_group.is_empty() {
+            uri_parts.push(self.macro_group.clone());
+        }
+        uri_parts.push(self.group_name.clone());
+
+        let mut uri = uri_parts.join("::");
         if let Some(function_name) = id.function_name {
             uri = format!("{uri}::{function_name}");
         }

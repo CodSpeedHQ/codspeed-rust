@@ -56,3 +56,7 @@ harness = false
 [[bench]]
 name = "test_benches"
 harness = false
+
+[[bench]]
+name = "repro_custom_main"
+harness = false
