@@ -22,7 +22,7 @@ codspeed = { path = "../codspeed", version = "=4.4.1" }
 divan = { package = "codspeed-divan-compat-walltime", path = "./divan_fork", version = "=4.4.1" }
 codspeed-divan-compat-macros = { version = "=4.4.1", path = './macros' }
 regex = "1.11.3"
-clap = { version = "4", default-features = false, features = ["std", "env"] }
+clap = { version = "4.5.17", default-features = false, features = ["std", "env"] }
 
 [[bench]]
 name = "basic_example"
