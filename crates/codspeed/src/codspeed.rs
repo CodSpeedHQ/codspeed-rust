@@ -36,19 +36,20 @@ impl CodSpeed {
     pub fn new() -> Self {
         use crate::instrument_hooks::InstrumentHooks;
         let instrumentation_status = {
-            // We completely bypass InstrumentHooks if we detect Valgrind via inline assembly
+            // Always initialize InstrumentHooks for environment collection,
+            // even when using Valgrind for the actual measurements.
+            let hooks_instance = InstrumentHooks::instance();
+
+            // We bypass InstrumentHooks if we detect Valgrind via inline assembly
             // Until we can reliably get rid of the inline assembly without causing breaking
             // changes in CPU simulation measurements by switching to InstrumentHooks only, we need
             // to keep this separation.
             if measurement::is_instrumented() {
                 InstrumentationStatus::Valgrind
+            } else if hooks_instance.is_instrumented() {
+                InstrumentationStatus::InstrumentHooks(hooks_instance)
             } else {
-                let hooks_instance = InstrumentHooks::instance();
-                if hooks_instance.is_instrumented() {
-                    InstrumentationStatus::InstrumentHooks(hooks_instance)
-                } else {
-                    InstrumentationStatus::NotInstrumented
-                }
+                InstrumentationStatus::NotInstrumented
             }
         };
 

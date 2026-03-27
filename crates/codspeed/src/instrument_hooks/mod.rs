@@ -35,8 +35,34 @@ mod linux_impl {
                 instance
                     .set_integration("codspeed-rust", env!("CARGO_PKG_VERSION"))
                     .expect("Failed to set integration");
+                instance.register_toolchain_environment();
                 instance
             })
+        }
+
+        /// Registers Rust toolchain information (captured at build time) via the
+        /// environment API.
+        ///
+        /// The env var names here must be kept in sync with `build.rs`.
+        fn register_toolchain_environment(&self) {
+            const SECTION: &str = "rust";
+
+            if let Some(v) = option_env!("CODSPEED_RUSTC_VERSION") {
+                let _ = self.set_environment(SECTION, "rustc", v);
+            }
+            if let Some(v) = option_env!("CODSPEED_RUSTC_RELEASE") {
+                let _ = self.set_environment(SECTION, "release", v);
+            }
+            if let Some(v) = option_env!("CODSPEED_RUSTC_LLVM_VERSION") {
+                let _ = self.set_environment(SECTION, "LLVM version", v);
+            }
+            if let Some(v) = option_env!("CODSPEED_CARGO_VERSION") {
+                let _ = self.set_environment(SECTION, "cargo", v);
+            }
+
+            if let Err(e) = self.write_environment() {
+                eprintln!("Warning: failed to write environment info: {e}");
+            }
         }
 
         #[inline(always)]
@@ -131,6 +157,40 @@ mod linux_impl {
             }
         }
 
+        pub fn set_environment(
+            &self,
+            section_name: &str,
+            key: &str,
+            value: &str,
+        ) -> Result<(), u8> {
+            let c_section = CString::new(section_name).map_err(|_| 1u8)?;
+            let c_key = CString::new(key).map_err(|_| 1u8)?;
+            let c_value = CString::new(value).map_err(|_| 1u8)?;
+            let result = unsafe {
+                ffi::instrument_hooks_set_environment(
+                    self.0,
+                    c_section.as_ptr(),
+                    c_key.as_ptr(),
+                    c_value.as_ptr(),
+                )
+            };
+            if result == 0 {
+                Ok(())
+            } else {
+                Err(result)
+            }
+        }
+
+        pub fn write_environment(&self) -> Result<(), u8> {
+            let pid = std::process::id();
+            let result = unsafe { ffi::instrument_hooks_write_environment(self.0, pid) };
+            if result == 0 {
+                Ok(())
+            } else {
+                Err(result)
+            }
+        }
+
         pub fn disable_callgrind_markers() {
             unsafe {
                 ffi::instrument_hooks_set_feature(
@@ -185,6 +245,19 @@ mod other_impl {
 
         pub fn current_timestamp() -> u64 {
             0
+        }
+
+        pub fn set_environment(
+            &self,
+            _section_name: &str,
+            _key: &str,
+            _value: &str,
+        ) -> Result<(), u8> {
+            Ok(())
+        }
+
+        pub fn write_environment(&self) -> Result<(), u8> {
+            Ok(())
         }
 
         pub fn disable_callgrind_markers() {}

@@ -58,3 +58,14 @@ pub type instrument_hooks_feature_t = ::std::os::raw::c_uint;
 extern "C" {
     pub fn instrument_hooks_set_feature(feature: instrument_hooks_feature_t, enabled: bool);
 }
+extern "C" {
+    pub fn instrument_hooks_set_environment(
+        arg1: *mut InstrumentHooks,
+        section_name: *const ::std::os::raw::c_char,
+        key: *const ::std::os::raw::c_char,
+        value: *const ::std::os::raw::c_char,
+    ) -> u8;
+}
+extern "C" {
+    pub fn instrument_hooks_write_environment(arg1: *mut InstrumentHooks, pid: u32) -> u8;
+}
