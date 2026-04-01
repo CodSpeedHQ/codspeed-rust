@@ -67,5 +67,14 @@ extern "C" {
     ) -> u8;
 }
 extern "C" {
+    pub fn instrument_hooks_set_environment_list(
+        arg1: *mut InstrumentHooks,
+        section_name: *const ::std::os::raw::c_char,
+        key: *const ::std::os::raw::c_char,
+        values: *const *const ::std::os::raw::c_char,
+        count: u32,
+    ) -> u8;
+}
+extern "C" {
     pub fn instrument_hooks_write_environment(arg1: *mut InstrumentHooks, pid: u32) -> u8;
 }
