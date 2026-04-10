@@ -59,6 +59,15 @@ mod linux_impl {
             if let Some(v) = option_env!("CODSPEED_CARGO_VERSION") {
                 let _ = self.set_environment(SECTION, "cargo", v);
             }
+            if let Some(v) = option_env!("CODSPEED_BUILD_PROFILE") {
+                let _ = self.set_environment(SECTION, "profile", v);
+            }
+            if let Some(v) = option_env!("CODSPEED_BUILD_OPT_LEVEL") {
+                let _ = self.set_environment(SECTION, "opt-level", v);
+            }
+            if let Some(v) = option_env!("CODSPEED_BUILD_TARGET_CPU") {
+                let _ = self.set_environment(SECTION, "target-cpu", v);
+            }
 
             if let Err(e) = self.write_environment() {
                 eprintln!("Warning: failed to write environment info: {e}");
