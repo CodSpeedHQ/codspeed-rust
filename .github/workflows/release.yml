@@ -10,7 +10,7 @@ permissions:
   contents: write
 
 jobs:
-  build-musl-binaries:
+  build-binaries:
     strategy:
       matrix:
         include:
@@ -18,6 +18,8 @@ jobs:
             runner: ubuntu-24.04
           - target: aarch64-unknown-linux-musl
             runner: codspeedhq-arm64-ubuntu-24.04
+          - target: aarch64-apple-darwin
+            runner: macos-latest
 
     runs-on: ${{ matrix.runner }}
     steps:
@@ -30,6 +32,7 @@ jobs:
           targets: ${{ matrix.target }}
 
       - name: Install musl tools
+        if: endsWith(matrix.target, '-linux-musl')
         run: sudo apt-get update && sudo apt-get install -y musl-tools
 
       - run: cargo build --locked --release --bin cargo-codspeed --target ${{ matrix.target }}
@@ -42,7 +45,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    needs: build-musl-binaries
+    needs: build-binaries
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -81,6 +84,7 @@ jobs:
         target:
           - x86_64-unknown-linux-musl
           - aarch64-unknown-linux-musl
+          - aarch64-apple-darwin
 
     runs-on: ubuntu-latest
     steps:
