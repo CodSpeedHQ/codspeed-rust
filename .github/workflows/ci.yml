@@ -235,6 +235,8 @@ jobs:
         with:
           run: cargo codspeed run -p codspeed-divan-compat
           mode: walltime
+          # TODO: Drop this
+          runner-version: branch:cod-2459-be-able-to-run-all-integrations-on-macos
 
   musl-build-check:
     strategy:
