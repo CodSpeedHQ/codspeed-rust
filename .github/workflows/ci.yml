@@ -207,6 +207,35 @@ jobs:
           run: cargo codspeed run
           mode: walltime
 
+  walltime-macos-test:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: moonrepo/setup-rust@v1
+        with:
+          cache-target: release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - run: cargo install --path crates/cargo-codspeed --locked
+
+      - name: Build the benchmarks
+        run: |
+          # Remove the cargo config else it forces instrumentation mode
+          rm -f .cargo/config.toml
+          cargo codspeed build -p codspeed-divan-compat
+
+      - name: Run the benchmarks
+        uses: CodSpeedHQ/action@main
+        env:
+          MY_ENV_VAR: "YES"
+          CODSPEED_SKIP_UPLOAD: "true"
+        with:
+          run: cargo codspeed run -p codspeed-divan-compat
+          mode: walltime
+
   musl-build-check:
     strategy:
       matrix:
