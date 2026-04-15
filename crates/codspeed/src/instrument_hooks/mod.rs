@@ -129,7 +129,7 @@ mod linux_impl {
 
         #[inline(always)]
         pub fn add_benchmark_timestamps(&self, start: u64, end: u64) {
-            let pid = std::process::id();
+            let pid = std::process::id() as i32;
 
             unsafe {
                 ffi::instrument_hooks_add_marker(
@@ -191,7 +191,7 @@ mod linux_impl {
         }
 
         pub fn write_environment(&self) -> Result<(), u8> {
-            let pid = std::process::id();
+            let pid = std::process::id() as i32;
             let result = unsafe { ffi::instrument_hooks_write_environment(self.0, pid) };
             if result == 0 {
                 Ok(())
@@ -203,7 +203,7 @@ mod linux_impl {
         pub fn disable_callgrind_markers() {
             unsafe {
                 ffi::instrument_hooks_set_feature(
-                    ffi::instrument_hooks_feature_t_FEATURE_DISABLE_CALLGRIND_MARKERS,
+                    ffi::instrument_hooks_feature_t_FEATURE_DISABLE_CALLGRIND_MARKERS.into(),
                     true,
                 )
             };

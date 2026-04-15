@@ -7,4 +7,5 @@ bindgen "$SCRIPT_DIR/../../instrument-hooks/includes/core.h" \
   -o "$SCRIPT_DIR/bindings.rs" \
   --rust-target 1.74 \
   --allowlist-function "instrument_hooks_.*" \
-  --allowlist-var "MARKER_TYPE_.*"
+  --allowlist-var "MARKER_TYPE_.*" \
+  --allowlist-type "instrument_hooks_feature_t"
