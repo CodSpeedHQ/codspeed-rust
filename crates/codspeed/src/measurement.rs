@@ -36,6 +36,11 @@ pub fn set_metadata() {
 }
 
 #[inline(always)]
+pub fn toggle_collect() {
+    unsafe { send_client_request(0, &[ClientRequest::ToggleCollect as Value, 0, 0, 0, 0, 0]) };
+}
+
+#[inline(always)]
 pub fn start() {
     unsafe {
         send_client_request(0, &[ClientRequest::ZeroStatistics as Value, 0, 0, 0, 0, 0]);
