@@ -43,3 +43,7 @@ harness = false
 [[bench]]
 name = "fib_example"
 harness = false
+
+[[bench]]
+name = "branching_example"
+harness = false
