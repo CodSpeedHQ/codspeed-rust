@@ -50,7 +50,7 @@ pub fn is_perf_enabled() -> bool {
 pub fn generate_unique_id() -> String {
     // Generate random bytes for UUID v4
     let mut bytes = [0u8; 16];
-    getrandom::getrandom(&mut bytes).expect("Failed to generate random bytes");
+    getrandom::fill(&mut bytes).expect("Failed to generate random bytes");
 
     // Extract values from bytes
     let r1 = u32::from_be_bytes([bytes[0], bytes[1], bytes[2], bytes[3]]);
