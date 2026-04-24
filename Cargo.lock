@@ -663,6 +663,7 @@ dependencies = [
  "codspeed",
  "codspeed-divan-compat-macros",
  "codspeed-divan-compat-walltime",
+ "rayon",
  "regex",
 ]
 
