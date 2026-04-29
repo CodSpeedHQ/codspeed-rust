@@ -52,5 +52,9 @@ name = "branching_example"
 harness = false
 
 [[bench]]
+name = "cycle_example"
+harness = false
+
+[[bench]]
 name = "rayon_example"
 harness = false
