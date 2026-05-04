@@ -11,15 +11,15 @@ fn fib_30() -> u32 {
     codspeed_divan_compat::black_box(fib(30))
 }
 
-#[codspeed_divan_compat::bench]
-fn fib_20() -> u32 {
-    codspeed_divan_compat::black_box(fib(20))
-}
-
-#[codspeed_divan_compat::bench]
-fn fib_10() -> u32 {
-    codspeed_divan_compat::black_box(fib(10))
-}
+// #[codspeed_divan_compat::bench]
+// fn fib_20() -> u32 {
+//     codspeed_divan_compat::black_box(fib(20))
+// }
+//
+// #[codspeed_divan_compat::bench]
+// fn fib_10() -> u32 {
+//     codspeed_divan_compat::black_box(fib(10))
+// }
 
 fn main() {
     codspeed_divan_compat::main();
