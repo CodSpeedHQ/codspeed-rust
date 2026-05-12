@@ -99,6 +99,7 @@ pub fn run_benches(
     package_filters: PackageFilters,
     bench_target_filters: BenchTargetFilters,
     measurement_mode: MeasurementMode,
+    bench_args: Vec<String>,
 ) -> Result<()> {
     let build_mode = measurement_mode.into();
     let codspeed_target_dir = get_codspeed_target_dir(metadata, build_mode);
@@ -132,6 +133,8 @@ pub fn run_benches(
         if let Some(bench_name_filter) = bench_name_filter.as_ref() {
             command.arg(bench_name_filter);
         }
+
+        command.args(&bench_args);
 
         command
             .status()

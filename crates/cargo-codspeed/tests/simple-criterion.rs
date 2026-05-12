@@ -123,6 +123,23 @@ fn test_criterion_build_and_run_filtered_by_name_single() {
 }
 
 #[test]
+fn test_criterion_walltime_run_forwards_args_after_double_dash() {
+    let dir = setup(DIR, Project::Simple);
+    cargo_codspeed(&dir)
+        .args(["build", "-m", "walltime"])
+        .assert()
+        .success();
+    cargo_codspeed(&dir)
+        .args(["run", "-m", "walltime", "--", "--exact", "fib 20"])
+        .assert()
+        .success()
+        .stdout(contains(FIB_BENCH_NAME))
+        .stdout(contains(BUBBLE_SORT_BENCH_NAME).not())
+        .stderr(contains("Finished running 2 benchmark suite(s)"));
+    teardown(dir);
+}
+
+#[test]
 fn test_criterion_cargo_bench_no_run() {
     let dir = setup(DIR, Project::Simple);
     std::process::Command::new("cargo")

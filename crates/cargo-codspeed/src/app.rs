@@ -100,6 +100,7 @@ impl Cli {
                 package_filters,
                 bench_target_filters,
                 measurement_mode,
+                bench_args,
             } => {
                 let mode = measurement_mode.unwrap_or_default();
                 eprintln!("[cargo-codspeed] Measurement mode: {mode:?}\n");
@@ -109,6 +110,7 @@ impl Cli {
                     package_filters,
                     bench_target_filters,
                     mode,
+                    bench_args,
                 )
             }
         }
@@ -211,6 +213,10 @@ enum Commands {
         /// Automatically set to `walltime` on macro runners
         #[arg(short = 'm', long = "measurement-mode", env = "CODSPEED_RUNNER_MODE")]
         measurement_mode: Option<MeasurementMode>,
+
+        /// Arguments forwarded to each benchmark binary after `--`
+        #[arg(last = true)]
+        bench_args: Vec<String>,
     },
 }
 
