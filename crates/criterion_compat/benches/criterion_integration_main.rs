@@ -5,6 +5,7 @@ mod criterion_integration;
 criterion_main! {
     criterion_integration::compare_functions::fibonaccis,
     // criterion_integration::external_process::benches, FIXME: Currently doesn't work
+    criterion_integration::iter_manual::benches,
     criterion_integration::iter_with_large_drop::benches,
     criterion_integration::iter_with_large_setup::benches,
     criterion_integration::iter_with_setup::benches,

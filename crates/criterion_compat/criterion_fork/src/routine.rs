@@ -1,6 +1,7 @@
 use codspeed::instrument_hooks::InstrumentHooks;
 
 use crate::benchmark::BenchmarkConfig;
+use crate::codspeed_iter_manual::ManualMeasurement;
 use crate::connection::OutgoingMessage;
 use crate::measurement::Measurement;
 use crate::report::{BenchmarkId, Report, ReportContext};
@@ -14,6 +15,11 @@ pub(crate) trait Routine<M: Measurement, T: ?Sized> {
     fn bench(&mut self, m: &M, iters: &[u64], parameter: &T) -> Vec<f64>;
     /// PRIVATE
     fn warm_up(&mut self, m: &M, how_long: Duration, parameter: &T) -> (u64, u64);
+
+    /// CodSpeed addition: returns the manual-mode measurement captured during
+    /// the most recent `warm_up`/`bench` call, if the user called
+    /// `b.iter_manual_unstable*`. Drained on read so `sample` can take ownership.
+    fn take_codspeed_manual(&mut self) -> Option<ManualMeasurement>;
 
     /// PRIVATE
     fn test(&mut self, m: &M, parameter: &T) {
@@ -134,6 +140,45 @@ pub(crate) trait Routine<M: Measurement, T: ?Sized> {
         let wu = config.warm_up_time;
         let m_ns = config.measurement_time.as_nanos();
 
+        // CodSpeed addition: criterion would normally announce its warmup
+        // window here, but for `iter_manual_unstable*` the user controls warmup
+        // entirely and criterion's `warm_up_time` is meaningless. We delay the
+        // banner until after `warm_up()` returns so we can suppress it for
+        // manual benches.
+        let (wu_elapsed, wu_iters) = self.warm_up(measurement, wu, parameter);
+
+        // CodSpeed addition: if the user called `b.iter_manual_unstable*`, the first
+        // closure invocation in `warm_up` already drove the entire benchmark
+        // (its own warmup + measurement rounds). Skip the adaptive sampler and
+        // return the captured per-round samples directly.
+        if let Some(manual) = self.take_codspeed_manual() {
+            let n = manual.samples.len() as u64;
+            let iters: Vec<f64> = vec![manual.iterations as f64; manual.samples.len()];
+            criterion.report.measurement_start(
+                id,
+                report_context,
+                n,
+                wu_elapsed as f64,
+                n * manual.iterations,
+            );
+            if let Some(conn) = &criterion.connection {
+                conn.send(&OutgoingMessage::MeasurementStart {
+                    id: id.into(),
+                    sample_count: n,
+                    estimate_ns: wu_elapsed as f64,
+                    iter_count: n * manual.iterations,
+                })
+                .unwrap();
+            }
+            return (
+                ActualSamplingMode::Flat,
+                iters.into_boxed_slice(),
+                manual.samples.into_boxed_slice(),
+            );
+        }
+
+        // CodSpeed addition: this bench wasn't manual, so emit criterion's
+        // usual warmup banner now (post-hoc but still before measurement).
         criterion
             .report
             .warmup(id, report_context, wu.as_nanos() as f64);
@@ -146,7 +191,6 @@ pub(crate) trait Routine<M: Measurement, T: ?Sized> {
             .unwrap();
         }
 
-        let (wu_elapsed, wu_iters) = self.warm_up(measurement, wu, parameter);
         if crate::debug_enabled() {
             println!(
                 "\nCompleted {} iterations in {} nanoseconds, estimated execution time is {} ns",
@@ -218,6 +262,9 @@ where
     T: ?Sized,
 {
     f: F,
+    // CodSpeed addition: stashed by `bench`/`warm_up` when the user calls
+    // `b.iter_manual_unstable*`. Drained via `take_codspeed_manual`.
+    codspeed_manual: Option<ManualMeasurement>,
     // TODO: Is there some way to remove these?
     _phantom: PhantomData<T>,
     _phamtom2: PhantomData<M>,
@@ -230,6 +277,7 @@ where
     pub fn new(f: F) -> Function<M, F, T> {
         Function {
             f,
+            codspeed_manual: None,
             _phantom: PhantomData,
             _phamtom2: PhantomData,
         }
@@ -250,6 +298,7 @@ where
             value: m.zero(),
             measurement: m,
             elapsed_time: Duration::from_millis(0),
+            codspeed_manual: None,
         };
 
         iters
@@ -271,6 +320,7 @@ where
             value: m.zero(),
             measurement: m,
             elapsed_time: Duration::from_millis(0),
+            codspeed_manual: None,
         };
 
         let mut total_iters = 0;
@@ -280,6 +330,15 @@ where
 
             b.assert_iterated();
 
+            // CodSpeed addition: if the user called `b.iter_manual_unstable*`, the
+            // closure already drove the whole benchmark. Hand the captured
+            // measurement back to `sample()` and return immediately instead of
+            // looping until `how_long` elapses.
+            if let Some(manual) = b.codspeed_manual.take() {
+                self.codspeed_manual = Some(manual);
+                return (b.elapsed_time.as_nanos() as u64, b.iters.max(1));
+            }
+
             total_iters += b.iters;
             elapsed_time += b.elapsed_time;
             if elapsed_time > how_long {
@@ -288,5 +347,9 @@ where
 
             b.iters = b.iters.wrapping_mul(2);
         }
+    }
+
+    fn take_codspeed_manual(&mut self) -> Option<ManualMeasurement> {
+        self.codspeed_manual.take()
     }
 }

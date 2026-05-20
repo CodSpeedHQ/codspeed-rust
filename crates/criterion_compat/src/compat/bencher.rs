@@ -1,6 +1,6 @@
 use codspeed::codspeed::{black_box, CodSpeed};
 use colored::Colorize;
-use criterion::BatchSize;
+use criterion::{BatchSize, IterManualOptions};
 
 #[cfg(feature = "async")]
 use criterion::async_executor::AsyncExecutor;
@@ -46,6 +46,32 @@ impl<'a> Bencher<'a> {
             "Skipping:".to_string().yellow(),
             self.uri.yellow(),
         );
+    }
+
+    /// Run `routine` with a precise schedule: `opts.rounds` measurement rounds,
+    /// each consisting of `opts.iters` calls to `routine`, optionally preceded
+    /// by `opts.warmup_rounds` unmeasured rounds. Bypasses criterion's adaptive
+    /// sampler entirely.
+    ///
+    /// Under CodSpeed instrumentation the schedule is ignored and a single
+    /// measured iteration is run.
+    ///
+    /// **Unstable.** This API is still under development and its name,
+    /// signature, and behavior may change in future releases.
+    #[inline(never)]
+    pub fn iter_manual_unstable<O, R>(&mut self, _opts: IterManualOptions, mut routine: R)
+    where
+        R: FnMut() -> O,
+    {
+        println!(
+            "{} {} (iter_manual_unstable options are ignored under CodSpeed instrumentation; running one measured iteration)",
+            "Note:".to_string().yellow(),
+            self.uri.yellow(),
+        );
+        self.codspeed.start_benchmark(self.uri.as_str());
+        let output = black_box(routine());
+        self.codspeed.end_benchmark();
+        drop(black_box(output));
     }
 
     #[inline(never)]
@@ -161,6 +187,35 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
             "Skipping:".to_string().yellow(),
             b.uri.yellow(),
         );
+    }
+
+    /// Async/await variant of [`Bencher::iter_manual_unstable`]. Bypasses
+    /// criterion's adaptive sampler.
+    ///
+    /// Under CodSpeed instrumentation the schedule is ignored and a single
+    /// measured iteration is run.
+    ///
+    /// **Unstable.** This API is still under development and its name,
+    /// signature, and behavior may change in future releases.
+    #[allow(clippy::await_holding_refcell_ref)]
+    #[inline(never)]
+    pub fn iter_manual_unstable<O, R, F>(&mut self, _opts: IterManualOptions, mut routine: R)
+    where
+        R: FnMut() -> F,
+        F: Future<Output = O>,
+    {
+        let AsyncBencher { b, runner } = self;
+        println!(
+            "{} {} (iter_manual_unstable options are ignored under CodSpeed instrumentation; running one measured iteration)",
+            "Note:".to_string().yellow(),
+            b.uri.yellow(),
+        );
+        runner.block_on(async {
+            b.codspeed.start_benchmark(b.uri.as_str());
+            let output = black_box(routine().await);
+            b.codspeed.end_benchmark();
+            drop(black_box(output));
+        });
     }
 
     #[doc(hidden)]

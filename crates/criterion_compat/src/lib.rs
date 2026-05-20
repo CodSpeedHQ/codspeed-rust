@@ -16,7 +16,7 @@ mod compat_criterion {
 
     pub use criterion::{
         async_executor, black_box, measurement, profiler, AxisScale, Baseline, BatchSize,
-        PlotConfiguration, PlottingBackend, SamplingMode, Throughput,
+        IterManualOptions, PlotConfiguration, PlottingBackend, SamplingMode, Throughput,
     };
 }
 
