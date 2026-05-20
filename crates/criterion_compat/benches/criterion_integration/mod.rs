@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 pub mod compare_functions;
 pub mod custom_measurement;
 // pub mod external_process;

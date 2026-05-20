@@ -54,5 +54,17 @@ name = "criterion_integration_main"
 harness = false
 
 [[bench]]
+name = "criterion_integration_fibonaccis"
+harness = false
+
+[[bench]]
+name = "criterion_integration_with_inputs"
+harness = false
+
+[[bench]]
+name = "criterion_integration_measurement_overhead"
+harness = false
+
+[[bench]]
 name = "test_benches"
 harness = false
