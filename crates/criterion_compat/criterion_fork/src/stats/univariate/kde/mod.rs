@@ -84,7 +84,15 @@ impl Bandwidth {
                 let n = A::cast(sample.len());
                 let sigma = sample.std_dev(None);
 
-                sigma * (factor / n).powf(exponent)
+                let h = sigma * (factor / n).powf(exponent);
+                // CodSpeed addition:
+                // Silverman's rule of thumb can return zero if all samples have the same value,
+                // so we return epsilon in that case to avoid division by zero in the KDE
+                if h > A::cast(0) {
+                    h
+                } else {
+                    A::epsilon()
+                }
             }
         }
     }
