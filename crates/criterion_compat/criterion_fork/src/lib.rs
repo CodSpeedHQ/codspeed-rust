@@ -53,6 +53,8 @@ mod benchmark;
 mod benchmark_group;
 pub mod async_executor;
 mod bencher;
+// CodSpeed addition: manual iteration control. See `codspeed_iter_manual.rs`.
+mod codspeed_iter_manual;
 mod connection;
 #[cfg(feature = "csv_output")]
 mod csv_report;
@@ -99,6 +101,8 @@ use crate::report::{BencherReport, CliReport, CliVerbosity, Report, ReportContex
 pub use crate::bencher::AsyncBencher;
 pub use crate::bencher::Bencher;
 pub use crate::benchmark_group::{BenchmarkGroup, BenchmarkId};
+// CodSpeed addition.
+pub use crate::codspeed_iter_manual::IterManualOptions;
 
 static DEBUG_ENABLED: Lazy<bool> = Lazy::new(|| std::env::var_os("CRITERION_DEBUG").is_some());
 static GNUPLOT_VERSION: Lazy<Result<Version, VersionError>> = Lazy::new(criterion_plot::version);

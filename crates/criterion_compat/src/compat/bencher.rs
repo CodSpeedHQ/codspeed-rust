@@ -1,6 +1,6 @@
 use codspeed::codspeed::{black_box, CodSpeed};
 use colored::Colorize;
-use criterion::BatchSize;
+use criterion::{BatchSize, IterManualOptions};
 
 #[cfg(feature = "async")]
 use criterion::async_executor::AsyncExecutor;
@@ -46,6 +46,40 @@ impl<'a> Bencher<'a> {
             "Skipping:".to_string().yellow(),
             self.uri.yellow(),
         );
+    }
+
+    #[inline(never)]
+    pub fn iter_manual_setup<I, O, S, R>(&mut self, opts: IterManualOptions, setup: S, routine: R)
+    where
+        S: FnMut() -> I,
+        R: FnMut(&mut I) -> O,
+    {
+        self.iter_manual_setup_teardown(opts, setup, routine, |_| ());
+    }
+
+    #[inline(never)]
+    pub fn iter_manual_setup_teardown<I, O, S, R, T>(
+        &mut self,
+        _opts: IterManualOptions,
+        mut setup: S,
+        mut routine: R,
+        mut teardown: T,
+    ) where
+        S: FnMut() -> I,
+        R: FnMut(&mut I) -> O,
+        T: FnMut(I),
+    {
+        println!(
+            "{} {} (iter_manual options are ignored under CodSpeed instrumentation; running one measured iteration)",
+            "Note:".to_string().yellow(),
+            self.uri.yellow(),
+        );
+        let mut input = black_box(setup());
+        self.codspeed.start_benchmark(self.uri.as_str());
+        let output = black_box(routine(&mut input));
+        self.codspeed.end_benchmark();
+        drop(black_box(output));
+        teardown(input);
     }
 
     #[inline(never)]
@@ -161,6 +195,51 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
             "Skipping:".to_string().yellow(),
             b.uri.yellow(),
         );
+    }
+
+    #[inline(never)]
+    pub fn iter_manual_setup<I, O, S, R, F>(
+        &mut self,
+        opts: IterManualOptions,
+        setup: S,
+        routine: R,
+    ) where
+        S: FnMut() -> I,
+        R: FnMut(&mut I) -> F,
+        F: Future<Output = O>,
+    {
+        self.iter_manual_setup_teardown(opts, setup, routine, |_| std::future::ready(()));
+    }
+
+    #[allow(clippy::await_holding_refcell_ref)]
+    #[inline(never)]
+    pub fn iter_manual_setup_teardown<I, O, S, R, T, RF, TF>(
+        &mut self,
+        _opts: IterManualOptions,
+        mut setup: S,
+        mut routine: R,
+        mut teardown: T,
+    ) where
+        S: FnMut() -> I,
+        R: FnMut(&mut I) -> RF,
+        T: FnMut(I) -> TF,
+        RF: Future<Output = O>,
+        TF: Future<Output = ()>,
+    {
+        let AsyncBencher { b, runner } = self;
+        println!(
+            "{} {} (iter_manual options are ignored under CodSpeed instrumentation; running one measured iteration)",
+            "Note:".to_string().yellow(),
+            b.uri.yellow(),
+        );
+        runner.block_on(async {
+            let mut input = black_box(setup());
+            b.codspeed.start_benchmark(b.uri.as_str());
+            let output = black_box(routine(&mut input).await);
+            b.codspeed.end_benchmark();
+            drop(black_box(output));
+            teardown(input).await;
+        });
     }
 
     #[doc(hidden)]

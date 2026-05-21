@@ -42,6 +42,10 @@ pub struct Bencher<'a, M: Measurement = WallTime> {
     pub(crate) value: M::Value,        // The measured value
     pub(crate) measurement: &'a M,     // Reference to the measurement object
     pub(crate) elapsed_time: Duration, // How much time did it take to perform the iteration? Used for the warmup period.
+    // CodSpeed addition: when `iter_manual*` runs, it drives the full
+    // benchmark itself and deposits the per-round results here. The outer
+    // sampler in `routine.rs` detects this and skips its adaptive logic.
+    pub(crate) codspeed_manual: Option<crate::codspeed_iter_manual::ManualMeasurement>,
 }
 impl<'a, M: Measurement> Bencher<'a, M> {
     /// Times a `routine` by executing it many times and timing the total elapsed time.
@@ -459,10 +463,12 @@ impl<'a, M: Measurement> Bencher<'a, M> {
 }
 
 /// Async/await variant of the Bencher struct.
+// CodSpeed addition: fields are `pub(crate)` so the codspeed_iter_manual module
+// can destructure this struct.
 #[cfg(feature = "async")]
 pub struct AsyncBencher<'a, 'b, A: AsyncExecutor, M: Measurement = WallTime> {
-    b: &'b mut Bencher<'a, M>,
-    runner: A,
+    pub(crate) b: &'b mut Bencher<'a, M>,
+    pub(crate) runner: A,
 }
 #[cfg(feature = "async")]
 impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
