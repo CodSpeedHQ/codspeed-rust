@@ -49,14 +49,6 @@ impl<'a> Bencher<'a> {
     }
 
     #[inline(never)]
-    pub fn iter_manual<O, R>(&mut self, _opts: IterManualOptions, mut routine: R)
-    where
-        R: FnMut() -> O,
-    {
-        self.iter_manual_setup_teardown(_opts, || (), |_| routine(), |_| ());
-    }
-
-    #[inline(never)]
     pub fn iter_manual_setup<I, O, S, R>(&mut self, opts: IterManualOptions, setup: S, routine: R)
     where
         S: FnMut() -> I,
@@ -203,15 +195,6 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
             "Skipping:".to_string().yellow(),
             b.uri.yellow(),
         );
-    }
-
-    #[inline(never)]
-    pub fn iter_manual<O, R, F>(&mut self, opts: IterManualOptions, mut routine: R)
-    where
-        R: FnMut() -> F,
-        F: Future<Output = O>,
-    {
-        self.iter_manual_setup_teardown(opts, || (), |_| routine(), |_| std::future::ready(()));
     }
 
     #[inline(never)]
