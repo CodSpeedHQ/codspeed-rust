@@ -166,7 +166,6 @@ jobs:
           cargo codspeed build -m ${{matrix.mode}} -p ${{ matrix.package }} ${{ matrix.features && format('--features {0}', matrix.features) || '' }}
 
       - name: Install valgrind-codspeed
-        if: inputs.language == 'python'
         shell: bash
         run: |
           git clone https://github.com/CodSpeedHQ/valgrind-codspeed
