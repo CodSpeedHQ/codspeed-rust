@@ -165,6 +165,15 @@ jobs:
           rm -f .cargo/config.toml
           cargo codspeed build -m ${{matrix.mode}} -p ${{ matrix.package }} ${{ matrix.features && format('--features {0}', matrix.features) || '' }}
 
+      - name: Install valgrind-codspeed
+        if: inputs.language == 'python'
+        shell: bash
+        run: |
+          git clone https://github.com/CodSpeedHQ/valgrind-codspeed
+          cd valgrind-codspeed
+          git checkout master
+          ./autogen.sh && ./configure && make -j$(nproc) && sudo make install
+
       - name: Run the benchmarks
         uses: CodSpeedHQ/action@main
         env:
@@ -172,6 +181,8 @@ jobs:
         with:
           run: cargo codspeed run
           mode: ${{ matrix.mode }}
+          cache-instruments: false
+          runner-version: latest
 
   walltime-integration-test:
     runs-on: codspeed-macro
