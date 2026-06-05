@@ -68,3 +68,7 @@ harness = false
 [[bench]]
 name = "test_benches"
 harness = false
+
+[[bench]]
+name = "custom_main"
+harness = false
