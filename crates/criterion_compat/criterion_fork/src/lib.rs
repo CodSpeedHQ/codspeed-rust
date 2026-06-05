@@ -398,6 +398,18 @@ mod codspeed {
         pub fn set_macro_group(&mut self, macro_group: impl Into<String>) {
             self.macro_group = macro_group.into();
         }
+
+        /// Ensures `current_file` is set, for CodSpeed URI generation.
+        ///
+        /// When set explicitly via `set_current_file`, it is kept as-is; otherwise it is
+        /// derived from the caller location.
+        #[track_caller]
+        pub(crate) fn ensure_current_file(&mut self) {
+            if !self.current_file.is_empty() {
+                return;
+            }
+            self.current_file = codspeed::utils::caller_file_path();
+        }
     }
 }
 
@@ -1201,7 +1213,9 @@ https://bheisler.github.io/criterion.rs/book/faq.html
     /// ```
     /// # Panics:
     /// Panics if the group name is empty
+    #[track_caller]
     pub fn benchmark_group<S: Into<String>>(&mut self, group_name: S) -> BenchmarkGroup<'_, M> {
+        self.ensure_current_file();
         let group_name = group_name.into();
         assert!(!group_name.is_empty(), "Group name must not be empty.");
 
@@ -1238,6 +1252,7 @@ where
     /// criterion_group!(benches, bench);
     /// criterion_main!(benches);
     /// ```
+    #[track_caller]
     pub fn bench_function<F>(&mut self, id: &str, f: F) -> &mut Criterion<M>
     where
         F: FnMut(&mut Bencher<'_, M>),
@@ -1270,6 +1285,7 @@ where
     /// criterion_group!(benches, bench);
     /// criterion_main!(benches);
     /// ```
+    #[track_caller]
     pub fn bench_with_input<F, I>(&mut self, id: BenchmarkId, input: &I, f: F) -> &mut Criterion<M>
     where
         F: FnMut(&mut Bencher<'_, M>, &I),

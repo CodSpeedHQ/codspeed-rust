@@ -279,12 +279,11 @@ mod codspeed {
         }
 
         let git_relative_file_path = codspeed::utils::get_git_relative_path(&c.current_file);
-        let uri = format!(
-            "{}::{}::{}",
-            git_relative_file_path.to_string_lossy(),
+        let uri = codspeed::utils::build_uri(&[
+            &git_relative_file_path.to_string_lossy(),
             &c.macro_group,
-            bench_name
-        );
+            &bench_name,
+        ]);
 
         (uri, bench_name)
     }

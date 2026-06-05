@@ -92,6 +92,7 @@ impl<M: Measurement> Criterion<M> {
         self.macro_group = macro_group.into();
     }
 
+    #[track_caller]
     pub fn bench_function<F>(&mut self, id: &str, f: F) -> &mut Criterion<M>
     where
         F: FnMut(&mut Bencher),
@@ -101,6 +102,7 @@ impl<M: Measurement> Criterion<M> {
         self
     }
 
+    #[track_caller]
     pub fn bench_with_input<F, I>(&mut self, id: BenchmarkId, input: &I, f: F) -> &mut Criterion<M>
     where
         F: FnMut(&mut Bencher, &I),
@@ -118,8 +120,22 @@ impl<M: Measurement> Criterion<M> {
         self
     }
 
+    #[track_caller]
     pub fn benchmark_group<S: Into<String>>(&mut self, group_name: S) -> BenchmarkGroup<M> {
+        self.ensure_current_file();
         BenchmarkGroup::<M>::new(self, group_name.into())
+    }
+
+    /// Ensures `current_file` is set, for CodSpeed URI generation.
+    ///
+    /// When set explicitly via `set_current_file`, it is kept as-is; otherwise it is
+    /// derived from the caller location.
+    #[track_caller]
+    fn ensure_current_file(&mut self) {
+        if !self.current_file.is_empty() {
+            return;
+        }
+        self.current_file = codspeed::utils::caller_file_path();
     }
 }
 

@@ -32,6 +32,37 @@ where
     }
 }
 
+/// Builds a benchmark URI by joining the non-empty segments with `::`.
+///
+/// Segments can be empty when `criterion_group!`/`criterion_main!` are bypassed (custom main):
+/// `current_file` and `macro_group` are not set in that case and must not produce empty
+/// `::` parts (e.g. `::::my_group::my_bench`).
+pub fn build_uri(segments: &[&str]) -> String {
+    segments
+        .iter()
+        .filter(|s| !s.is_empty())
+        .copied()
+        .collect::<Vec<_>>()
+        .join("::")
+}
+
+/// Resolves the caller's source file path for URI generation, anchored to the
+/// workspace root when running under the CodSpeed runner.
+///
+/// `#[track_caller]` so the location resolves to the original benchmark call site
+/// rather than this helper.
+#[track_caller]
+pub fn caller_file_path() -> String {
+    let caller = std::panic::Location::caller();
+    match std::env::var("CODSPEED_CARGO_WORKSPACE_ROOT") {
+        Ok(workspace_root) => PathBuf::from(workspace_root)
+            .join(caller.file())
+            .to_string_lossy()
+            .into_owned(),
+        Err(_) => caller.file().to_string(),
+    }
+}
+
 /// Fixes spaces around `::` created by stringify!($function).
 pub fn get_formated_function_path(function_path: impl Into<String>) -> String {
     let function_path = function_path.into();
@@ -109,6 +140,28 @@ mod tests {
 
         let relative_path = get_git_relative_path(&symlink);
         assert_eq!(relative_path, symlink.canonicalize().unwrap());
+    }
+
+    /// COD-2324: empty segments (no file/macro group when `criterion_group!` is bypassed)
+    /// must not produce URIs like `::::my_group::my_bench`.
+    #[test]
+    fn test_build_uri_skips_empty_segments() {
+        assert_eq!(
+            build_uri(&["", "", "my_group::my_bench"]),
+            "my_group::my_bench"
+        );
+        assert_eq!(
+            build_uri(&["benches/custom_main.rs", "", "my_group::my_bench"]),
+            "benches/custom_main.rs::my_group::my_bench"
+        );
+        assert_eq!(
+            build_uri(&[
+                "benches/bench.rs",
+                "benches::bench_fn",
+                "my_group::my_bench"
+            ]),
+            "benches/bench.rs::benches::bench_fn::my_group::my_bench"
+        );
     }
 
     #[test]

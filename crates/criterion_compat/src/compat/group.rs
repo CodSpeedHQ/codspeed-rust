@@ -1,7 +1,10 @@
 use std::marker::PhantomData;
 use std::{cell::RefCell, rc::Rc, time::Duration};
 
-use codspeed::{codspeed::CodSpeed, utils::get_git_relative_path};
+use codspeed::{
+    codspeed::CodSpeed,
+    utils::{build_uri, get_git_relative_path},
+};
 use criterion::measurement::WallTime;
 use criterion::{measurement::Measurement, PlotConfiguration, SamplingMode, Throughput};
 
@@ -63,12 +66,11 @@ impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
         I: ?Sized,
     {
         let git_relative_file_path = get_git_relative_path(&self.current_file);
-        let mut uri = format!(
-            "{}::{}::{}",
-            git_relative_file_path.to_string_lossy(),
-            self.macro_group,
-            self.group_name,
-        );
+        let mut uri = build_uri(&[
+            &git_relative_file_path.to_string_lossy(),
+            &self.macro_group,
+            &self.group_name,
+        ]);
         if let Some(function_name) = id.function_name {
             uri = format!("{uri}::{function_name}");
         }
