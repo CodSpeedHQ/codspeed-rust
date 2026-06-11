@@ -36,4 +36,4 @@ harness = false
 tempfile = { workspace = true }
 
 [build-dependencies]
-cc = "1.0"
+cc = "1.2.40"
