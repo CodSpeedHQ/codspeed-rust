@@ -113,10 +113,9 @@ impl BuildOptions<'_> {
         let package_names = self
             .package_filters
             .packages_from_flags(metadata)
-            .map_err(|e| {
+            .inspect_err(|_e| {
                 // Avoid leaving an orphan cargo process, even if something went wrong
-                cargo.wait().expect("Could not get cargo's exist status");
-                e
+                cargo.wait().expect("Could not get cargo's exit status");
             })?
             .into_iter()
             .map(|t| t.name.clone())
