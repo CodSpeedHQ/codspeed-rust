@@ -102,6 +102,19 @@ jobs:
       - name: Check divan_compat MSRV
         run: cargo msrv --path crates/divan_compat verify -- cargo check --all-features --config codspeed=true
 
+  minimal-versions:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - uses: moonrepo/setup-rust@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: rustup toolchain install nightly --profile minimal
+      - run: cargo +nightly update -Zminimal-versions -p codspeed --recursive
+      - run: cargo check -p codspeed --all-features --config codspeed=true
+
   tests-without-cargo-codspeed:
     runs-on: ubuntu-latest
     steps:
@@ -283,6 +296,7 @@ jobs:
       - tests-without-cargo-codspeed
       - test-cargo-codspeed
       - msrv-check
+      - minimal-versions
       - analysis-integration-test
       - walltime-integration-test
       - walltime-macos-test
