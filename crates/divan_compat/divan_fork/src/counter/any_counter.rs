@@ -65,7 +65,7 @@ impl AnyCounter {
         &self,
         duration: FineDuration,
         bytes_format: BytesFormat,
-    ) -> DisplayThroughput {
+    ) -> DisplayThroughput<'_> {
         DisplayThroughput { counter: self, picos: duration.picos as f64, bytes_format }
     }
 

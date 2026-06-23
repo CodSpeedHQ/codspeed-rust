@@ -335,7 +335,7 @@ impl<'a> EntryTree<'a> {
         }
     }
 
-    pub fn bench_options(&self) -> Option<&'a BenchOptions> {
+    pub fn bench_options(&self) -> Option<&'a BenchOptions<'_>> {
         self.meta()?.bench_options()
     }
 

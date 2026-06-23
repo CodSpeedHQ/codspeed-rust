@@ -121,7 +121,7 @@ impl<M: Measurement> Criterion<M> {
     }
 
     #[track_caller]
-    pub fn benchmark_group<S: Into<String>>(&mut self, group_name: S) -> BenchmarkGroup<M> {
+    pub fn benchmark_group<S: Into<String>>(&mut self, group_name: S) -> BenchmarkGroup<'_, M> {
         self.ensure_current_file();
         BenchmarkGroup::<M>::new(self, group_name.into())
     }
