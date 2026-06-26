@@ -1,6 +1,6 @@
 [package]
 name = "codspeed"
-version = "5.0.0"
+version = "5.0.1"
 rust-version = "1.85" # MSRV
 edition = "2021"
 description = "Core instrumentation library for CodSpeed"
