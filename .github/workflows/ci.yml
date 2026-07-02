@@ -9,6 +9,9 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  CODSPEED_WALLTIME_PROFILER: samply
+
 jobs:
   lint:
     runs-on: ubuntu-latest
