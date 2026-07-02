@@ -1,4 +1,5 @@
 pub mod codspeed;
+pub mod compat_utils;
 
 pub mod instrument_hooks;
 

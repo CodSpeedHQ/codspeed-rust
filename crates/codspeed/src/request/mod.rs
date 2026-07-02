@@ -5,6 +5,7 @@ const CG_BASE: u32 = ((b'C' as u32) << 24) + ((b'T' as u32) << 16);
 pub enum ClientRequest {
     RunningOnValgrind = 0x1001,
     ZeroStatistics = CG_BASE + 1,
+    ToggleCollect = CG_BASE + 2,
     DumpStatisticsAt = CG_BASE + 3,
     StartInstrumentation = CG_BASE + 4,
     StopInstrumentation = CG_BASE + 5,
