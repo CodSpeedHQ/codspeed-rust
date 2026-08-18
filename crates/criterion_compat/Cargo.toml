@@ -20,7 +20,9 @@ keywords = ["codspeed", "benchmark", "criterion"]
 criterion = { package = "codspeed-criterion-compat-walltime", path = "./criterion_fork", version = "=5.0.1", default-features = false }
 codspeed = { path = "../codspeed", version = "=5.0.1" }
 colored = "3.0.0"
-clap = { version = "4", default-features = false, features = ["std"] }
+clap = { version = "4", default-features = false, features = [
+    "std",
+], optional = true }
 regex = { version = "1.5", default-features = false, features = ["std"] }
 
 futures = { version = "0.3", default-features = false, optional = true }
@@ -31,7 +33,9 @@ tokio = { version = "1.39", default-features = false, features = [
 async-std = { version = "1.12", optional = true }
 
 [features]
-default = ["rayon", "plotters", "cargo_bench_support"]
+default = ["cli", "rayon", "plotters", "cargo_bench_support"]
+# Benchmark filtering from CLI arguments, which requires `clap`.
+cli = ["dep:clap"]
 # Criterion.rs features
 async = ["futures", "criterion/async"]
 async_futures = ["criterion/async_futures", "futures/executor", "async"]

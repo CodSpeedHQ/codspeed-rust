@@ -6,6 +6,7 @@ use criterion::{
     profiler::Profiler,
     PlottingBackend,
 };
+#[cfg(feature = "cli")]
 use regex::Regex;
 
 use crate::{Bencher, BenchmarkFilter, BenchmarkGroup, BenchmarkId};
@@ -26,7 +27,6 @@ impl Criterion {
             env!("CARGO_PKG_VERSION"),
         );
 
-        // Parse CLI arguments to extract filter
         let filter = Self::parse_filter();
 
         Criterion {
@@ -38,6 +38,12 @@ impl Criterion {
         }
     }
 
+    #[cfg(not(feature = "cli"))]
+    fn parse_filter() -> BenchmarkFilter {
+        BenchmarkFilter::AcceptAll
+    }
+
+    #[cfg(feature = "cli")]
     fn parse_filter() -> BenchmarkFilter {
         use clap::{Arg, Command};
 

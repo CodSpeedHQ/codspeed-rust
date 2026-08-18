@@ -13,7 +13,9 @@ pub mod __private {
 }
 
 mod bench;
+#[cfg(feature = "cli")]
 mod cli;
+#[cfg(feature = "cli")]
 mod config;
 mod entry;
 mod uri;
@@ -156,8 +158,10 @@ pub mod counter {
     }
 }
 use codspeed::codspeed::CodSpeed;
+#[cfg(feature = "cli")]
 use config::Filter;
 use entry::AnyBenchEntry;
+#[cfg(feature = "cli")]
 use regex::Regex;
 use std::{cell::RefCell, rc::Rc};
 
@@ -184,6 +188,7 @@ pub fn main() {
     // codspeed URI from entry metadata directly.
 
     // 3. Filtering
+    #[cfg(feature = "cli")]
     let should_run_benchmark_from_filters = {
         let mut command = cli::command();
         let matches = command.get_matches_mut();
@@ -215,6 +220,8 @@ pub fn main() {
             }
         }
     };
+    #[cfg(not(feature = "cli"))]
+    let should_run_benchmark_from_filters = |_uri: &str| true;
 
     // 4. Scan the tree and execute benchmarks
     let codspeed = Rc::new(RefCell::new(CodSpeed::new()));

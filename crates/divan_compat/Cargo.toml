@@ -21,8 +21,16 @@ keywords = ["codspeed", "benchmark", "divan"]
 codspeed = { path = "../codspeed", version = "=5.0.1" }
 divan = { package = "codspeed-divan-compat-walltime", path = "./divan_fork", version = "=5.0.1" }
 codspeed-divan-compat-macros = { version = "=5.0.1", path = './macros' }
-regex = "1.11.3"
-clap = { version = "4", default-features = false, features = ["std", "env"] }
+regex = { version = "1.11.3", optional = true }
+clap = { version = "4", default-features = false, features = [
+    "std",
+    "env",
+], optional = true }
+
+[features]
+default = ["cli"]
+# Benchmark filtering from CLI arguments, which requires `clap`.
+cli = ["dep:clap", "dep:regex"]
 
 [[bench]]
 name = "basic_example"
