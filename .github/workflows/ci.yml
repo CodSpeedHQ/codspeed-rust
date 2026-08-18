@@ -179,7 +179,7 @@ jobs:
           cargo codspeed build -m ${{matrix.mode}} -p ${{ matrix.package }} ${{ matrix.features && format('--features {0}', matrix.features) || '' }}
 
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@main
+        uses: CodSpeedHQ/action@v5
         env:
           MY_ENV_VAR: "YES"
         with:
