@@ -28,6 +28,15 @@ fn fib_in_thread_bench_local(bencher: codspeed_divan_compat::Bencher, n: usize) 
     })
 }
 
+#[cfg_attr(
+    not(codspeed),
+    codspeed_divan_compat::bench(threads = 4, sample_count = 1)
+)]
+#[cfg_attr(codspeed, codspeed_divan_compat::bench(sample_count = 1))]
+fn divan_threads() {
+    codspeed_divan_compat::black_box(fibo(20));
+}
+
 fn main() {
     codspeed_divan_compat::main();
 }
