@@ -56,6 +56,9 @@ extern "C" {
 extern "C" {
     pub fn instrument_hooks_current_timestamp() -> u64;
 }
+extern "C" {
+    pub fn instrument_hooks_callgrind_add_obj_skip(path: *const ::std::os::raw::c_char) -> u8;
+}
 pub const instrument_hooks_feature_t_FEATURE_DISABLE_CALLGRIND_MARKERS: instrument_hooks_feature_t =
     0;
 pub type instrument_hooks_feature_t = ::std::os::raw::c_uint;
