@@ -22,6 +22,8 @@ pub(crate) struct TimeSample {
 pub(crate) struct RawSample {
     pub start: Timestamp,
     pub end: Timestamp,
+    pub benchmark_start: u64,
+    pub benchmark_end: u64,
     pub timer: Timer,
     pub alloc_info: ThreadAllocInfo,
     pub counter_totals: [u128; KnownCounterKind::COUNT],
