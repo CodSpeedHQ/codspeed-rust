@@ -1,0 +1,5 @@
+version: 3
+ignore_actions:
+  # Intentionally tracks the action's main branch to test unreleased changes.
+  - name: CodSpeedHQ/action
+    ref: main
