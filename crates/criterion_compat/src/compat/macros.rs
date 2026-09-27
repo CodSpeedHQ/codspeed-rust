@@ -1,6 +1,7 @@
 #[macro_export]
 macro_rules! criterion_group {
     (name = $name:ident; config = $config:expr; targets = $( $target:path ),+ $(,)*) => {
+        #[doc = "The function which runs the benchmarks."]
         pub fn $name(criterion: &mut $crate::Criterion) {
             let mut criterion = &mut criterion.with_patched_measurement($config);
             $(
@@ -22,7 +23,7 @@ macro_rules! criterion_group {
 #[macro_export]
 macro_rules! criterion_main {
     ( $( $group:path ),+ $(,)* ) => {
-        pub fn main() {
+        fn main() {
             let mut criterion = $crate::Criterion::new_instrumented();
             $(
                 $group(&mut criterion);

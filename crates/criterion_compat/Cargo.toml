@@ -72,3 +72,7 @@ harness = false
 [[bench]]
 name = "custom_main"
 harness = false
+
+[[bench]]
+name = "missing_docs"
+harness = false
