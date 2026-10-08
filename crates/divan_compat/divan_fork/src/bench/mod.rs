@@ -29,7 +29,7 @@ mod args;
 mod defer;
 mod options;
 
-use ::codspeed::instrument_hooks::InstrumentHooks;
+use ::codspeed::instrument_hooks::{BenchmarkMarkers, InstrumentHooks};
 use defer::{DeferSlot, DeferStore};
 
 pub use self::{
@@ -658,7 +658,7 @@ impl<'a> BenchContext<'a> {
 
         let bench_overheads = timer.bench_overheads();
 
-        let _ = InstrumentHooks::instance().start_benchmark();
+        let markers = BenchmarkMarkers::start();
         while {
             // Conditions for when sampling is over:
             if elapsed_picos >= max_picos {
@@ -825,7 +825,7 @@ impl<'a> BenchContext<'a> {
                 elapsed_picos = elapsed_picos.saturating_add(progress_picos);
             }
         }
-        let _ = InstrumentHooks::instance().stop_benchmark();
+        drop(markers);
 
         // Reset flag for ignoring allocations.
         crate::alloc::IGNORE_ALLOC.set(false);
