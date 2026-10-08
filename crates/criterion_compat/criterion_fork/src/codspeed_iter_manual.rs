@@ -6,7 +6,7 @@
 
 use std::time::{Duration, Instant};
 
-use codspeed::instrument_hooks::InstrumentHooks;
+use codspeed::instrument_hooks::{BenchmarkMarkers, InstrumentHooks};
 
 #[cfg(feature = "async")]
 use crate::async_executor::AsyncExecutor;
@@ -112,6 +112,7 @@ impl<'a, M: Measurement> Bencher<'a, M> {
 
         self.elapsed_time = Duration::ZERO;
         let mut samples = Vec::with_capacity(opts.rounds as usize);
+        let markers = BenchmarkMarkers::start();
         for _ in 0..opts.rounds {
             let bench_start = InstrumentHooks::current_timestamp();
             let round_start = Instant::now();
@@ -126,6 +127,7 @@ impl<'a, M: Measurement> Bencher<'a, M> {
 
             samples.push(self.measurement.to_f64(&value));
         }
+        drop(markers);
 
         self.codspeed_manual = Some(ManualMeasurement {
             samples,
@@ -172,6 +174,7 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
 
             b.elapsed_time = Duration::ZERO;
             let mut samples = Vec::with_capacity(opts.rounds as usize);
+            let markers = BenchmarkMarkers::start();
             for _ in 0..opts.rounds {
                 let bench_start = InstrumentHooks::current_timestamp();
                 let round_start = Instant::now();
@@ -186,6 +189,7 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
 
                 samples.push(b.measurement.to_f64(&value));
             }
+            drop(markers);
 
             b.codspeed_manual = Some(ManualMeasurement {
                 samples,
