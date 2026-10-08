@@ -24,6 +24,9 @@ codspeed-divan-compat-macros = { version = "=5.0.2", path = './macros' }
 regex = "1.11.3"
 clap = { version = "4", default-features = false, features = ["std", "env"] }
 
+[dev-dependencies]
+tokio = { version = "1.39", features = ["rt-multi-thread"] }
+
 [[bench]]
 name = "basic_example"
 harness = false
@@ -42,4 +45,8 @@ harness = false
 
 [[bench]]
 name = "fib_example"
+harness = false
+
+[[bench]]
+name = "allocator_ripple"
 harness = false
