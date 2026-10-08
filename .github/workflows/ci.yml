@@ -160,6 +160,7 @@ jobs:
           - package: codspeed-criterion-compat
             features: async_futures
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
