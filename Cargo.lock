@@ -590,7 +590,6 @@ dependencies = [
  "colored",
  "getrandom 0.4.3",
  "glob",
- "libc",
  "nix",
  "serde",
  "serde_json",
