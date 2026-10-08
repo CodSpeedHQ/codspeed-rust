@@ -132,7 +132,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        partition: [1, 2, 3, 4, 5]
+        partition: [1, 2, 3, 4, 5, 6, 7, 8]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -142,7 +142,7 @@ jobs:
           bins: cargo-nextest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - run: cargo nextest run -p cargo-codspeed --partition hash:${{ matrix.partition }}/5
+      - run: cargo nextest run -p cargo-codspeed --partition hash:${{ matrix.partition }}/8
 
   analysis-integration-test:
     strategy:
