@@ -160,6 +160,9 @@ jobs:
           - package: codspeed-criterion-compat
             features: async_futures
     runs-on: ubuntu-latest
+    # Every benchmark runs in its own process: a harness regression that leaves
+    # a child stuck must fail the job instead of blocking it for hours.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
