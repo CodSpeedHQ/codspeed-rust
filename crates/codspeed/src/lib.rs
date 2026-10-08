@@ -1,6 +1,7 @@
 pub mod codspeed;
 
 pub mod instrument_hooks;
+pub mod isolation;
 
 mod macros;
 mod measurement;
