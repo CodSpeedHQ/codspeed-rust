@@ -133,7 +133,7 @@ pub(crate) struct PackageFilters {
 
 #[derive(Args, Clone)]
 pub(crate) struct BenchTargetFilters {
-    /// Select only the specified benchmark target (all benchmark targets by default)
+    /// Select only the specified benchmark target; can be repeated (all benchmark targets by default)
     #[arg(long, help_heading = TARGET_HELP)]
     pub(crate) bench: Option<Vec<String>>,
 }
@@ -200,7 +200,16 @@ enum Commands {
     },
     /// Run the previously built benchmarks
     Run {
-        /// If specified, only run benches containing this string in their names
+        /// Only run benchmarks whose name matches this unanchored regex.
+        ///
+        /// The string matched against depends on the measurement mode:
+        /// - **simulation/memory**: the CodSpeed URI
+        /// - **walltime**: the benchmark framework's own name (can be listed with `-- --list`,
+        ///   and validated with `-- --list '<filter>'`)
+        ///
+        /// To require the whole name to match instead of a regex, pass `-- --exact`. The name format
+        /// still differs between modes.
+        #[arg(verbatim_doc_comment)]
         benchname: Option<String>,
 
         #[command(flatten)]
