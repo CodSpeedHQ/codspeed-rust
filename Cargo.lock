@@ -664,6 +664,7 @@ dependencies = [
  "codspeed-divan-compat-macros",
  "codspeed-divan-compat-walltime",
  "regex",
+ "tokio",
 ]
 
 [[package]]
