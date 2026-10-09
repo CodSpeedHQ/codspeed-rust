@@ -279,6 +279,24 @@ pub use linux_impl::InstrumentHooks;
 #[cfg(not(use_instrument_hooks))]
 pub use other_impl::InstrumentHooks;
 
+/// Sends the benchmark start marker when created and the stop marker when
+/// dropped, so every exit path closes the measured region.
+pub struct BenchmarkMarkers(&'static InstrumentHooks);
+
+impl BenchmarkMarkers {
+    pub fn start() -> Self {
+        let hooks = InstrumentHooks::instance();
+        let _ = hooks.start_benchmark();
+        Self(hooks)
+    }
+}
+
+impl Drop for BenchmarkMarkers {
+    fn drop(&mut self) {
+        let _ = self.0.stop_benchmark();
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::InstrumentHooks;

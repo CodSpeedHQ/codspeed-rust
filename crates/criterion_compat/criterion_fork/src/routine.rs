@@ -1,4 +1,4 @@
-use codspeed::instrument_hooks::InstrumentHooks;
+use codspeed::instrument_hooks::BenchmarkMarkers;
 
 use crate::benchmark::BenchmarkConfig;
 use crate::codspeed_iter_manual::ManualMeasurement;
@@ -238,13 +238,8 @@ pub(crate) trait Routine<M: Measurement, T: ?Sized> {
         }
 
         let m_elapsed = {
-            let hooks = InstrumentHooks::instance();
-
-            let _ = hooks.start_benchmark();
-            let value = self.bench(measurement, &m_iters, parameter);
-            let _ = hooks.stop_benchmark();
-
-            value
+            let _markers = BenchmarkMarkers::start();
+            self.bench(measurement, &m_iters, parameter)
         };
         let m_iters_f: Vec<f64> = m_iters.iter().map(|&x| x as f64).collect();
 
