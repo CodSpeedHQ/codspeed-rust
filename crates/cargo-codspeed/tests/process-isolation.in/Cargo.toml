@@ -1,0 +1,19 @@
+[package]
+name = "process-isolation"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+divan = { package = "codspeed-divan-compat", path = "../../../divan_compat" }
+tokio = { version = "1.39", features = ["rt-multi-thread"] }
+
+[workspace]
+
+[[bench]]
+name = "isolated"
+harness = false
+
+[[bench]]
+name = "panicking"
+harness = false

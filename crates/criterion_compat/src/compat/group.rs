@@ -3,6 +3,7 @@ use std::{cell::RefCell, rc::Rc, time::Duration};
 
 use codspeed::{
     codspeed::CodSpeed,
+    isolation::Isolation,
     utils::{build_uri, get_git_relative_path},
 };
 use criterion::measurement::WallTime;
@@ -83,9 +84,11 @@ impl<'a, M: Measurement> BenchmarkGroup<'a, M> {
             return;
         }
 
-        let mut codspeed = self.codspeed.borrow_mut();
-        let mut b = Bencher::new(&mut codspeed, uri);
-        f(&mut b, input);
+        Isolation::current().run(uri, |uri| {
+            let mut codspeed = self.codspeed.borrow_mut();
+            let mut b = Bencher::new(&mut codspeed, uri);
+            f(&mut b, input);
+        });
     }
 }
 
