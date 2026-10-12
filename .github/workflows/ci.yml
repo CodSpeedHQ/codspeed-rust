@@ -13,19 +13,19 @@ jobs:
   lint:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
         with:
           components: rustfmt, clippy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - uses: pre-commit/action@v3.0.1
+      - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd # v3.0.1
         with:
           extra_args: --all-files
 
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@5b4d68e2e660441203ab128a23676f1e4faf1532 # v2.86.3
         with:
           tool: bindgen-cli@0.72.1
       - name: Check if bindings are up-to-date
@@ -56,11 +56,11 @@ jobs:
           - { os: windows-latest, target: x86_64-pc-windows-msvc }
           - { os: windows-latest, target: aarch64-pc-windows-msvc }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
 
-      - uses: moonrepo/setup-rust@v1
+      - uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
         with:
           targets: ${{ matrix.job.target }}
           # moonrepo/setup-rust does not allow for different cache keys per matrix job
@@ -71,11 +71,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       # Use this in place of the moonrepo/setup-rust cache, see above for explanation
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           shared-key: ${{ matrix.job.target }}
 
-      - uses: taiki-e/install-action@v2
+      - uses: taiki-e/install-action@5b4d68e2e660441203ab128a23676f1e4faf1532 # v2.86.3
         with:
           tool: cross@0.2.5
 
@@ -85,10 +85,10 @@ jobs:
   msrv-check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
         with:
           bins: cargo-msrv
         env:
@@ -105,10 +105,10 @@ jobs:
   minimal-versions:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: rustup toolchain install nightly --profile minimal
@@ -118,10 +118,10 @@ jobs:
   tests-without-cargo-codspeed:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
         with:
           bins: cargo-nextest
         env:
@@ -134,10 +134,10 @@ jobs:
       matrix:
         partition: [1, 2, 3, 4, 5]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
         with:
           bins: cargo-nextest
         env:
@@ -161,10 +161,10 @@ jobs:
             features: async_futures
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
         with:
           cache-target: release
         env:
@@ -179,7 +179,7 @@ jobs:
           cargo codspeed build -m ${{matrix.mode}} -p ${{ matrix.package }} ${{ matrix.features && format('--features {0}', matrix.features) || '' }}
 
       - name: Run the benchmarks
-        uses: CodSpeedHQ/action@main
+        uses: CodSpeedHQ/action@v5
         env:
           MY_ENV_VAR: "YES"
         with:
@@ -206,10 +206,10 @@ jobs:
           - package: codspeed-criterion-compat
             bench: criterion_integration_measurement_overhead
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
         with:
           cache-target: release
         env:
@@ -234,10 +234,10 @@ jobs:
   walltime-macos-test:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
         with:
           cache-target: release
         env:
@@ -273,10 +273,10 @@ jobs:
 
     runs-on: ${{ matrix.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           submodules: true
-      - uses: moonrepo/setup-rust@v1
+      - uses: moonrepo/setup-rust@abb2d32350334249b178c401e5ec5836e0cd88d3 # v1.3.0
         with:
           targets: ${{ matrix.target }}
         env:
@@ -302,6 +302,6 @@ jobs:
       - walltime-macos-test
       - musl-build-check
     steps:
-      - uses: re-actors/alls-green@release/v1
+      - uses: re-actors/alls-green@05ac9388f0aebcb5727afa17fcccfecd6f8ec5fe # v1.2.2
         with:
           jobs: ${{ toJson( needs ) }}
