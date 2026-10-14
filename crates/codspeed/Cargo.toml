@@ -42,6 +42,8 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
     "registry",
     "env-filter",
 ], optional = true }
+# Unused directly: raises the floor of `sharded-slab`'s `lazy_static = "1"`, which fails to build below 1.1
+lazy_static = { version = "1.1", optional = true }
 
 [features]
 otel = [
@@ -51,6 +53,7 @@ otel = [
     "dep:tracing",
     "dep:tracing-opentelemetry",
     "dep:tracing-subscriber",
+    "dep:lazy_static",
 ]
 
 [[bench]]
