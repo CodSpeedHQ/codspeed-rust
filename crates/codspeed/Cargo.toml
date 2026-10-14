@@ -28,6 +28,31 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 statrs = { version = "0.18.0", default-features = false }
 
+opentelemetry = { version = "0.33", default-features = false, features = ["trace"], optional = true }
+opentelemetry_sdk = { version = "0.33", default-features = false, features = ["trace"], optional = true }
+opentelemetry-otlp = { version = "0.33", default-features = false, features = [
+    "trace",
+    "http-proto",
+    "reqwest-blocking-client",
+], optional = true }
+tracing = { version = "0.1", default-features = false, features = ["std"], optional = true }
+tracing-opentelemetry = { version = "0.34", default-features = false, optional = true }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "std",
+    "registry",
+    "env-filter",
+], optional = true }
+
+[features]
+otel = [
+    "dep:opentelemetry",
+    "dep:opentelemetry_sdk",
+    "dep:opentelemetry-otlp",
+    "dep:tracing",
+    "dep:tracing-opentelemetry",
+    "dep:tracing-subscriber",
+]
+
 [[bench]]
 name = "native"
 harness = false

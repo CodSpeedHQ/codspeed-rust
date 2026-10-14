@@ -75,6 +75,42 @@ Done running my_benchmark
 Finished running 1 benchmark suite(s)
 ```
 
+### Exporting `tracing` spans with OpenTelemetry
+
+With the opt-in `otel` feature, `divan::main()` installs a global `tracing` subscriber that exports
+the spans emitted by your benchmarks, and the events recorded inside them, over OTLP/HTTP:
+
+```toml title="Cargo.toml"
+[dev-dependencies]
+divan = { package = "codspeed-divan-compat", version = "*", features = ["otel"] }
+```
+
+- `CODSPEED_OTEL_ENDPOINT`: base URL of the OTLP/HTTP receiver, e.g. `http://localhost:4318`.
+  Nothing is exported when it is unset.
+- `CODSPEED_OTEL_FILTER`: [`EnvFilter`](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html)
+  directives selecting what is exported. Defaults to `info`.
+
+The provider is also registered as the global OpenTelemetry tracer provider, and spans are flushed
+when `divan::main()` returns.
+
+If your benchmarks already set a global subscriber before calling `divan::main()`, nothing is
+installed. Add the CodSpeed layer to your subscriber instead, and keep its guard alive until the
+benchmarks are done:
+
+```rust
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+fn main() {
+    let (otel_layer, _otel_guard) = divan::otel::layer().unzip();
+    tracing_subscriber::registry()
+        .with(otel_layer)
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+    divan::main();
+}
+```
+
 ### Not supported:
 
 - [`divan::bench(crate = xxx)`](https://docs.rs/divan/latest/divan/attr.bench.html#crate): due to how the compatibility layer works internally, we do not plan to support this feature.
