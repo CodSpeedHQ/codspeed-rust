@@ -2,9 +2,15 @@
 //!
 //! Everything is a no-op unless [`ENDPOINT_ENV`] is set.
 
-use opentelemetry::trace::TracerProvider as _;
+use std::sync::{Arc, PoisonError, RwLock};
+use std::time::Duration;
+
+use opentelemetry::trace::{Span as _, TracerProvider as _};
+use opentelemetry::{Context, KeyValue};
 use opentelemetry_otlp::{SpanExporter, WithExportConfig};
-use opentelemetry_sdk::{trace::SdkTracerProvider, Resource};
+use opentelemetry_sdk::error::OTelSdkResult;
+use opentelemetry_sdk::trace::{SdkTracerProvider, Span, SpanData, SpanProcessor};
+use opentelemetry_sdk::Resource;
 use tracing::Subscriber;
 use tracing_subscriber::{layer::SubscriberExt, registry::LookupSpan, EnvFilter, Layer};
 
@@ -15,6 +21,11 @@ pub const ENDPOINT_ENV: &str = "CODSPEED_OTEL_ENDPOINT";
 pub const FILTER_ENV: &str = "CODSPEED_OTEL_FILTER";
 
 const DEFAULT_FILTER: &str = "info";
+
+/// Span attribute holding the URI of the benchmark running when the span started.
+pub const BENCHMARK_URI_ATTRIBUTE: &str = "codspeed.benchmark.uri";
+
+static CURRENT_BENCHMARK: RwLock<Option<Arc<str>>> = RwLock::new(None);
 
 /// Spans emitted by the exporter itself would be exported in turn, in an endless loop.
 const EXPORTER_FILTER_DIRECTIVES: &[&str] = &[
@@ -97,6 +108,7 @@ fn build_provider() -> Option<SdkTracerProvider> {
 
     Some(
         SdkTracerProvider::builder()
+            .with_span_processor(BenchmarkLabelProcessor)
             .with_batch_exporter(exporter)
             .with_resource(
                 Resource::builder()
@@ -105,6 +117,44 @@ fn build_provider() -> Option<SdkTracerProvider> {
             )
             .build(),
     )
+}
+
+pub(crate) fn enter_benchmark(uri: &str) {
+    *CURRENT_BENCHMARK
+        .write()
+        .unwrap_or_else(PoisonError::into_inner) = Some(Arc::from(uri));
+}
+
+pub(crate) fn exit_benchmark() {
+    *CURRENT_BENCHMARK
+        .write()
+        .unwrap_or_else(PoisonError::into_inner) = None;
+}
+
+/// Labels each span with the benchmark running when it starts.
+#[derive(Debug)]
+struct BenchmarkLabelProcessor;
+
+impl SpanProcessor for BenchmarkLabelProcessor {
+    fn on_start(&self, span: &mut Span, _cx: &Context) {
+        let current_benchmark = CURRENT_BENCHMARK
+            .read()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone();
+        if let Some(uri) = current_benchmark {
+            span.set_attribute(KeyValue::new(BENCHMARK_URI_ATTRIBUTE, uri));
+        }
+    }
+
+    fn on_end(&self, _span: SpanData) {}
+
+    fn force_flush(&self) -> OTelSdkResult {
+        Ok(())
+    }
+
+    fn shutdown_with_timeout(&self, _timeout: Duration) -> OTelSdkResult {
+        Ok(())
+    }
 }
 
 fn build_filter() -> EnvFilter {
@@ -133,4 +183,60 @@ fn service_name() -> String {
 
 fn is_cargo_hash(s: &str) -> bool {
     s.len() == 16 && s.chars().all(|c| c.is_ascii_hexdigit())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use opentelemetry::trace::Tracer as _;
+    use std::sync::Mutex;
+
+    #[derive(Debug, Clone, Default)]
+    struct RecordingExporter(Arc<Mutex<Vec<SpanData>>>);
+
+    impl opentelemetry_sdk::trace::SpanExporter for RecordingExporter {
+        async fn export(&self, batch: Vec<SpanData>) -> OTelSdkResult {
+            self.0.lock().unwrap().extend(batch);
+            Ok(())
+        }
+    }
+
+    fn benchmark_uri(span: &SpanData) -> Option<String> {
+        span.attributes
+            .iter()
+            .find(|attribute| attribute.key.as_str() == BENCHMARK_URI_ATTRIBUTE)
+            .map(|attribute| attribute.value.to_string())
+    }
+
+    #[test]
+    fn labels_the_spans_started_in_a_benchmark() {
+        let exporter = RecordingExporter::default();
+        let provider = SdkTracerProvider::builder()
+            .with_span_processor(BenchmarkLabelProcessor)
+            .with_simple_exporter(exporter.clone())
+            .build();
+        let tracer = provider.tracer("test");
+
+        tracer.start("before").end();
+        enter_benchmark("bench.rs::a");
+        tracer.start("inside").end();
+        exit_benchmark();
+        tracer.start("after").end();
+
+        let labels = exporter
+            .0
+            .lock()
+            .unwrap()
+            .iter()
+            .map(|span| (span.name.to_string(), benchmark_uri(span)))
+            .collect::<Vec<_>>();
+        assert_eq!(
+            labels,
+            [
+                ("before".into(), None),
+                ("inside".into(), Some("bench.rs::a".into())),
+                ("after".into(), None),
+            ]
+        );
+    }
 }

@@ -1,3 +1,4 @@
+pub mod benchmark_scope;
 pub mod codspeed;
 
 pub mod instrument_hooks;

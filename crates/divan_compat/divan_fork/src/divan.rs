@@ -296,8 +296,13 @@ impl Divan {
                         .start_leaf(&format!("t={thread_count}"), is_last_thread_count);
                 }
 
+                let (bench_name, uri) =
+                    codspeed::bench_name_and_uri(&bench_entry, bench_display_name);
+
                 let mut bench_context = BenchContext::new(shared_context, options, thread_count);
+                ::codspeed::benchmark_scope::enter(&uri);
                 with_bencher(Bencher::new(&mut bench_context));
+                ::codspeed::benchmark_scope::exit();
 
                 if !bench_context.did_run {
                     eprintln!(
@@ -310,11 +315,7 @@ impl Divan {
 
                 if should_compute_stats {
                     let stats = bench_context.compute_stats();
-                    codspeed::collect_walltime_results(
-                        &bench_context,
-                        &bench_entry,
-                        bench_display_name,
-                    );
+                    codspeed::collect_walltime_results(&bench_context, bench_name, uri);
                     tree_painter.borrow_mut().finish_leaf(
                         is_last_thread_count,
                         &stats,
@@ -359,70 +360,73 @@ mod codspeed {
     use crate::bench::BenchContext;
     use crate::entry::AnyBenchEntry;
 
-    pub(crate) fn collect_walltime_results(
-        bench_context: &BenchContext,
+    pub(crate) fn bench_name_and_uri(
         bench_entry: &AnyBenchEntry,
         closure_bench_display_name: &str,
-    ) {
+    ) -> (String, String) {
         // WARNING: Keep URI generation in sync with `codspeed-divan-compat::uri::generate`
         // Not worth doing the work of actually using the same code since this fork is temporary
-        let (bench_name, uri) = {
-            let bench_function_name = bench_entry.meta().display_name;
+        let bench_function_name = bench_entry.meta().display_name;
 
-            let (bench_type_name, bench_arg_name) = {
-                let bench_function_or_type_name = bench_entry.display_name().to_string();
+        let (bench_type_name, bench_arg_name) = {
+            let bench_function_or_type_name = bench_entry.display_name().to_string();
 
-                let type_name = if bench_function_or_type_name == bench_function_name {
-                    None
-                } else {
-                    Some(bench_function_or_type_name)
-                };
-
-                let arg_name = match type_name.as_ref() {
-                    None => {
-                        if closure_bench_display_name == bench_function_name {
-                            None
-                        } else {
-                            Some(closure_bench_display_name)
-                        }
-                    }
-                    Some(type_name) => {
-                        if closure_bench_display_name == type_name {
-                            None
-                        } else {
-                            Some(closure_bench_display_name)
-                        }
-                    }
-                };
-
-                (type_name, arg_name)
+            let type_name = if bench_function_or_type_name == bench_function_name {
+                None
+            } else {
+                Some(bench_function_or_type_name)
             };
 
-            let mut bench_name = bench_function_name.to_string();
+            let arg_name = match type_name.as_ref() {
+                None => {
+                    if closure_bench_display_name == bench_function_name {
+                        None
+                    } else {
+                        Some(closure_bench_display_name)
+                    }
+                }
+                Some(type_name) => {
+                    if closure_bench_display_name == type_name {
+                        None
+                    } else {
+                        Some(closure_bench_display_name)
+                    }
+                }
+            };
 
-            match (bench_type_name, bench_arg_name) {
-                (None, None) => {}
-                (Some(type_name), None) => {
-                    bench_name.push_str(format!("[{type_name}]").as_str());
-                }
-                (None, Some(arg_name)) => {
-                    bench_name.push_str(format!("[{arg_name}]").as_str());
-                }
-                (Some(type_name), Some(arg_name)) => {
-                    bench_name.push_str(format!("[{type_name}, {arg_name}]").as_str());
-                }
-            }
-
-            let file = bench_entry.meta().location.file;
-            let mut module_path =
-                bench_entry.meta().module_path_components().skip(1).collect::<Vec<_>>().join("::");
-            if !module_path.is_empty() {
-                module_path.push_str("::");
-            }
-            let uri = format!("{file}::{module_path}{bench_name}");
-            (bench_name, uri)
+            (type_name, arg_name)
         };
 
+        let mut bench_name = bench_function_name.to_string();
+
+        match (bench_type_name, bench_arg_name) {
+            (None, None) => {}
+            (Some(type_name), None) => {
+                bench_name.push_str(format!("[{type_name}]").as_str());
+            }
+            (None, Some(arg_name)) => {
+                bench_name.push_str(format!("[{arg_name}]").as_str());
+            }
+            (Some(type_name), Some(arg_name)) => {
+                bench_name.push_str(format!("[{type_name}, {arg_name}]").as_str());
+            }
+        }
+
+        let file = bench_entry.meta().location.file;
+        let mut module_path =
+            bench_entry.meta().module_path_components().skip(1).collect::<Vec<_>>().join("::");
+        if !module_path.is_empty() {
+            module_path.push_str("::");
+        }
+        let uri = format!("{file}::{module_path}{bench_name}");
+        (bench_name, uri)
+    }
+
+    pub(crate) fn collect_walltime_results(
+        bench_context: &BenchContext,
+        bench_name: String,
+        uri: String,
+    ) {
         let iter_per_round = bench_context.samples.sample_size;
         let iters_per_round =
             vec![iter_per_round as u128; bench_context.samples.time_samples.len()];
