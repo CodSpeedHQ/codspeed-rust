@@ -12,6 +12,7 @@ use codspeed::instrument_hooks::{BenchmarkMarkers, InstrumentHooks};
 use crate::async_executor::AsyncExecutor;
 use crate::black_box;
 use crate::measurement::Measurement;
+use crate::routine::BenchmarkMarkers;
 #[cfg(feature = "async")]
 use crate::AsyncBencher;
 use crate::Bencher;

@@ -1,6 +1,6 @@
 use std::{cell::RefCell, marker::PhantomData, rc::Rc, time::Duration};
 
-use codspeed::codspeed::CodSpeed;
+use codspeed::{codspeed::CodSpeed, isolation::Isolation};
 use criterion::{
     measurement::{Measurement, WallTime},
     profiler::Profiler,
@@ -40,6 +40,10 @@ impl Criterion {
 
     fn parse_filter() -> BenchmarkFilter {
         use clap::{Arg, Command};
+
+        if let Some(uri) = Isolation::current().only_benchmark() {
+            return BenchmarkFilter::Exact(uri.to_owned());
+        }
 
         let matches = Command::new("Criterion Benchmark")
             .arg(

@@ -155,13 +155,15 @@ pub mod counter {
         }
     }
 }
-use codspeed::codspeed::CodSpeed;
+use codspeed::{codspeed::CodSpeed, isolation::Isolation};
 use config::Filter;
 use entry::AnyBenchEntry;
 use regex::Regex;
 use std::{cell::RefCell, rc::Rc};
 
 pub fn main() {
+    let isolation = Isolation::current();
+
     // Outlined steps of original divan::main and their equivalent in codspeed instrumented mode
     // 1. Get registered entries
     let group_entries = &entry::GROUP_ENTRIES;
@@ -208,6 +210,9 @@ pub fn main() {
             .map(|arg_filters| arg_filters.map(parse_filter).collect());
 
         move |uri: &str| {
+            if let Some(only) = isolation.only_benchmark() {
+                return uri == only;
+            }
             if let Some(filters) = filters.as_ref() {
                 filters.iter().any(|filter| filter.is_match(uri))
             } else {
@@ -224,8 +229,11 @@ pub fn main() {
 
         if let Some(options) = &meta.bench_options {
             if let Some(true) = options.ignore {
-                let uri = uri::generate(&entry, entry.display_name());
-                println!("Skipped: {uri}");
+                // The parent already reported it; child processes stay quiet.
+                if isolation.only_benchmark().is_none() {
+                    let uri = uri::generate(&entry, entry.display_name());
+                    println!("Skipped: {uri}");
+                }
                 continue;
             }
         }
@@ -237,7 +245,7 @@ pub fn main() {
                     continue;
                 }
 
-                bench_fn(bench::Bencher::new(&codspeed, uri));
+                isolation.run(uri, |uri| bench_fn(bench::Bencher::new(&codspeed, uri)));
             }
             entry::BenchEntryRunner::Args(bench_runner) => {
                 let bench_runner = bench_runner();
@@ -249,9 +257,9 @@ pub fn main() {
                         continue;
                     }
 
-                    let bencher = bench::Bencher::new(&codspeed, uri);
-
-                    bench_runner.bench(bencher, arg_index);
+                    isolation.run(uri, |uri| {
+                        bench_runner.bench(bench::Bencher::new(&codspeed, uri), arg_index)
+                    });
                 }
             }
         }
