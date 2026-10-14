@@ -30,6 +30,7 @@ statrs = { version = "0.18.0", default-features = false }
 
 opentelemetry = { version = "0.33", default-features = false, features = ["trace"], optional = true }
 opentelemetry_sdk = { version = "0.33", default-features = false, features = ["trace"], optional = true }
+futures-executor = { version = "0.3", default-features = false, features = ["std"], optional = true }
 opentelemetry-otlp = { version = "0.33", default-features = false, features = [
     "trace",
     "http-proto",
@@ -47,6 +48,7 @@ lazy_static = { version = "1.1", optional = true }
 
 [features]
 otel = [
+    "dep:futures-executor",
     "dep:opentelemetry",
     "dep:opentelemetry_sdk",
     "dep:opentelemetry-otlp",

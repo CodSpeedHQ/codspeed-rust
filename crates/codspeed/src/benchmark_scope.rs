@@ -12,9 +12,9 @@ pub fn enter(uri: &str) {
     let _ = uri;
 }
 
-/// Marks the end of the current benchmark.
+/// Marks the end of the current benchmark and exports the spans held so far.
 ///
-/// Call it outside the measured section.
+/// Call it outside the measured section, before the benchmark is reported as executed.
 pub fn exit() {
     #[cfg(feature = "otel")]
     crate::otel::exit_benchmark();

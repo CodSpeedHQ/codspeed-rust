@@ -1,8 +1,13 @@
 //! Export of the `tracing` spans and events emitted by benchmarks over OTLP/HTTP.
 //!
 //! Everything is a no-op unless [`ENDPOINT_ENV`] is set.
+//!
+//! Ended spans are held in memory and only exported when a benchmark scope exits (see
+//! [`crate::benchmark_scope`]) or the exporter shuts down, so no export runs while a benchmark is
+//! measured.
 
-use std::sync::{Arc, PoisonError, RwLock};
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Arc, Mutex, OnceLock, PoisonError, RwLock};
 use std::time::Duration;
 
 use opentelemetry::trace::{Span as _, TracerProvider as _};
@@ -25,7 +30,16 @@ const DEFAULT_FILTER: &str = "info";
 /// Span attribute holding the URI of the benchmark running when the span started.
 pub const BENCHMARK_URI_ATTRIBUTE: &str = "codspeed.benchmark.uri";
 
+/// Ended spans held in memory between two exports, past which spans are dropped. Bounds the
+/// memory used by a benchmark emitting spans on every iteration.
+const MAX_HELD_SPANS: usize = 1_000_000;
+
+/// Spans sent per export request.
+const EXPORT_BATCH_SIZE: usize = 4_096;
+
 static CURRENT_BENCHMARK: RwLock<Option<Arc<str>>> = RwLock::new(None);
+
+static PROVIDER: OnceLock<SdkTracerProvider> = OnceLock::new();
 
 /// Spans emitted by the exporter itself would be exported in turn, in an endless loop.
 const EXPORTER_FILTER_DIRECTIVES: &[&str] = &[
@@ -64,6 +78,7 @@ where
     S: Subscriber + for<'span> LookupSpan<'span>,
 {
     let provider = build_provider()?;
+    let _ = PROVIDER.set(provider.clone());
     let layer = tracing_opentelemetry::layer()
         .with_tracer(provider.tracer("codspeed"))
         .with_filter(build_filter());
@@ -109,7 +124,7 @@ fn build_provider() -> Option<SdkTracerProvider> {
     Some(
         SdkTracerProvider::builder()
             .with_span_processor(BenchmarkLabelProcessor)
-            .with_batch_exporter(exporter)
+            .with_span_processor(HoldingSpanProcessor::new(exporter))
             .with_resource(
                 Resource::builder()
                     .with_service_name(service_name())
@@ -129,6 +144,12 @@ pub(crate) fn exit_benchmark() {
     *CURRENT_BENCHMARK
         .write()
         .unwrap_or_else(PoisonError::into_inner) = None;
+
+    if let Some(provider) = PROVIDER.get() {
+        if let Err(error) = provider.force_flush() {
+            eprintln!("Warning: failed to export OpenTelemetry spans: {error}");
+        }
+    }
 }
 
 /// Labels each span with the benchmark running when it starts.
@@ -154,6 +175,73 @@ impl SpanProcessor for BenchmarkLabelProcessor {
 
     fn shutdown_with_timeout(&self, _timeout: Duration) -> OTelSdkResult {
         Ok(())
+    }
+}
+
+/// Holds the ended spans until a flush.
+#[derive(Debug)]
+struct HoldingSpanProcessor<E> {
+    exporter: E,
+    spans: Mutex<Vec<SpanData>>,
+    dropped_spans: AtomicUsize,
+}
+
+impl<E> HoldingSpanProcessor<E> {
+    fn new(exporter: E) -> Self {
+        Self {
+            exporter,
+            spans: Mutex::new(Vec::new()),
+            dropped_spans: AtomicUsize::new(0),
+        }
+    }
+}
+
+impl<E: opentelemetry_sdk::trace::SpanExporter> HoldingSpanProcessor<E> {
+    /// Exports in batches, carrying on past a failed batch.
+    fn export(&self, spans: Vec<SpanData>) -> OTelSdkResult {
+        let mut result = Ok(());
+        let mut spans = spans.into_iter().peekable();
+        while spans.peek().is_some() {
+            let batch = spans.by_ref().take(EXPORT_BATCH_SIZE).collect();
+            if let Err(error) = futures_executor::block_on(self.exporter.export(batch)) {
+                result = Err(error);
+            }
+        }
+        result
+    }
+}
+
+impl<E: opentelemetry_sdk::trace::SpanExporter> SpanProcessor for HoldingSpanProcessor<E> {
+    fn on_start(&self, _span: &mut Span, _cx: &Context) {}
+
+    fn on_end(&self, span: SpanData) {
+        let mut spans = self.spans.lock().unwrap_or_else(PoisonError::into_inner);
+        if spans.len() < MAX_HELD_SPANS {
+            spans.push(span);
+        } else {
+            self.dropped_spans.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+
+    fn force_flush(&self) -> OTelSdkResult {
+        let spans = std::mem::take(&mut *self.spans.lock().unwrap_or_else(PoisonError::into_inner));
+        let dropped_spans = self.dropped_spans.swap(0, Ordering::Relaxed);
+        if dropped_spans > 0 {
+            eprintln!(
+                "Warning: dropped {dropped_spans} OpenTelemetry spans, past the {MAX_HELD_SPANS} held \
+                 per benchmark"
+            );
+        }
+        self.export(spans)
+    }
+
+    fn shutdown_with_timeout(&self, timeout: Duration) -> OTelSdkResult {
+        self.force_flush()
+            .and(self.exporter.shutdown_with_timeout(timeout))
+    }
+
+    fn set_resource(&mut self, resource: &Resource) {
+        self.exporter.set_resource(resource);
     }
 }
 
@@ -189,13 +277,14 @@ fn is_cargo_hash(s: &str) -> bool {
 mod tests {
     use super::*;
     use opentelemetry::trace::Tracer as _;
-    use std::sync::Mutex;
 
+    /// Records the exported spans, and the size of each batch.
     #[derive(Debug, Clone, Default)]
-    struct RecordingExporter(Arc<Mutex<Vec<SpanData>>>);
+    struct RecordingExporter(Arc<Mutex<Vec<SpanData>>>, Arc<Mutex<Vec<usize>>>);
 
     impl opentelemetry_sdk::trace::SpanExporter for RecordingExporter {
         async fn export(&self, batch: Vec<SpanData>) -> OTelSdkResult {
+            self.1.lock().unwrap().push(batch.len());
             self.0.lock().unwrap().extend(batch);
             Ok(())
         }
@@ -238,5 +327,23 @@ mod tests {
                 ("after".into(), None),
             ]
         );
+    }
+
+    #[test]
+    fn holds_spans_until_flushed() {
+        let exporter = RecordingExporter::default();
+        let provider = SdkTracerProvider::builder()
+            .with_span_processor(HoldingSpanProcessor::new(exporter.clone()))
+            .build();
+        let tracer = provider.tracer("test");
+
+        for _ in 0..=EXPORT_BATCH_SIZE {
+            tracer.start("span").end();
+        }
+        assert!(exporter.0.lock().unwrap().is_empty());
+
+        provider.force_flush().unwrap();
+        assert_eq!(exporter.0.lock().unwrap().len(), EXPORT_BATCH_SIZE + 1);
+        assert_eq!(*exporter.1.lock().unwrap(), [EXPORT_BATCH_SIZE, 1]);
     }
 }
