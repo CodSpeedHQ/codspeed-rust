@@ -81,6 +81,7 @@ impl CodSpeed {
     #[inline(always)]
     pub fn start_benchmark(&mut self, name: &str) {
         self.current_benchmark = CString::new(name).expect("CString::new failed");
+        crate::benchmark_scope::enter(name);
 
         if let InstrumentationStatus::InstrumentHooks(hooks_instance) = &self.instrumentation_status
         {
@@ -99,9 +100,15 @@ impl CodSpeed {
         // The overhead in case we are not running valgrind is extremely low, and we do not want to
         // add a conditionnal branch to valgrind measurements.
         measurement::stop(&self.current_benchmark);
-        if let InstrumentationStatus::InstrumentHooks(hooks_instance) = &self.instrumentation_status
-        {
+        let hooks_instance = match &self.instrumentation_status {
+            InstrumentationStatus::InstrumentHooks(hooks_instance) => Some(*hooks_instance),
+            _ => None,
+        };
+        if let Some(hooks_instance) = hooks_instance {
             let _ = hooks_instance.stop_benchmark();
+        }
+        crate::benchmark_scope::exit();
+        if let Some(hooks_instance) = hooks_instance {
             let _ =
                 hooks_instance.set_executed_benchmark(&self.current_benchmark.to_string_lossy());
         }

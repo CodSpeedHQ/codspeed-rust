@@ -24,6 +24,13 @@ codspeed-divan-compat-macros = { version = "=5.0.3", path = './macros' }
 regex = "1.11.3"
 clap = { version = "4", default-features = false, features = ["std", "env"] }
 
+[features]
+# Export the `tracing` spans and events of benchmarks over OTLP to `CODSPEED_OTEL_ENDPOINT`
+otel = ["codspeed/otel"]
+
+[dev-dependencies]
+tracing = "0.1"
+
 [[bench]]
 name = "basic_example"
 harness = false
@@ -43,3 +50,8 @@ harness = false
 [[bench]]
 name = "fib_example"
 harness = false
+
+[[bench]]
+name = "otel_example"
+harness = false
+required-features = ["otel"]

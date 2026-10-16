@@ -1,4 +1,6 @@
 pub use codspeed::codspeed_uri;
+#[cfg(feature = "otel")]
+pub use codspeed::otel;
 
 #[cfg(not(codspeed))]
 mod compat_divan {
@@ -19,3 +21,13 @@ mod compat_divan {
 }
 
 pub use compat_divan::*;
+
+/// Runs all registered benchmarks.
+///
+/// With the `otel` feature, spans and events are exported for the duration of the run.
+pub fn main() {
+    #[cfg(feature = "otel")]
+    let _otel_guard = otel::init();
+
+    compat_divan::main();
+}
