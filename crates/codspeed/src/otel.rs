@@ -6,10 +6,13 @@
 //! Ended spans and log records are held in memory and only exported when a benchmark scope exits
 //! (see [`crate::benchmark_scope`]) or the exporters shut down, so no export runs while a benchmark
 //! is measured.
+//!
+//! With instrument hooks, spans and log records are timestamped with the monotonic clock of the
+//! benchmark markers, shifted by [`MONOTONIC_OFFSET_ATTRIBUTE`] to read as wall clock times.
 
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Mutex, OnceLock, PoisonError, RwLock};
-use std::time::Duration;
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use opentelemetry::logs::{AnyValue, LogRecord as _};
 use opentelemetry::trace::{Span as _, TracerProvider as _};
@@ -23,6 +26,9 @@ use opentelemetry_sdk::Resource;
 use tracing::Subscriber;
 use tracing_subscriber::filter::{filter_fn, FilterExt};
 use tracing_subscriber::{layer::SubscriberExt, registry::LookupSpan, EnvFilter, Layer};
+
+use crate::instrument_hooks::InstrumentHooks;
+pub use crate::instrument_hooks::MONOTONIC_OFFSET_ATTRIBUTE;
 
 /// Base URL of the OTLP/HTTP receiver, e.g. `http://localhost:4318`.
 pub const ENDPOINT_ENV: &str = "CODSPEED_OTEL_ENDPOINT";
@@ -166,21 +172,64 @@ fn build_providers() -> Option<Providers> {
         }
     };
 
-    let resource = Resource::builder()
-        .with_service_name(service_name())
-        .build();
+    let clock = MonotonicClock::new();
+    let mut resource = Resource::builder().with_service_name(service_name());
+    if let Some(clock) = clock {
+        resource =
+            resource.with_attribute(KeyValue::new(MONOTONIC_OFFSET_ATTRIBUTE, clock.offset_ns));
+    }
+    let resource = resource.build();
     Some(Providers {
         tracer: SdkTracerProvider::builder()
             .with_span_processor(BenchmarkLabelProcessor)
-            .with_span_processor(HoldingSpanProcessor::new(span_exporter))
+            .with_span_processor(HoldingSpanProcessor::new(span_exporter, clock))
             .with_resource(resource.clone())
             .build(),
         logger: SdkLoggerProvider::builder()
             .with_log_processor(BenchmarkLabelProcessor)
-            .with_log_processor(HoldingLogProcessor::new(log_exporter))
+            .with_log_processor(HoldingLogProcessor::new(log_exporter, clock))
             .with_resource(resource)
             .build(),
     })
+}
+
+/// The instrument hooks monotonic clock, shifted by a fixed offset to read as wall clock times.
+#[derive(Debug, Clone, Copy)]
+struct MonotonicClock {
+    offset_ns: i64,
+}
+
+impl MonotonicClock {
+    /// Uses the offset instrument hooks shares across the process, so that every integration in
+    /// it shifts its timestamps alike. Returns `None` where the monotonic clock is unavailable.
+    fn new() -> Option<Self> {
+        match InstrumentHooks::monotonic_offset() {
+            0 => None,
+            offset_ns => Some(Self { offset_ns }),
+        }
+    }
+
+    fn now(&self) -> SystemTime {
+        let monotonic_ns = InstrumentHooks::current_timestamp() as i64;
+        UNIX_EPOCH + Duration::from_nanos((monotonic_ns + self.offset_ns) as u64)
+    }
+
+    /// Converts wall clock times taken shortly before to this clock, by their distance to now.
+    /// Changes of the wall clock since they were taken would otherwise skew them.
+    fn convert_recent<'a>(&self, times: impl IntoIterator<Item = &'a mut SystemTime>) {
+        let (wall_now, now) = (SystemTime::now(), self.now());
+        for time in times {
+            *time = shift(*time, wall_now, now);
+        }
+    }
+}
+
+/// Moves `time`, taken on the clock reading `from_now`, to the clock reading `to_now`.
+fn shift(time: SystemTime, from_now: SystemTime, to_now: SystemTime) -> SystemTime {
+    match from_now.duration_since(time) {
+        Ok(elapsed) => to_now - elapsed,
+        Err(error) => to_now + error.duration(),
+    }
 }
 
 pub(crate) fn enter_benchmark(uri: &str) {
@@ -298,17 +347,19 @@ fn export_in_batches<T>(
     result
 }
 
-/// Holds the ended spans until a flush.
+/// Holds the ended spans until a flush, after moving their times to `clock`.
 #[derive(Debug)]
 struct HoldingSpanProcessor<E> {
     exporter: E,
+    clock: Option<MonotonicClock>,
     spans: Held<SpanData>,
 }
 
 impl<E> HoldingSpanProcessor<E> {
-    fn new(exporter: E) -> Self {
+    fn new(exporter: E, clock: Option<MonotonicClock>) -> Self {
         Self {
             exporter,
+            clock,
             spans: Held::new(),
         }
     }
@@ -317,7 +368,20 @@ impl<E> HoldingSpanProcessor<E> {
 impl<E: opentelemetry_sdk::trace::SpanExporter> SpanProcessor for HoldingSpanProcessor<E> {
     fn on_start(&self, _span: &mut Span, _cx: &Context) {}
 
-    fn on_end(&self, span: SpanData) {
+    fn on_end(&self, mut span: SpanData) {
+        // Spans end as they are closed, so their times are recent.
+        if let Some(clock) = &self.clock {
+            let event_times = span
+                .events
+                .events
+                .iter_mut()
+                .map(|event| &mut event.timestamp);
+            clock.convert_recent(
+                [&mut span.start_time, &mut span.end_time]
+                    .into_iter()
+                    .chain(event_times),
+            );
+        }
         self.spans.push(span);
     }
 
@@ -337,17 +401,19 @@ impl<E: opentelemetry_sdk::trace::SpanExporter> SpanProcessor for HoldingSpanPro
     }
 }
 
-/// Holds the emitted log records until a flush.
+/// Holds the emitted log records until a flush, after timestamping them with `clock`.
 #[derive(Debug)]
 struct HoldingLogProcessor<E> {
     exporter: E,
+    clock: Option<MonotonicClock>,
     records: Held<(SdkLogRecord, InstrumentationScope)>,
 }
 
 impl<E> HoldingLogProcessor<E> {
-    fn new(exporter: E) -> Self {
+    fn new(exporter: E, clock: Option<MonotonicClock>) -> Self {
         Self {
             exporter,
+            clock,
             records: Held::new(),
         }
     }
@@ -355,6 +421,12 @@ impl<E> HoldingLogProcessor<E> {
 
 impl<E: opentelemetry_sdk::logs::LogExporter> LogProcessor for HoldingLogProcessor<E> {
     fn emit(&self, record: &mut SdkLogRecord, instrumentation: &InstrumentationScope) {
+        // Records are emitted as their event happens.
+        if let Some(clock) = &self.clock {
+            let now = clock.now();
+            record.set_timestamp(now);
+            record.set_observed_timestamp(now);
+        }
         self.records.push((record.clone(), instrumentation.clone()));
     }
 
@@ -520,7 +592,7 @@ mod tests {
     fn holds_spans_until_flushed() {
         let exporter = RecordingExporter::default();
         let provider = SdkTracerProvider::builder()
-            .with_span_processor(HoldingSpanProcessor::new(exporter.clone()))
+            .with_span_processor(HoldingSpanProcessor::new(exporter.clone(), None))
             .build();
         let tracer = provider.tracer("test");
 
@@ -538,7 +610,7 @@ mod tests {
     fn holds_log_records_until_flushed() {
         let exporter = RecordingLogExporter::default();
         let provider = SdkLoggerProvider::builder()
-            .with_log_processor(HoldingLogProcessor::new(exporter.clone()))
+            .with_log_processor(HoldingLogProcessor::new(exporter.clone(), None))
             .build();
         let logger = provider.logger("test");
 
@@ -550,6 +622,49 @@ mod tests {
         provider.force_flush().unwrap();
         assert_eq!(exporter.0.lock().unwrap().len(), EXPORT_BATCH_SIZE + 1);
         assert_eq!(*exporter.1.lock().unwrap(), [EXPORT_BATCH_SIZE, 1]);
+    }
+
+    #[test]
+    fn shifts_times_by_their_distance_to_now() {
+        let at = |secs| UNIX_EPOCH + Duration::from_secs(secs);
+        assert_eq!(shift(at(97), at(100), at(1_000)), at(997));
+        assert_eq!(shift(at(103), at(100), at(1_000)), at(1_003));
+    }
+
+    #[test]
+    fn timestamps_spans_and_log_records_with_the_monotonic_clock() {
+        let clock = MonotonicClock { offset_ns: 1_000 };
+        let span_exporter = RecordingExporter::default();
+        let tracer_provider = SdkTracerProvider::builder()
+            .with_span_processor(HoldingSpanProcessor::new(
+                span_exporter.clone(),
+                Some(clock),
+            ))
+            .build();
+        let log_exporter = RecordingLogExporter::default();
+        let logger_provider = SdkLoggerProvider::builder()
+            .with_log_processor(HoldingLogProcessor::new(log_exporter.clone(), Some(clock)))
+            .build();
+        let logger = logger_provider.logger("test");
+
+        let before = clock.now();
+        let mut span = tracer_provider.tracer("test").start("span");
+        logger.emit(logger.create_log_record());
+        span.end();
+        let after = clock.now();
+        tracer_provider.force_flush().unwrap();
+        logger_provider.force_flush().unwrap();
+
+        let spans = span_exporter.0.lock().unwrap();
+        // The wall clock moves on between the two clock reads of a conversion.
+        let tolerance = Duration::from_millis(10);
+        assert!(before - tolerance <= spans[0].start_time);
+        assert!(spans[0].start_time <= spans[0].end_time);
+        assert!(spans[0].end_time <= after + tolerance);
+        let records = log_exporter.0.lock().unwrap();
+        let timestamp = records[0].timestamp().unwrap();
+        assert!(before <= timestamp && timestamp <= after);
+        assert_eq!(records[0].observed_timestamp(), Some(timestamp));
     }
 
     #[test]
