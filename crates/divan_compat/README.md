@@ -75,10 +75,11 @@ Done running my_benchmark
 Finished running 1 benchmark suite(s)
 ```
 
-### Exporting `tracing` spans with OpenTelemetry
+### Exporting `tracing` spans and logs with OpenTelemetry
 
 With the opt-in `telemetry` feature, `divan::main()` installs a global `tracing` subscriber that
-exports the spans emitted by your benchmarks, and the events recorded inside them, over OTLP/HTTP:
+exports the spans emitted by your benchmarks as traces, and their events as logs, over OTLP/HTTP.
+Each log record carries the trace and span IDs of the span it was emitted in:
 
 ```toml title="Cargo.toml"
 [dev-dependencies]
@@ -90,8 +91,8 @@ divan = { package = "codspeed-divan-compat", version = "*", features = ["telemet
 - `CODSPEED_TELEMETRY_FILTER`: [`EnvFilter`](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html)
   directives selecting what is exported. Defaults to `info`.
 
-The provider is also registered as the global OpenTelemetry tracer provider, and spans are flushed
-when `divan::main()` returns.
+The tracer provider is also registered as the global OpenTelemetry tracer provider, and spans and
+logs are flushed when `divan::main()` returns.
 
 If your benchmarks already set a global subscriber before calling `divan::main()`, nothing is
 installed. Add the CodSpeed layer to your subscriber instead, and keep its guard alive until the

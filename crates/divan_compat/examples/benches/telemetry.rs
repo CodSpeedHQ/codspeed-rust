@@ -1,4 +1,5 @@
-//! Benchmarks emitting telemetry in different ways: `tracing` spans, or nothing at all.
+//! Benchmarks emitting telemetry in different ways: `tracing` spans and events, or nothing at
+//! all.
 
 use tracing::{debug, debug_span, info, info_span, warn};
 
@@ -28,6 +29,14 @@ fn parse_and_sum() -> u32 {
         warn!(skipped = 4 - values.len(), "skipped invalid fields");
     }
     sum(&values)
+}
+
+/// A `tracing` event outside of any span.
+#[divan::bench]
+fn event_without_span() -> u32 {
+    let values = std::hint::black_box([1, 2, 3]);
+    info!(count = values.len(), "summed without a span");
+    values.iter().sum()
 }
 
 /// No telemetry at all.
