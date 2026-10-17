@@ -205,6 +205,8 @@ jobs:
             bench: criterion_integration_with_inputs
           - package: codspeed-criterion-compat
             bench: criterion_integration_measurement_overhead
+          - package: codspeed-criterion-compat
+            bench: missing_docs
     steps:
       - uses: actions/checkout@v4
         with:
