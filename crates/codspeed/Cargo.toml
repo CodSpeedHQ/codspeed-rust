@@ -27,6 +27,16 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 statrs = { version = "0.18.0", default-features = false }
 
+tracing = { version = "0.1", default-features = false, features = [
+    "std",
+], optional = true }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "std",
+], optional = true }
+
+# The export of the telemetry: `cargo-codspeed` only sets this cfg in its telemetry builds, so that
+# the other builds don't compile it, even with the `telemetry` feature.
+[target.'cfg(codspeed_telemetry)'.dependencies]
 opentelemetry = { version = "0.33", default-features = false, features = [
     "trace",
     "logs",
@@ -44,9 +54,6 @@ opentelemetry-otlp = { version = "0.33", default-features = false, features = [
     "http-proto",
     "reqwest-blocking-client",
 ], optional = true }
-tracing = { version = "0.1", default-features = false, features = [
-    "std",
-], optional = true }
 tracing-opentelemetry = { version = "0.34", default-features = false, optional = true }
 tracing-subscriber = { version = "0.3", default-features = false, features = [
     "std",
@@ -57,6 +64,13 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
 # `lazy_static = "1"` but fails to build with 1.0, which minimal-versions resolution
 # (`-Z minimal-versions`) picks. Requiring 1.1 here raises that floor.
 lazy_static = { version = "1.1", optional = true }
+
+# `cargo-codspeed` sets this cfg when building benchmarks for a measurement mode,
+# so that features unification compiles the `tracing` spans and events of the whole build out.
+[target.'cfg(codspeed_tracing_off)'.dependencies]
+tracing = { version = "0.1", default-features = false, features = [
+    "max_level_off",
+] }
 
 [features]
 telemetry = [

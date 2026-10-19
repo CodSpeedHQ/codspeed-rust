@@ -9,11 +9,15 @@ use cargo_metadata::{camino::Utf8PathBuf, Message, Metadata, TargetKind};
 use std::collections::HashMap;
 use std::process::{exit, Command, Stdio};
 
+const TRACING_OFF_CFG: &str = "codspeed_tracing_off";
+const TELEMETRY_CFG: &str = "codspeed_telemetry";
+
 struct BuildOptions<'a> {
     bench_target_filters: BenchTargetFilters,
     package_filters: PackageFilters,
     features: &'a Option<Vec<String>>,
     profile: &'a str,
+    keep_tracing: bool,
     passthrough_flags: &'a Vec<String>,
 }
 
@@ -31,6 +35,7 @@ pub struct BuildConfig {
     pub profile: String,
     pub quiet: bool,
     pub build_mode: BuildMode,
+    pub keep_tracing: bool,
     pub passthrough_flags: Vec<String>,
 }
 
@@ -226,8 +231,21 @@ See `cargo codspeed build --help` for more information.");
         ];
 
         // Add the codspeed cfg flag if the benchmark should only run once
-        if build_mode == BuildMode::Analysis {
+        if build_mode.runs_once() {
             flags.push("--cfg=codspeed".to_owned());
+        }
+
+        // Compile `tracing` out of measured benchmarks, so that it doesn't weigh on the
+        // measurements: the `codspeed` crate enables the `max_level_off` feature of `tracing`
+        // behind this cfg. Only the telemetry build keeps it, to export what it records.
+        if build_mode != BuildMode::Telemetry && !self.keep_tracing {
+            flags.push(format!("--cfg={TRACING_OFF_CFG}"));
+        }
+
+        // Behind this cfg, the `codspeed` crate compiles the export of the telemetry, only needed
+        // in the telemetry build.
+        if build_mode == BuildMode::Telemetry {
+            flags.push(format!("--cfg={TELEMETRY_CFG}"));
         }
 
         match std::env::var("RUSTFLAGS") {
@@ -307,6 +325,7 @@ pub fn build_benches(metadata: &Metadata, config: BuildConfig) -> Result<()> {
         package_filters: config.package_filters,
         features: &config.features,
         profile: &config.profile,
+        keep_tracing: config.keep_tracing,
         passthrough_flags: &config.passthrough_flags,
     }
     .build(metadata, config.quiet, build_mode)?;
