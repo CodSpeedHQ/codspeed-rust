@@ -10,7 +10,9 @@ pub use self::{
     options::BenchOptions,
 };
 
-use codspeed::codspeed::CodSpeed;
+use ::codspeed::codspeed::CodSpeed;
+use ::codspeed::compat_utils;
+use ::codspeed::instrument_hooks::InstrumentHooks;
 use std::cell::RefCell;
 
 /// Using this in place of `()` for `GenI` prevents `Bencher::with_inputs` from
@@ -136,11 +138,15 @@ where
     {
         let mut codspeed = self.codspeed.borrow_mut();
         let mut gen_input = self.config.gen_input.borrow_mut();
-        let input = gen_input();
-        codspeed.start_benchmark(self.uri.as_str());
-        let output = benched(input);
-        codspeed.end_benchmark();
-        divan::black_box(output);
+
+        compat_utils::run_rounds(&mut codspeed, self.uri.as_str(), || {
+            // FIXME: We could also run multiple rounds here
+            let input = gen_input();
+            InstrumentHooks::toggle_collect();
+            let output = benched(divan::black_box(input));
+            InstrumentHooks::toggle_collect();
+            divan::black_box(output);
+        });
     }
 
     pub fn bench_local_refs<O, B>(self, mut benched: B)
@@ -149,11 +155,14 @@ where
     {
         let mut codspeed = self.codspeed.borrow_mut();
         let mut gen_input = self.config.gen_input.borrow_mut();
-        let mut input = gen_input();
 
-        codspeed.start_benchmark(self.uri.as_str());
-        let output = benched(&mut input);
-        codspeed.end_benchmark();
-        divan::black_box(output);
+        compat_utils::run_rounds(&mut codspeed, self.uri.as_str(), || {
+            let mut input = gen_input();
+            InstrumentHooks::toggle_collect();
+            let output = benched(&mut input);
+            InstrumentHooks::toggle_collect();
+            divan::black_box(input);
+            divan::black_box(output);
+        });
     }
 }
