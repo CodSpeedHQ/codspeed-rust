@@ -7,6 +7,16 @@ pub enum BuildMode {
     #[default]
     Analysis,
     Walltime,
+    /// Runs each benchmark like [`BuildMode::Analysis`], to collect the telemetry it emits rather
+    /// than measure it
+    Telemetry,
+}
+
+impl BuildMode {
+    /// Whether the benchmarks run once, behind `cfg(codspeed)`, rather than in a walltime loop
+    pub fn runs_once(self) -> bool {
+        matches!(self, BuildMode::Analysis | BuildMode::Telemetry)
+    }
 }
 
 impl fmt::Display for BuildMode {
@@ -17,6 +27,7 @@ impl fmt::Display for BuildMode {
             match self {
                 BuildMode::Analysis => "analysis",
                 BuildMode::Walltime => "walltime",
+                BuildMode::Telemetry => "telemetry",
             }
         )
     }
@@ -30,6 +41,8 @@ pub enum MeasurementMode {
     Simulation,
     Walltime,
     Memory,
+    /// Collects the telemetry the benchmarks emit instead of measuring them
+    Telemetry,
 }
 
 impl From<MeasurementMode> for BuildMode {
@@ -37,6 +50,7 @@ impl From<MeasurementMode> for BuildMode {
         match measurement_mode {
             MeasurementMode::Simulation | MeasurementMode::Memory => BuildMode::Analysis,
             MeasurementMode::Walltime => BuildMode::Walltime,
+            MeasurementMode::Telemetry => BuildMode::Telemetry,
         }
     }
 }
@@ -50,6 +64,7 @@ impl fmt::Display for MeasurementMode {
                 MeasurementMode::Simulation => "simulation",
                 MeasurementMode::Walltime => "walltime",
                 MeasurementMode::Memory => "memory",
+                MeasurementMode::Telemetry => "telemetry",
             }
         )
     }

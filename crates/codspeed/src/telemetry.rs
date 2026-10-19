@@ -3,7 +3,9 @@
 //!
 //! Everything is a no-op unless `CODSPEED_OTEL_ENDPOINT` is set.
 //!
-//! Ended spans and log records are exported in batches from a background thread.
+//! Ended spans and log records are exported in batches from a background thread. Telemetry is
+//! collected in a run of its own, whose performance is not measured, so exporting while a
+//! benchmark runs doesn't matter.
 //!
 //! Spans and log records keep the wall clock times of the SDK. With instrument hooks, they also
 //! carry their times on the clock of the benchmark markers: spans as their
