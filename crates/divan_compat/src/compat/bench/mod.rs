@@ -136,11 +136,21 @@ where
     {
         let mut codspeed = self.codspeed.borrow_mut();
         let mut gen_input = self.config.gen_input.borrow_mut();
-        let input = gen_input();
-        codspeed.start_benchmark(self.uri.as_str());
-        let output = benched(input);
-        codspeed.end_benchmark();
-        divan::black_box(output);
+        loop {
+            let warming_up = codspeed.warmup_iteration();
+            let input = gen_input();
+            if !warming_up {
+                codspeed.start_benchmark(self.uri.as_str());
+            }
+            let output = benched(input);
+            if !warming_up {
+                codspeed.end_benchmark();
+            }
+            divan::black_box(output);
+            if !warming_up {
+                break;
+            }
+        }
     }
 
     pub fn bench_local_refs<O, B>(self, mut benched: B)
@@ -149,11 +159,20 @@ where
     {
         let mut codspeed = self.codspeed.borrow_mut();
         let mut gen_input = self.config.gen_input.borrow_mut();
-        let mut input = gen_input();
-
-        codspeed.start_benchmark(self.uri.as_str());
-        let output = benched(&mut input);
-        codspeed.end_benchmark();
-        divan::black_box(output);
+        loop {
+            let warming_up = codspeed.warmup_iteration();
+            let mut input = gen_input();
+            if !warming_up {
+                codspeed.start_benchmark(self.uri.as_str());
+            }
+            let output = benched(&mut input);
+            if !warming_up {
+                codspeed.end_benchmark();
+            }
+            divan::black_box(output);
+            if !warming_up {
+                break;
+            }
+        }
     }
 }

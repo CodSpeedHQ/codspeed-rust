@@ -68,7 +68,7 @@ $ cargo codspeed run
      Running my_benchmark
 Using codspeed-criterion-compat v1.0.0 compatibility layer
 NOTICE: codspeed is enabled, but no performance measurement will be made since it's running in an unknown environment.
-Checked: benches/bencher_example.rs::fib_20 (group: benches)
+Checked: benches/bencher_example.rs::fib_20 (group: benches) (warmup: 5 iterations)
         Done running bencher_example
     Finished running 1 benchmark suite(s)
 ```

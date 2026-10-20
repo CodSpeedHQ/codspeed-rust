@@ -25,13 +25,18 @@ impl<'a> Bencher<'a> {
     {
         // NOTE: this structure hardens our benchmark against dead code elimination
         // https://godbolt.org/z/KnYeKMd1o
-        for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
-            if i < codspeed::codspeed::WARMUP_RUNS {
-                black_box(routine());
-            } else {
+        // A single call site also keeps the warmup and the measured iteration on the same
+        // code addresses, so the instruction cache warmed up by the unmeasured iterations
+        // is the one the measured iteration uses.
+        loop {
+            let warming_up = self.codspeed.warmup_iteration();
+            if !warming_up {
                 self.codspeed.start_benchmark(self.uri.as_str());
-                black_box(routine());
+            }
+            black_box(routine());
+            if !warming_up {
                 self.codspeed.end_benchmark();
+                break;
             }
         }
     }
@@ -68,10 +73,20 @@ impl<'a> Bencher<'a> {
             "Note:".to_string().yellow(),
             self.uri.yellow(),
         );
-        self.codspeed.start_benchmark(self.uri.as_str());
-        let output = black_box(routine());
-        self.codspeed.end_benchmark();
-        drop(black_box(output));
+        loop {
+            let warming_up = self.codspeed.warmup_iteration();
+            if !warming_up {
+                self.codspeed.start_benchmark(self.uri.as_str());
+            }
+            let output = black_box(routine());
+            if !warming_up {
+                self.codspeed.end_benchmark();
+            }
+            drop(black_box(output));
+            if !warming_up {
+                break;
+            }
+        }
     }
 
     #[inline(never)]
@@ -80,17 +95,20 @@ impl<'a> Bencher<'a> {
         S: FnMut() -> I,
         R: FnMut(I) -> O,
     {
-        for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
+        loop {
+            let warming_up = self.codspeed.warmup_iteration();
             let input = black_box(setup());
-            let output = if i < codspeed::codspeed::WARMUP_RUNS {
-                routine(input)
-            } else {
+            if !warming_up {
                 self.codspeed.start_benchmark(self.uri.as_str());
-                let output = routine(input);
+            }
+            let output = routine(input);
+            if !warming_up {
                 self.codspeed.end_benchmark();
-                output
-            };
+            }
             drop(black_box(output));
+            if !warming_up {
+                break;
+            }
         }
     }
 
@@ -123,18 +141,21 @@ impl<'a> Bencher<'a> {
         S: FnMut() -> I,
         R: FnMut(&mut I) -> O,
     {
-        for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
+        loop {
+            let warming_up = self.codspeed.warmup_iteration();
             let mut input = black_box(setup());
-            let output = if i < codspeed::codspeed::WARMUP_RUNS {
-                black_box(routine(&mut input))
-            } else {
+            if !warming_up {
                 self.codspeed.start_benchmark(self.uri.as_str());
-                let output = black_box(routine(&mut input));
+            }
+            let output = black_box(routine(&mut input));
+            if !warming_up {
                 self.codspeed.end_benchmark();
-                output
-            };
+            }
             drop(black_box(output));
             drop(black_box(input));
+            if !warming_up {
+                break;
+            }
         }
     }
 
@@ -162,13 +183,15 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
     {
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
-            for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
-                if i < codspeed::codspeed::WARMUP_RUNS {
-                    black_box(routine().await);
-                } else {
+            loop {
+                let warming_up = b.codspeed.warmup_iteration();
+                if !warming_up {
                     b.codspeed.start_benchmark(b.uri.as_str());
-                    black_box(routine().await);
+                }
+                black_box(routine().await);
+                if !warming_up {
                     b.codspeed.end_benchmark();
+                    break;
                 }
             }
         });
@@ -210,10 +233,20 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
             b.uri.yellow(),
         );
         runner.block_on(async {
-            b.codspeed.start_benchmark(b.uri.as_str());
-            let output = black_box(routine().await);
-            b.codspeed.end_benchmark();
-            drop(black_box(output));
+            loop {
+                let warming_up = b.codspeed.warmup_iteration();
+                if !warming_up {
+                    b.codspeed.start_benchmark(b.uri.as_str());
+                }
+                let output = black_box(routine().await);
+                if !warming_up {
+                    b.codspeed.end_benchmark();
+                }
+                drop(black_box(output));
+                if !warming_up {
+                    break;
+                }
+            }
         });
     }
 
@@ -255,17 +288,20 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
     {
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
-            for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
+            loop {
+                let warming_up = b.codspeed.warmup_iteration();
                 let input = black_box(setup());
-                let output = if i < codspeed::codspeed::WARMUP_RUNS {
-                    routine(input).await
-                } else {
+                if !warming_up {
                     b.codspeed.start_benchmark(b.uri.as_str());
-                    let output = routine(input).await;
+                }
+                let output = routine(input).await;
+                if !warming_up {
                     b.codspeed.end_benchmark();
-                    output
-                };
+                }
                 drop(black_box(output));
+                if !warming_up {
+                    break;
+                }
             }
         })
     }
@@ -284,18 +320,21 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
     {
         let AsyncBencher { b, runner } = self;
         runner.block_on(async {
-            for i in 0..codspeed::codspeed::WARMUP_RUNS + 1 {
+            loop {
+                let warming_up = b.codspeed.warmup_iteration();
                 let mut input = black_box(setup());
-                let output = if i < codspeed::codspeed::WARMUP_RUNS {
-                    black_box(routine(&mut input).await)
-                } else {
+                if !warming_up {
                     b.codspeed.start_benchmark(b.uri.as_str());
-                    let output = black_box(routine(&mut input).await);
+                }
+                let output = black_box(routine(&mut input).await);
+                if !warming_up {
                     b.codspeed.end_benchmark();
-                    output
-                };
+                }
                 drop(black_box(output));
                 drop(black_box(input));
+                if !warming_up {
+                    break;
+                }
             }
         });
     }
