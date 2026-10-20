@@ -85,7 +85,6 @@ impl<'a> Bencher<'a> {
             let output = if i < codspeed::codspeed::WARMUP_RUNS {
                 routine(input)
             } else {
-                let input = black_box(setup());
                 self.codspeed.start_benchmark(self.uri.as_str());
                 let output = routine(input);
                 self.codspeed.end_benchmark();
@@ -305,6 +304,34 @@ impl<'a, 'b, A: AsyncExecutor> AsyncBencher<'a, 'b, A> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::cell::Cell;
+    use std::rc::Rc;
+
+    #[test]
+    fn iter_batched_consumes_each_setup_input() {
+        let mut codspeed = CodSpeed::new();
+        let mut bencher = Bencher::new(&mut codspeed, "iter_batched_setup".to_owned());
+        let setups = Cell::new(0);
+        let routines = Cell::new(0);
+        let live_inputs = Rc::new(());
+
+        bencher.iter_batched(
+            || {
+                setups.set(setups.get() + 1);
+                Rc::clone(&live_inputs)
+            },
+            |input| {
+                routines.set(routines.get() + 1);
+                assert_eq!(setups.get(), routines.get());
+                assert_eq!(Rc::strong_count(&input), 2);
+                input
+            },
+            BatchSize::PerIteration,
+        );
+
+        assert_eq!(setups.get(), routines.get());
+        assert_eq!(Rc::strong_count(&live_inputs), 1);
+    }
 
     fn assert_send<T: Send>() {}
     fn assert_sync<T: Sync>() {}
