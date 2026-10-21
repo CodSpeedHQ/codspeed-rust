@@ -65,12 +65,12 @@ $ cargo codspeed run
    Collected 1 benchmark suite(s) to run
 Running my_benchmark
 NOTICE: codspeed is enabled, but no performance measurement will be made since it's running in an unknown environment.
-Checked: benches/my_benchmark.rs::fibonacci[1]
-Checked: benches/my_benchmark.rs::fibonacci[2]
-Checked: benches/my_benchmark.rs::fibonacci[4]
-Checked: benches/my_benchmark.rs::fibonacci[8]
-Checked: benches/my_benchmark.rs::fibonacci[16]
-Checked: benches/my_benchmark.rs::fibonacci[32]
+Checked: benches/my_benchmark.rs::fibonacci[1] (warmup: 5 iterations)
+Checked: benches/my_benchmark.rs::fibonacci[2] (warmup: 5 iterations)
+Checked: benches/my_benchmark.rs::fibonacci[4] (warmup: 5 iterations)
+Checked: benches/my_benchmark.rs::fibonacci[8] (warmup: 5 iterations)
+Checked: benches/my_benchmark.rs::fibonacci[16] (warmup: 5 iterations)
+Checked: benches/my_benchmark.rs::fibonacci[32] (warmup: 5 iterations)
 Done running my_benchmark
 Finished running 1 benchmark suite(s)
 ```

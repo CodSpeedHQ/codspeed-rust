@@ -35,14 +35,24 @@ pub fn set_metadata() {
     }
 }
 
+/// Switches Callgrind instrumentation on. With `--cache-sim=yes` this flushes the
+/// simulated cache, so it is issued once before the warmup and never between the
+/// warmup and the measured iteration.
 #[inline(always)]
-pub fn start() {
+pub fn start_instrumentation() {
     unsafe {
-        send_client_request(0, &[ClientRequest::ZeroStatistics as Value, 0, 0, 0, 0, 0]);
         send_client_request(
             0,
             &[ClientRequest::StartInstrumentation as Value, 0, 0, 0, 0, 0],
         );
+    }
+}
+
+/// Zeroes the cost centers without touching the simulated cache state.
+#[inline(always)]
+pub fn zero_statistics() {
+    unsafe {
+        send_client_request(0, &[ClientRequest::ZeroStatistics as Value, 0, 0, 0, 0, 0]);
     }
 }
 

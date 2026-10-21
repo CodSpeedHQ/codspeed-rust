@@ -1,5 +1,5 @@
 use codspeed::{
-    codspeed::{black_box, CodSpeed, WARMUP_RUNS},
+    codspeed::{black_box, CodSpeed},
     utils::{get_formated_function_path, get_git_relative_path},
 };
 
@@ -34,13 +34,20 @@ impl Bencher {
         let file = get_git_relative_path(self.current_file.as_str());
         let bench_path = get_formated_function_path(self.current_bench_path.as_str());
         let uri = format!("{}::{}", file.to_string_lossy(), bench_path);
-        for _ in 0..WARMUP_RUNS {
-            black_box(inner());
+        loop {
+            let warming_up = self.codspeed.warmup_iteration();
+            if !warming_up {
+                self.codspeed.start_benchmark(uri.as_str());
+            }
+            let output = inner();
+            if !warming_up {
+                self.codspeed.end_benchmark();
+            }
+            black_box(output);
+            if !warming_up {
+                break;
+            }
         }
-        self.codspeed.start_benchmark(uri.as_str());
-        let output = inner();
-        self.codspeed.end_benchmark();
-        black_box(output);
     }
 }
 
