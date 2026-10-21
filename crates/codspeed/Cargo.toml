@@ -36,3 +36,12 @@ tempfile = { workspace = true }
 
 [build-dependencies]
 cc = "1.2.40"
+
+[[package.metadata.symposium.skills]]
+source.git = "https://github.com/CodSpeedHQ/codspeed/tree/main/skills"
+
+[[package.metadata.symposium.mcp_servers]]
+type = "http"
+name = "CodSpeed"
+url = "https://mcp.codspeed.io/mcp"
+headers = []
