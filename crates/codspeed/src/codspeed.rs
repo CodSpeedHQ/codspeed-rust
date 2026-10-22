@@ -30,6 +30,9 @@ pub struct CodSpeed {
     current_benchmark: CString,
     group_stack: Vec<String>,
     instrumentation_status: InstrumentationStatus,
+    /// When the current benchmark started, on the clock of the benchmark markers.
+    #[cfg(codspeed)]
+    round_start: u64,
 }
 
 impl CodSpeed {
@@ -67,6 +70,8 @@ impl CodSpeed {
             current_benchmark: CString::new("").expect("CString::new failed"),
             group_stack: Vec::new(),
             instrumentation_status,
+            #[cfg(codspeed)]
+            round_start: 0,
         }
     }
 
@@ -87,6 +92,11 @@ impl CodSpeed {
             let _ = hooks_instance.start_benchmark();
         }
 
+        #[cfg(codspeed)]
+        {
+            self.round_start = crate::instrument_hooks::InstrumentHooks::current_timestamp();
+        }
+
         // We intentionally do this no matter the instrumentation status.
         // The overhead in case we are not running valgrind is extremely low, and we do not want to
         // add a conditionnal branch to valgrind measurements.
@@ -99,6 +109,14 @@ impl CodSpeed {
         // The overhead in case we are not running valgrind is extremely low, and we do not want to
         // add a conditionnal branch to valgrind measurements.
         measurement::stop(&self.current_benchmark);
+
+        #[cfg(codspeed)]
+        {
+            let round_end = crate::instrument_hooks::InstrumentHooks::current_timestamp();
+            crate::instrument_hooks::InstrumentHooks::instance()
+                .add_benchmark_timestamps(self.round_start, round_end);
+        }
+
         if let InstrumentationStatus::InstrumentHooks(hooks_instance) = &self.instrumentation_status
         {
             let _ = hooks_instance.stop_benchmark();
