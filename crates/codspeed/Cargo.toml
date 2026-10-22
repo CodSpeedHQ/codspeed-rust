@@ -54,6 +54,10 @@ opentelemetry-otlp = { version = "0.33", default-features = false, features = [
     "http-proto",
     "reqwest-blocking-client",
 ], optional = true }
+tracing-log = { version = "0.2", default-features = false, features = [
+    "log-tracer",
+    "std",
+], optional = true }
 tracing-opentelemetry = { version = "0.34", default-features = false, optional = true }
 tracing-subscriber = { version = "0.3", default-features = false, features = [
     "std",
@@ -79,6 +83,7 @@ telemetry = [
     "dep:opentelemetry-appender-tracing",
     "dep:opentelemetry-otlp",
     "dep:tracing",
+    "dep:tracing-log",
     "dep:tracing-opentelemetry",
     "dep:tracing-subscriber",
     "dep:lazy_static",
@@ -88,7 +93,17 @@ telemetry = [
 name = "native"
 harness = false
 
+[[test]]
+name = "telemetry_log"
+required-features = ["telemetry"]
+
 [dev-dependencies]
+opentelemetry-proto = { version = "0.33", default-features = false, features = [
+    "gen-tonic-messages",
+    "logs",
+    "trace",
+] }
+prost = "0.14"
 tempfile = { workspace = true }
 
 [build-dependencies]

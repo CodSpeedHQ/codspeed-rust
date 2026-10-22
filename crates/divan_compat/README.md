@@ -91,12 +91,16 @@ divan = { package = "codspeed-divan-compat", version = "*", features = ["telemet
 - `CODSPEED_TELEMETRY_FILTER`: [`EnvFilter`](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html)
   directives selecting what is exported. Defaults to `info`.
 
+The records of the [`log`](https://docs.rs/log) crate are exported as logs too, unless a `log`
+logger is set before calling `divan::main()`.
+
 The tracer provider is also registered as the global OpenTelemetry tracer provider, and spans and
 logs are flushed when `divan::main()` returns.
 
 If your benchmarks already set a global subscriber before calling `divan::main()`, nothing is
 installed. Add the CodSpeed layer to your subscriber instead, and keep its guard alive until the
-benchmarks are done:
+benchmarks are done. `tracing-subscriber`'s `init()` also forwards the records of the `log` crate
+to it, with its default `tracing-log` feature:
 
 ```rust
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};

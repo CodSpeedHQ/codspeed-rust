@@ -25,7 +25,9 @@ use opentelemetry_sdk::logs::{BatchLogProcessor, LogProcessor, SdkLogRecord, Sdk
 use opentelemetry_sdk::trace::{BatchSpanProcessor, SdkTracerProvider};
 use opentelemetry_sdk::Resource;
 use tracing::dispatcher::WeakDispatch;
+use tracing::level_filters::LevelFilter;
 use tracing::{span, Dispatch, Subscriber};
+use tracing_log::{AsLog, LogTracer};
 use tracing_subscriber::filter::{filter_fn, FilterExt};
 use tracing_subscriber::layer::{Context, SubscriberExt};
 use tracing_subscriber::{registry::LookupSpan, EnvFilter, Layer};
@@ -103,6 +105,10 @@ impl Drop for TelemetryGuard {
 /// Events are exported as log records carrying the trace and span IDs of the span they are emitted
 /// in, rather than as span events.
 ///
+/// Records of the `log` crate reach the subscriber only through a [`LogTracer`], which
+/// `tracing-subscriber`'s `init` and `try_init` install with its default `tracing-log` feature.
+/// Otherwise, call [`LogTracer::init`].
+///
 /// Keep the returned guard alive until the benchmarks are done.
 pub fn layer<S>() -> Option<(impl Layer<S>, TelemetryGuard)>
 where
@@ -116,18 +122,26 @@ fn build_layer<S>(providers: &Providers) -> impl Layer<S>
 where
     S: Subscriber + for<'span> LookupSpan<'span>,
 {
+    // Without a hint, `filter_fn` would lift the max level of the subscriber to `TRACE`.
+    let span_filter =
+        filter_fn(|metadata| metadata.is_span()).with_max_level_hint(LevelFilter::TRACE);
+    let event_filter =
+        filter_fn(|metadata| metadata.is_event()).with_max_level_hint(LevelFilter::TRACE);
     let span_layer = MonotonicEndLayer::default()
         .and_then(tracing_opentelemetry::layer().with_tracer(providers.tracer.tracer("codspeed")))
         .and_then(MonotonicStartLayer::default())
-        .with_filter(build_filter().and(filter_fn(|metadata| metadata.is_span())));
+        .with_filter(build_filter().and(span_filter));
     let log_layer = OpenTelemetryTracingBridge::new(&providers.logger)
-        .with_filter(build_filter().and(filter_fn(|metadata| metadata.is_event())));
+        .with_filter(build_filter().and(event_filter));
     span_layer.and_then(log_layer)
 }
 
 /// Installs a global `tracing` subscriber exporting spans and events to the receiver at
 /// `CODSPEED_OTEL_ENDPOINT`, and registers its provider as the global OpenTelemetry tracer
 /// provider.
+///
+/// Records of the `log` crate are exported as log records too, unless a `log` logger is already
+/// set.
 ///
 /// Returns `None` when the variable is unset or a global subscriber is already set.
 pub fn init() -> Option<TelemetryGuard> {
@@ -140,6 +154,10 @@ pub fn init() -> Option<TelemetryGuard> {
     if tracing::subscriber::set_global_default(subscriber).is_err() {
         return None;
     }
+    // Set after the subscriber, so that `log` skips the records above its max level.
+    let _ = LogTracer::builder()
+        .with_max_level(LevelFilter::current().as_log())
+        .init();
     opentelemetry::global::set_tracer_provider(guard.providers.tracer.clone());
     Some(guard)
 }
