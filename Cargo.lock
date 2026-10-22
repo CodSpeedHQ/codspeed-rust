@@ -589,12 +589,15 @@ dependencies = [
  "opentelemetry",
  "opentelemetry-appender-tracing",
  "opentelemetry-otlp",
+ "opentelemetry-proto",
  "opentelemetry_sdk",
+ "prost",
  "serde",
  "serde_json",
  "statrs",
  "tempfile",
  "tracing",
+ "tracing-log",
  "tracing-opentelemetry",
  "tracing-subscriber",
 ]
@@ -674,6 +677,7 @@ version = "0.0.0"
 dependencies = [
  "codspeed-divan-compat",
  "fastrand 2.3.0",
+ "log",
  "num-bigint",
  "num-traits",
  "tracing",

@@ -10,6 +10,7 @@ license = "MIT OR Apache-2.0"
 [dependencies]
 divan = { package = "codspeed-divan-compat", path = "..", features = ["telemetry"] }
 fastrand = "2.3.0"
+log = "0.4"
 num-bigint = { version = "0.4", optional = true }
 num-traits = { version = "0.2", optional = true }
 tracing = "0.1"

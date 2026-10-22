@@ -1,5 +1,5 @@
-//! Benchmarks emitting telemetry in different ways: `tracing` spans and events, or nothing at
-//! all.
+//! Benchmarks emitting telemetry in different ways: `tracing` spans and events, records of the
+//! `log` crate, or nothing at all.
 
 use tracing::{debug, debug_span, info, info_span, warn};
 
@@ -36,6 +36,15 @@ fn parse_and_sum() -> u32 {
 fn event_without_span() -> u32 {
     let values = std::hint::black_box([1, 2, 3]);
     info!(count = values.len(), "summed without a span");
+    values.iter().sum()
+}
+
+/// Records of the `log` crate, without `tracing`.
+#[divan::bench]
+fn log_records() -> u32 {
+    let values = std::hint::black_box([1, 2, 3]);
+    log::info!("summing {} values, logged with the log crate", values.len());
+    log::debug!("filtered out by the default filter");
     values.iter().sum()
 }
 
