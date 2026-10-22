@@ -22,7 +22,9 @@ use opentelemetry_appender_tracing::layer::OpenTelemetryTracingBridge;
 use opentelemetry_otlp::{LogExporter, SpanExporter, WithExportConfig};
 use opentelemetry_sdk::error::OTelSdkResult;
 use opentelemetry_sdk::logs::{BatchLogProcessor, LogProcessor, SdkLogRecord, SdkLoggerProvider};
-use opentelemetry_sdk::trace::{BatchSpanProcessor, SdkTracerProvider};
+use opentelemetry_sdk::trace::{
+    BatchSpanProcessor, SdkTracerProvider, Span, SpanData, SpanProcessor,
+};
 use opentelemetry_sdk::Resource;
 use tracing::dispatcher::WeakDispatch;
 use tracing::level_filters::LevelFilter;
@@ -61,6 +63,12 @@ const MAX_QUEUE_SIZE: usize = 1 << 16;
 
 /// Spans or log records sent per export request.
 const EXPORT_BATCH_SIZE: usize = 4_096;
+
+/// Target of the span and event [`warm_up`] emits.
+const WARMUP_TARGET: &str = "codspeed::telemetry::warmup";
+
+/// Field marking the span and event [`warm_up`] emits, which are not exported.
+const WARMUP_FIELD: &str = "codspeed_warmup";
 
 /// Spans emitted by the exporter itself would be exported in turn, in an endless loop.
 const EXPORTER_FILTER_DIRECTIVES: &[&str] = &[
@@ -159,7 +167,17 @@ pub fn init() -> Option<TelemetryGuard> {
         .with_max_level(LevelFilter::current().as_log())
         .init();
     opentelemetry::global::set_tracer_provider(guard.providers.tracer.clone());
+    warm_up();
     Some(guard)
+}
+
+/// The first span and the first event of the process take tens of microseconds longer than the
+/// next ones to go through the subscriber. Emits one of each, which are not exported, so that the
+/// first benchmark emitting telemetry doesn't take that time.
+fn warm_up() {
+    let span = tracing::error_span!(target: WARMUP_TARGET, "warmup", codspeed_warmup = true);
+    let _entered = span.enter();
+    tracing::error!(target: WARMUP_TARGET, codspeed_warmup = true, "warmup");
 }
 
 fn build_providers() -> Option<Providers> {
@@ -208,13 +226,13 @@ fn build_providers() -> Option<Providers> {
         .build();
     Some(Providers {
         tracer: SdkTracerProvider::builder()
-            .with_span_processor(span_processor)
+            .with_span_processor(WarmupFilter(span_processor))
             .with_resource(resource.clone())
             .build(),
         logger: SdkLoggerProvider::builder()
             .with_log_processor(GeneratedEventNameProcessor)
             .with_log_processor(MonotonicTimeProcessor)
-            .with_log_processor(log_processor)
+            .with_log_processor(WarmupFilter(log_processor))
             .with_resource(resource)
             .build(),
     })
@@ -389,9 +407,67 @@ fn has_generated_event_name(record: &SdkLogRecord) -> bool {
         .is_some_and(|location| location.parse() == Ok(line))
 }
 
+/// Drops the span and event [`warm_up`] emits, before handing the others to the processor it
+/// wraps.
+#[derive(Debug)]
+struct WarmupFilter<P>(P);
+
+impl<P: SpanProcessor> SpanProcessor for WarmupFilter<P> {
+    fn on_start(&self, span: &mut Span, cx: &opentelemetry::Context) {
+        self.0.on_start(span, cx);
+    }
+
+    fn on_end(&self, span: SpanData) {
+        let is_warmup = span
+            .attributes
+            .iter()
+            .any(|attribute| attribute.key.as_str() == WARMUP_FIELD);
+        if !is_warmup {
+            self.0.on_end(span);
+        }
+    }
+
+    fn force_flush(&self) -> OTelSdkResult {
+        self.0.force_flush()
+    }
+
+    fn shutdown_with_timeout(&self, timeout: Duration) -> OTelSdkResult {
+        self.0.shutdown_with_timeout(timeout)
+    }
+
+    fn set_resource(&mut self, resource: &Resource) {
+        self.0.set_resource(resource);
+    }
+}
+
+impl<P: LogProcessor> LogProcessor for WarmupFilter<P> {
+    fn emit(&self, record: &mut SdkLogRecord, instrumentation: &InstrumentationScope) {
+        let is_warmup = record
+            .attributes_iter()
+            .any(|(key, _)| key.as_str() == WARMUP_FIELD);
+        if !is_warmup {
+            self.0.emit(record, instrumentation);
+        }
+    }
+
+    fn force_flush(&self) -> OTelSdkResult {
+        self.0.force_flush()
+    }
+
+    fn shutdown_with_timeout(&self, timeout: Duration) -> OTelSdkResult {
+        self.0.shutdown_with_timeout(timeout)
+    }
+
+    fn set_resource(&mut self, resource: &Resource) {
+        self.0.set_resource(resource);
+    }
+}
+
 fn build_filter() -> EnvFilter {
     let user_directives = std::env::var(FILTER_ENV).unwrap_or_else(|_| DEFAULT_FILTER.to_owned());
-    let directives = std::iter::once(user_directives.as_str())
+    let warmup_directive = format!("{WARMUP_TARGET}=error");
+    let directives = [user_directives.as_str(), warmup_directive.as_str()]
+        .into_iter()
         .chain(EXPORTER_FILTER_DIRECTIVES.iter().copied())
         .collect::<Vec<_>>()
         .join(",");
