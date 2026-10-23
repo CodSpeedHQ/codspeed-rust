@@ -75,6 +75,47 @@ Done running my_benchmark
 Finished running 1 benchmark suite(s)
 ```
 
+### Exporting `tracing` spans and logs with OpenTelemetry
+
+With the opt-in `telemetry` feature, `divan::main()` installs a global `tracing` subscriber that
+exports the spans emitted by your benchmarks as traces, and their events as logs, over OTLP/HTTP.
+Each log record carries the trace and span IDs of the span it was emitted in:
+
+```toml title="Cargo.toml"
+[dev-dependencies]
+divan = { package = "codspeed-divan-compat", version = "*", features = ["telemetry"] }
+```
+
+- `CODSPEED_OTEL_ENDPOINT`: base URL of the OTLP/HTTP receiver, e.g. `http://localhost:4318`.
+  Nothing is exported when it is unset.
+- `CODSPEED_TELEMETRY_FILTER`: [`EnvFilter`](https://docs.rs/tracing-subscriber/latest/tracing_subscriber/filter/struct.EnvFilter.html)
+  directives selecting what is exported. Defaults to `info`.
+
+The records of the [`log`](https://docs.rs/log) crate are exported as logs too, unless a `log`
+logger is set before calling `divan::main()`.
+
+The tracer provider is also registered as the global OpenTelemetry tracer provider, and spans and
+logs are flushed when `divan::main()` returns.
+
+If your benchmarks already set a global subscriber before calling `divan::main()`, nothing is
+installed. Add the CodSpeed layer to your subscriber instead, and keep its guard alive until the
+benchmarks are done. `tracing-subscriber`'s `init()` also forwards the records of the `log` crate
+to it, with its default `tracing-log` feature:
+
+```rust
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+
+fn main() {
+    let (telemetry_layer, _telemetry_guard) = divan::telemetry::layer().unzip();
+    tracing_subscriber::registry()
+        .with(telemetry_layer)
+        .with(tracing_subscriber::fmt::layer())
+        .init();
+
+    divan::main();
+}
+```
+
 ### Not supported:
 
 - [`divan::bench(crate = xxx)`](https://docs.rs/divan/latest/divan/attr.bench.html#crate): due to how the compatibility layer works internally, we do not plan to support this feature.

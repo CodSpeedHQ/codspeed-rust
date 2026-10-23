@@ -24,6 +24,10 @@ codspeed-divan-compat-macros = { version = "=6.0.0", path = './macros' }
 regex = "1.11.3"
 clap = { version = "4", default-features = false, features = ["std", "env"] }
 
+[features]
+# Export the `tracing` spans and events of benchmarks over OTLP to `CODSPEED_OTEL_ENDPOINT`
+telemetry = ["codspeed/telemetry"]
+
 [dev-dependencies]
 tokio = { version = "1.39", features = ["rt-multi-thread"] }
 
