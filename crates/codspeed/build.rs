@@ -1,5 +1,6 @@
 fn main() {
     println!("cargo:rustc-check-cfg=cfg(use_instrument_hooks)");
+    println!("cargo:rustc-check-cfg=cfg(codspeed)");
 
     println!("cargo:rerun-if-changed=instrument-hooks/dist/core.c");
     println!("cargo:rerun-if-changed=instrument-hooks/includes/core.h");
