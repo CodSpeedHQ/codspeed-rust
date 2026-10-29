@@ -108,7 +108,7 @@ fn exports_the_records_of_the_log_crate() {
     assert_eq!(body, string("from log"));
     assert_eq!(record.severity_number, SeverityNumber::Info as i32);
     assert_eq!(record.severity_text, "INFO");
-    assert_eq!(record.event_name, "");
+    assert_eq!(record.event_name, "log event");
     let attributes = &record.attributes;
     assert_eq!(attribute(attributes, "code.filepath"), string(file!()));
     assert_eq!(

@@ -9,5 +9,6 @@ fn main() {
         "tracing static max level: {}",
         tracing::level_filters::STATIC_MAX_LEVEL
     );
+    eprintln!("log static max level: {}", log::STATIC_MAX_LEVEL);
     divan::main();
 }

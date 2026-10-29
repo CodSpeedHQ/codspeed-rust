@@ -36,19 +36,7 @@ impl Cli {
                 offline,
                 frozen,
                 measurement_mode,
-                keep_tracing,
             } => {
-                let is_telemetry_only = !measurement_mode.is_empty()
-                    && measurement_mode
-                        .iter()
-                        .all(|m| m == &MeasurementMode::Telemetry);
-                if is_telemetry_only && keep_tracing {
-                    bail!(
-                        "`--keep-tracing` has no effect in telemetry mode, which always keeps \
-                        `tracing`"
-                    );
-                }
-
                 let passthrough_flags = {
                     let mut passthrough_flags = Vec::new();
                     if all_features {
@@ -101,7 +89,6 @@ impl Cli {
                             profile: profile.clone(),
                             quiet: self.quiet,
                             build_mode,
-                            keep_tracing,
                             passthrough_flags: passthrough_flags.clone(),
                         },
                     )?;
@@ -210,11 +197,6 @@ enum Commands {
             env = "CODSPEED_RUNNER_MODE"
         )]
         measurement_mode: Vec<MeasurementMode>,
-
-        /// Keep `tracing` spans and events compiled in. By default, the `max_level_off` feature of
-        /// `tracing` compiles them out of every mode but `telemetry`.
-        #[arg(long, help_heading = COMPILATION_HELP)]
-        keep_tracing: bool,
     },
     /// Run the previously built benchmarks
     Run {

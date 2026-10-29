@@ -6,6 +6,7 @@ publish = false
 
 [dependencies]
 divan = { package = "codspeed-divan-compat", path = "../../../divan_compat" }
+log = "0.4"
 tracing = "0.1"
 
 [workspace]

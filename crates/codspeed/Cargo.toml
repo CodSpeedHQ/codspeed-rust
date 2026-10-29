@@ -69,13 +69,6 @@ tracing-subscriber = { version = "0.3", default-features = false, features = [
 # (`-Z minimal-versions`) picks. Requiring 1.1 here raises that floor.
 lazy_static = { version = "1.1", optional = true }
 
-# `cargo-codspeed` sets this cfg when building benchmarks for a measurement mode,
-# so that features unification compiles the `tracing` spans and events of the whole build out.
-[target.'cfg(codspeed_tracing_off)'.dependencies]
-tracing = { version = "0.1", default-features = false, features = [
-    "max_level_off",
-] }
-
 [features]
 telemetry = [
     "dep:opentelemetry",
