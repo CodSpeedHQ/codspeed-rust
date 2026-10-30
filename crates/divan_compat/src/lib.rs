@@ -1,4 +1,6 @@
 pub use codspeed::codspeed_uri;
+#[cfg(feature = "telemetry")]
+pub use codspeed::telemetry;
 
 #[cfg(not(codspeed))]
 mod compat_divan {
@@ -19,3 +21,13 @@ mod compat_divan {
 }
 
 pub use compat_divan::*;
+
+/// Runs all registered benchmarks.
+///
+/// With the `telemetry` feature, spans and events are exported for the duration of the run.
+pub fn main() {
+    #[cfg(feature = "telemetry")]
+    let _telemetry_guard = telemetry::init();
+
+    compat_divan::main();
+}

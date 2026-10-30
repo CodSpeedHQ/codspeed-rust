@@ -226,8 +226,17 @@ See `cargo codspeed build --help` for more information.");
         ];
 
         // Add the codspeed cfg flag if the benchmark should only run once
-        if build_mode == BuildMode::Analysis {
+        if build_mode.runs_once() {
             flags.push("--cfg=codspeed".to_owned());
+        }
+
+        // Set in every build, so that projects can tune these builds from their manifest
+        flags.push("--cfg=codspeed_build".to_string());
+
+        // Behind this cfg, the `codspeed` crate compiles the export of the telemetry, only needed
+        // in the telemetry build.
+        if build_mode == BuildMode::Telemetry {
+            flags.push("--cfg=codspeed_telemetry".to_string());
         }
 
         match std::env::var("RUSTFLAGS") {

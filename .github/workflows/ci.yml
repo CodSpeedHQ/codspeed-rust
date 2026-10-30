@@ -95,6 +95,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Check cospeed MSRV
         run: cargo msrv --path crates/codspeed verify -- cargo check --all-features --config codspeed=true
+      - name: Check cospeed MSRV in telemetry builds
+        run: cargo msrv --path crates/codspeed verify -- cargo check --all-features --config codspeed=true
+        env:
+          RUSTFLAGS: --cfg codspeed_telemetry
       - name: Check bencher_compat MSRV
         run: cargo msrv --path crates/bencher_compat verify -- cargo check --all-features --config codspeed=true
       - name: Check criterion_compat MSRV
@@ -114,6 +118,10 @@ jobs:
       - run: rustup toolchain install nightly --profile minimal
       - run: cargo +nightly update -Zminimal-versions -p codspeed --recursive
       - run: cargo check -p codspeed --all-features --config codspeed=true
+      - name: Check in telemetry builds
+        run: cargo check -p codspeed --all-features --config codspeed=true
+        env:
+          RUSTFLAGS: --cfg codspeed_telemetry
 
   tests-without-cargo-codspeed:
     runs-on: ubuntu-latest
@@ -127,6 +135,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: cargo nextest run --workspace --exclude cargo-codspeed
+      - name: Run the telemetry tests, only built in telemetry builds
+        run: cargo nextest run -p codspeed --features telemetry
+        env:
+          RUSTFLAGS: --cfg codspeed_telemetry
 
   test-cargo-codspeed:
     runs-on: ubuntu-latest

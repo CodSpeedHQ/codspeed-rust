@@ -1,0 +1,16 @@
+[package]
+name = "tracing-example"
+version = "0.0.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+divan = { package = "codspeed-divan-compat", path = "../../../divan_compat" }
+log = "0.4"
+tracing = "0.1"
+
+[workspace]
+
+[[bench]]
+name = "tracing_example"
+harness = false

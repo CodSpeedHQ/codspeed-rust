@@ -23,3 +23,17 @@ repos:
       - id: clippy
         name: clippy[codspeed, all-features]
         args: [--all-targets, --all-features, --, -D, warnings, --cfg, codspeed]
+      # The telemetry export is only compiled in telemetry builds. The cfg goes through
+      # `build.rustflags` so that cargo also resolves its target dependencies.
+      - id: clippy
+        name: clippy[codspeed_telemetry, all-features]
+        args:
+          [
+            --all-targets,
+            --all-features,
+            --config,
+            'build.rustflags=["--cfg", "codspeed_telemetry"]',
+            --,
+            -D,
+            warnings,
+          ]

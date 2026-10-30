@@ -27,11 +27,76 @@ serde = { workspace = true }
 serde_json = { workspace = true }
 statrs = { version = "0.18.0", default-features = false }
 
+tracing = { version = "0.1", default-features = false, features = [
+    "std",
+], optional = true }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "std",
+], optional = true }
+
+# The export of the telemetry: `cargo-codspeed` only sets this cfg in its telemetry builds, so that
+# the other builds don't compile it, even with the `telemetry` feature.
+[target.'cfg(codspeed_telemetry)'.dependencies]
+opentelemetry = { version = "0.33", default-features = false, features = [
+    "trace",
+    "logs",
+], optional = true }
+opentelemetry_sdk = { version = "0.33", default-features = false, features = [
+    "trace",
+    "logs",
+], optional = true }
+opentelemetry-appender-tracing = { version = "0.33", default-features = false, features = [
+    "experimental_metadata_attributes",
+], optional = true }
+opentelemetry-otlp = { version = "0.33", default-features = false, features = [
+    "trace",
+    "logs",
+    "http-proto",
+    "reqwest-blocking-client",
+], optional = true }
+tracing-log = { version = "0.2", default-features = false, features = [
+    "log-tracer",
+    "std",
+], optional = true }
+tracing-opentelemetry = { version = "0.34", default-features = false, optional = true }
+tracing-subscriber = { version = "0.3", default-features = false, features = [
+    "std",
+    "registry",
+    "env-filter",
+], optional = true }
+# Unused directly: `sharded-slab`, a dependency of `tracing-subscriber`, declares
+# `lazy_static = "1"` but fails to build with 1.0, which minimal-versions resolution
+# (`-Z minimal-versions`) picks. Requiring 1.1 here raises that floor.
+lazy_static = { version = "1.1", optional = true }
+
+[features]
+telemetry = [
+    "dep:opentelemetry",
+    "dep:opentelemetry_sdk",
+    "dep:opentelemetry-appender-tracing",
+    "dep:opentelemetry-otlp",
+    "dep:tracing",
+    "dep:tracing-log",
+    "dep:tracing-opentelemetry",
+    "dep:tracing-subscriber",
+    "dep:lazy_static",
+]
+
 [[bench]]
 name = "native"
 harness = false
 
+[[test]]
+name = "telemetry_log"
+required-features = ["telemetry"]
+
 [dev-dependencies]
+opentelemetry-proto = { version = "0.33", default-features = false, features = [
+    "gen-tonic-messages",
+    "logs",
+    "trace",
+] }
+prost = "0.14"
 tempfile = { workspace = true }
 
 [build-dependencies]
