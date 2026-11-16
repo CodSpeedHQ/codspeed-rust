@@ -45,6 +45,13 @@ csv_output = ["criterion/csv_output"]
 rayon = ["criterion/rayon"]
 plotters = ["criterion/plotters"]
 
+# Export the `tracing` spans and events of benchmarks over OTLP to `CODSPEED_OTEL_ENDPOINT`
+telemetry = ["codspeed/telemetry"]
+
+[dev-dependencies]
+log = "0.4"
+tracing = "0.1"
+
 [[bench]]
 name = "criterion_example"
 harness = false
@@ -72,3 +79,8 @@ harness = false
 [[bench]]
 name = "custom_main"
 harness = false
+
+[[bench]]
+name = "telemetry"
+harness = false
+required-features = ["telemetry"]

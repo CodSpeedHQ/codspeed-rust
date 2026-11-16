@@ -23,6 +23,8 @@ macro_rules! criterion_group {
 macro_rules! criterion_main {
     ( $( $group:path ),+ $(,)* ) => {
         pub fn main() {
+            // Exports spans and events for the duration of the run, with the `telemetry` feature.
+            let _telemetry_guard = $crate::__init_telemetry();
             let mut criterion = $crate::Criterion::new_instrumented();
             $(
                 $group(&mut criterion);

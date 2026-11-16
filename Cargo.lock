@@ -620,9 +620,11 @@ dependencies = [
  "codspeed-criterion-compat-walltime",
  "colored",
  "futures",
+ "log",
  "regex",
  "smol 2.0.0",
  "tokio",
+ "tracing",
 ]
 
 [[package]]
