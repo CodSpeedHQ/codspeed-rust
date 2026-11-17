@@ -1,3 +1,5 @@
+#![cfg_attr(docsrs, feature(doc_cfg), doc(auto_cfg(hide(codspeed))))]
+
 pub use codspeed::codspeed_uri;
 #[cfg(feature = "telemetry")]
 pub use codspeed::telemetry;
