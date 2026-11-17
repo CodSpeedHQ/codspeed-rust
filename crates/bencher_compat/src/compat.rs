@@ -81,6 +81,8 @@ macro_rules! benchmark_group {
 macro_rules! benchmark_main {
     ($($group_name:path),+) => {
         pub fn main() {
+            // Exports spans and events for the duration of the run, with the `telemetry` feature.
+            let _telemetry_guard = $crate::__init_telemetry();
             let mut bencher = $crate::Bencher::default();
             $(
                 $group_name(&mut bencher);

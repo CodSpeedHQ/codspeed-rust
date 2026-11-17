@@ -608,6 +608,8 @@ version = "6.0.0"
 dependencies = [
  "bencher",
  "codspeed",
+ "log",
+ "tracing",
 ]
 
 [[package]]
