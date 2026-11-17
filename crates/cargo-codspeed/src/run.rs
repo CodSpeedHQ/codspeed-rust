@@ -7,8 +7,9 @@ use crate::{
 use anyhow::Context;
 use cargo_metadata::{Metadata, Package};
 use codspeed::walltime_results::WalltimeResults;
+use flate2::{write::GzEncoder, Compression};
 use std::{
-    io::{self, Write},
+    io,
     path::{Path, PathBuf},
 };
 
@@ -172,7 +173,7 @@ pub fn run_benches(
 }
 
 fn aggregate_raw_walltime_data(workspace_root: &Path) -> Result<()> {
-    let results = WalltimeResults::collect_walltime_results(workspace_root)
+    let mut results = WalltimeResults::collect_walltime_results(workspace_root)
         .with_context(|| {
             format!(
                 "Failed to collect walltime results. This may be due to version incompatibility. \
@@ -196,18 +197,32 @@ fn aggregate_raw_walltime_data(workspace_root: &Path) -> Result<()> {
         }
     }
 
-    let results_folder = std::env::var("CODSPEED_PROFILE_FOLDER")
+    let profile_folder = std::env::var("CODSPEED_PROFILE_FOLDER")
         .map(PathBuf::from)
-        .unwrap_or_else(|_| workspace_root.join("target/codspeed/profiles"))
-        .join("results");
+        .unwrap_or_else(|_| workspace_root.join("target/codspeed/profiles"));
+    let results_folder = profile_folder.join("results");
     std::fs::create_dir_all(&results_folder).context("Failed to create results folder")?;
 
+    let walltime_rounds = results.take_walltime_rounds();
     let results_path = results_folder.join(format!("{}.json", std::process::id()));
-    let mut results_file =
-        std::fs::File::create(&results_path).context("Failed to create results file")?;
-    serde_json::to_writer_pretty(&results_file, &results)?;
-    results_file
-        .flush()
-        .context("Failed to flush results file")?;
+    std::fs::write(&results_path, serde_json::to_vec_pretty(&results)?)
+        .context("Failed to write results file")?;
+
+    if let Some(walltime_rounds) = walltime_rounds {
+        let rounds_folder = profile_folder.join("walltime_rounds");
+        std::fs::create_dir_all(&rounds_folder).context("Failed to create rounds folder")?;
+        let rounds_file =
+            std::fs::File::create(rounds_folder.join(format!("{}.json.gz", std::process::id())))
+                .context("Failed to create rounds file")?;
+        let mut rounds_writer =
+            io::BufWriter::new(GzEncoder::new(rounds_file, Compression::fast()));
+        serde_json::to_writer(&mut rounds_writer, &walltime_rounds)
+            .context("Failed to write rounds file")?;
+        rounds_writer
+            .into_inner()
+            .map_err(io::IntoInnerError::into_error)
+            .and_then(GzEncoder::finish)
+            .context("Failed to finish rounds file")?;
+    }
     Ok(())
 }
