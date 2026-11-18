@@ -230,7 +230,10 @@ enum Commands {
 }
 
 pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
-    let cli = Cli::try_parse_from(args)?;
+    let cli = match Cli::try_parse_from(args) {
+        Err(error) if !error.use_stderr() => error.exit(),
+        result => result?,
+    };
     if let Err(e) = cli.run() {
         eprintln!("Error: {e}");
         exit(1);
