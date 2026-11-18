@@ -230,6 +230,8 @@ enum Commands {
 }
 
 pub fn run(args: impl Iterator<Item = OsString>) -> Result<()> {
+    // Clap returns help and version as errors that print to stdout and exit 0.
+    // Forward usage errors to main, which reports them with exit status 1.
     let cli = match Cli::try_parse_from(args) {
         Err(error) if !error.use_stderr() => error.exit(),
         result => result?,
