@@ -48,6 +48,10 @@ plotters = ["criterion/plotters"]
 # Export the `tracing` spans and events of benchmarks over OTLP to `CODSPEED_OTEL_ENDPOINT`
 telemetry = ["codspeed/telemetry"]
 
+# Enable all of the async runtimes for the docs.rs output
+[package.metadata.docs.rs]
+features = ["async_futures", "async_smol", "async_std", "async_tokio"]
+
 [dev-dependencies]
 log = "0.4"
 tracing = "0.1"
