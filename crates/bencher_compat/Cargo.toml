@@ -1,6 +1,6 @@
 [package]
 name = "codspeed-bencher-compat"
-version = "6.0.0"
+version = "6.1.0"
 rust-version = "1.85" # MSRV
 edition = "2021"
 description = "Bencher compatibility layer for CodSpeed"
@@ -19,7 +19,7 @@ keywords = ["codspeed", "benchmark", "bencher"]
 
 [dependencies]
 bencher = "0.1.5"
-codspeed = { path = "../codspeed", version = "=6.0.0" }
+codspeed = { path = "../codspeed", version = "=6.1.0" }
 
 [features]
 # Export the `tracing` spans and events of benchmarks over OTLP to `CODSPEED_OTEL_ENDPOINT`
