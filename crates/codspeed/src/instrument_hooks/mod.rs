@@ -26,6 +26,9 @@ mod linux_impl {
         }
 
         /// Returns a singleton instance of `InstrumentHooks`.
+        ///
+        /// The first call initializes the hooks, which does IPC with the runner and can be slow.
+        /// Harnesses must make that first call at startup, never inside a timed or warm-up region.
         #[inline(always)]
         pub fn instance() -> &'static Self {
             static INSTANCE: OnceLock<InstrumentHooks> = OnceLock::new();

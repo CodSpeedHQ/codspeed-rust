@@ -288,6 +288,7 @@ impl<'a, M: Measurement> Bencher<'a, M> {
         self.iterated = true;
         let batch_size = size.iters_per_batch(self.iters);
         assert!(batch_size != 0, "Batch size must not be zero.");
+        let hooks = InstrumentHooks::instance();
         let time_start = Instant::now();
         self.value = self.measurement.zero();
 
@@ -300,7 +301,7 @@ impl<'a, M: Measurement> Bencher<'a, M> {
                 let output = routine(input);
                 let end = self.measurement.end(start);
                 let bench_end = InstrumentHooks::current_timestamp();
-                InstrumentHooks::instance().add_benchmark_timestamps(bench_start, bench_end);
+                hooks.add_benchmark_timestamps(bench_start, bench_end);
 
                 self.value = self.measurement.add(&self.value, &end);
 
@@ -320,7 +321,7 @@ impl<'a, M: Measurement> Bencher<'a, M> {
                 outputs.extend(inputs.into_iter().map(&mut routine));
                 let end = self.measurement.end(start);
                 let bench_end = InstrumentHooks::current_timestamp();
-                InstrumentHooks::instance().add_benchmark_timestamps(bench_start, bench_end);
+                hooks.add_benchmark_timestamps(bench_start, bench_end);
 
                 self.value = self.measurement.add(&self.value, &end);
 
@@ -400,6 +401,7 @@ impl<'a, M: Measurement> Bencher<'a, M> {
         self.iterated = true;
         let batch_size = size.iters_per_batch(self.iters);
         assert!(batch_size != 0, "Batch size must not be zero.");
+        let hooks = InstrumentHooks::instance();
         let time_start = Instant::now();
         self.value = self.measurement.zero();
 
@@ -412,7 +414,7 @@ impl<'a, M: Measurement> Bencher<'a, M> {
                 let output = routine(&mut input);
                 let end = self.measurement.end(start);
                 let bench_end = InstrumentHooks::current_timestamp();
-                InstrumentHooks::instance().add_benchmark_timestamps(bench_start, bench_end);
+                hooks.add_benchmark_timestamps(bench_start, bench_end);
 
                 self.value = self.measurement.add(&self.value, &end);
 
@@ -433,7 +435,7 @@ impl<'a, M: Measurement> Bencher<'a, M> {
                 outputs.extend(inputs.iter_mut().map(&mut routine));
                 let end = self.measurement.end(start);
                 let bench_end = InstrumentHooks::current_timestamp();
-                InstrumentHooks::instance().add_benchmark_timestamps(bench_start, bench_end);
+                hooks.add_benchmark_timestamps(bench_start, bench_end);
 
                 self.value = self.measurement.add(&self.value, &end);
 
@@ -743,6 +745,7 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
             b.iterated = true;
             let batch_size = size.iters_per_batch(b.iters);
             assert!(batch_size != 0, "Batch size must not be zero.");
+            let hooks = InstrumentHooks::instance();
             let time_start = Instant::now();
             b.value = b.measurement.zero();
 
@@ -755,7 +758,7 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
                     let output = routine(input).await;
                     let end = b.measurement.end(start);
                     let bench_end = InstrumentHooks::current_timestamp();
-                    InstrumentHooks::instance().add_benchmark_timestamps(bench_start, bench_end);
+                    hooks.add_benchmark_timestamps(bench_start, bench_end);
 
                     b.value = b.measurement.add(&b.value, &end);
 
@@ -778,7 +781,7 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
                     }
                     let end = b.measurement.end(start);
                     let bench_end = InstrumentHooks::current_timestamp();
-                    InstrumentHooks::instance().add_benchmark_timestamps(bench_start, bench_end);
+                    hooks.add_benchmark_timestamps(bench_start, bench_end);
 
                     b.value = b.measurement.add(&b.value, &end);
 
@@ -864,6 +867,7 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
             b.iterated = true;
             let batch_size = size.iters_per_batch(b.iters);
             assert!(batch_size != 0, "Batch size must not be zero.");
+            let hooks = InstrumentHooks::instance();
             let time_start = Instant::now();
             b.value = b.measurement.zero();
 
@@ -876,7 +880,7 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
                     let output = routine(&mut input).await;
                     let end = b.measurement.end(start);
                     let bench_end = InstrumentHooks::current_timestamp();
-                    InstrumentHooks::instance().add_benchmark_timestamps(bench_start, bench_end);
+                    hooks.add_benchmark_timestamps(bench_start, bench_end);
 
                     b.value = b.measurement.add(&b.value, &end);
 
@@ -900,7 +904,7 @@ impl<'a, 'b, A: AsyncExecutor, M: Measurement> AsyncBencher<'a, 'b, A, M> {
                     }
                     let end = b.measurement.end(start);
                     let bench_end = InstrumentHooks::current_timestamp();
-                    InstrumentHooks::instance().add_benchmark_timestamps(bench_start, bench_end);
+                    hooks.add_benchmark_timestamps(bench_start, bench_end);
 
                     b.value = b.measurement.add(&b.value, &end);
 
