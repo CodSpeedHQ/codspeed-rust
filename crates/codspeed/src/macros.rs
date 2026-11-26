@@ -13,10 +13,18 @@ macro_rules! abs_file {
 #[macro_export]
 macro_rules! codspeed_uri {
     ( $name:ident ) => {
-        format!("{}::{}", file!(), stringify!($name))
+        format!(
+            "{}::{}",
+            $crate::utils::normalize_file_path(file!()),
+            stringify!($name)
+        )
     };
     ( $function:path ) => {
-        format!("{}::{}", file!(), stringify!($function))
+        format!(
+            "{}::{}",
+            $crate::utils::normalize_file_path(file!()),
+            stringify!($function)
+        )
     };
 }
 

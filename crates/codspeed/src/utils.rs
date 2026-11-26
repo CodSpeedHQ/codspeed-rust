@@ -1,5 +1,6 @@
+use std::borrow::Cow;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::{Component, Path, PathBuf};
 
 fn get_parent_git_repo_path(abs_path: &Path) -> io::Result<PathBuf> {
     if abs_path.join(".git").exists() {
@@ -61,6 +62,48 @@ pub fn caller_file_path() -> String {
             .into_owned(),
         Err(_) => caller.file().to_string(),
     }
+}
+
+/// Removes the `.` and `..` segments of a `file!()` path, for the benchmark
+/// URI. It returns paths without such segments unchanged.
+///
+/// rustc keeps these segments when a module comes from `#[path = "../x.rs"]`
+/// or a target from `[[bench]] path = "../x.rs"`. In a URI, a URL parser
+/// resolves them, so the benchmark page and its flame graph break.
+///
+/// It doesn't touch the file system. A `..` segment removes the segment
+/// before it, so leading `..` segments stay.
+pub fn normalize_file_path(file: &str) -> Cow<'_, str> {
+    // Splits the string: `Path::components` hides the `.` segments not at the start
+    let has_dot_segment = file
+        .split(std::path::is_separator)
+        .any(|segment| segment == "." || segment == "..");
+    if !has_dot_segment {
+        return Cow::Borrowed(file);
+    }
+
+    let mut components: Vec<Component> = Vec::new();
+    for component in Path::new(file).components() {
+        match component {
+            Component::CurDir => {}
+            Component::ParentDir => match components.last() {
+                Some(Component::Normal(_)) => {
+                    components.pop();
+                }
+                // The root has no parent
+                Some(Component::RootDir | Component::Prefix(_)) => {}
+                _ => components.push(component),
+            },
+            _ => components.push(component),
+        }
+    }
+    Cow::Owned(
+        components
+            .iter()
+            .collect::<PathBuf>()
+            .to_string_lossy()
+            .into_owned(),
+    )
 }
 
 /// Fixes spaces around `::` created by stringify!($function).
@@ -140,6 +183,41 @@ mod tests {
 
         let relative_path = get_git_relative_path(&symlink);
         assert_eq!(relative_path, symlink.canonicalize().unwrap());
+    }
+
+    #[test]
+    fn test_normalize_file_path_removes_dot_segments() {
+        let cases = [
+            ("crates/p/benches/../src/x.rs", "crates/p/src/x.rs"),
+            ("crates/p/./benches/x.rs", "crates/p/benches/x.rs"),
+            ("./benches/x.rs", "benches/x.rs"),
+            ("benches/../../shared/x.rs", "../shared/x.rs"),
+            ("../../x.rs", "../../x.rs"),
+        ];
+        for (file, expected) in cases {
+            assert_eq!(
+                Path::new(normalize_file_path(file).as_ref()),
+                Path::new(expected),
+                "{file}"
+            );
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_normalize_file_path_keeps_absolute_paths_absolute() {
+        assert_eq!(
+            normalize_file_path("/home/ci/ws/a/../b.rs"),
+            "/home/ci/ws/b.rs"
+        );
+        assert_eq!(normalize_file_path("/../x.rs"), "/x.rs");
+    }
+
+    #[test]
+    fn test_normalize_file_path_keeps_paths_without_dot_segments() {
+        for file in ["benches/bench.rs", "a//b.rs", "a/.../b.rs", "a/..b.rs"] {
+            assert!(matches!(normalize_file_path(file), Cow::Borrowed(f) if f == file));
+        }
     }
 
     /// COD-2324: empty segments (no file/macro group when `criterion_group!` is bypassed)

@@ -66,7 +66,7 @@ pub(crate) fn generate(bench_entry: &AnyBenchEntry, closure_bench_display_name: 
         }
     }
 
-    let file = bench_entry.meta().location.file;
+    let file = codspeed::utils::normalize_file_path(bench_entry.meta().location.file);
     // In the context of a bench, the top level module will be a repetition of the file name, we
     // chose to skip it
     let mut module_path = bench_entry
@@ -159,6 +159,30 @@ mod tests {
             closure_bench_display_name,
         );
         assert_eq!(uri, "bar.rs::bench_function");
+    }
+
+    #[test]
+    fn test_generate_removes_dot_segments_from_the_file() {
+        let meta = EntryMeta {
+            display_name: "bench_function",
+            raw_name: "bench_function",
+            module_path: "test::inner",
+            location: EntryLocation {
+                file: "crates/p/benches/../src/inner.rs",
+                ..Default::default()
+            },
+            bench_options: None,
+        };
+        let bench_entry = BenchEntry {
+            meta,
+            bench: BenchEntryRunner::Plain(|_| {}),
+        };
+        let uri = generate(&AnyBenchEntry::Bench(&bench_entry), "root/../");
+        // The args keep their dot segments: they are not a path
+        assert_eq!(
+            uri,
+            "crates/p/src/inner.rs::inner::bench_function[root/../]"
+        );
     }
 
     #[allow(non_upper_case_globals)]
