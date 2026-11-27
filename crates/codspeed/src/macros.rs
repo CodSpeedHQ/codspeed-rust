@@ -15,14 +15,14 @@ macro_rules! codspeed_uri {
     ( $name:ident ) => {
         format!(
             "{}::{}",
-            $crate::utils::normalize_file_path(file!()),
+            $crate::utils::get_git_relative_file_path(file!()),
             stringify!($name)
         )
     };
     ( $function:path ) => {
         format!(
             "{}::{}",
-            $crate::utils::normalize_file_path(file!()),
+            $crate::utils::get_git_relative_file_path(file!()),
             stringify!($function)
         )
     };
