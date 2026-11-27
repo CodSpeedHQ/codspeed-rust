@@ -413,7 +413,7 @@ mod codspeed {
                 }
             }
 
-            let file = bench_entry.meta().location.file;
+            let file = ::codspeed::utils::normalize_file_path(bench_entry.meta().location.file);
             let mut module_path =
                 bench_entry.meta().module_path_components().skip(1).collect::<Vec<_>>().join("::");
             if !module_path.is_empty() {
