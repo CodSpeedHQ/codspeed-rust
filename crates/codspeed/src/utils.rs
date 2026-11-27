@@ -1,4 +1,3 @@
-use std::borrow::Cow;
 use std::io;
 use std::path::{Component, Path, PathBuf};
 
@@ -14,22 +13,50 @@ fn get_parent_git_repo_path(abs_path: &Path) -> io::Result<PathBuf> {
     }
 }
 
+/// Returns `abs_path` relative to the root of its git repository, for the benchmark URI.
+///
+/// It canonicalizes the path, which resolves the symlinks and the `.` and `..` segments.
+/// When the file can't be canonicalized (e.g. it no longer exists), it removes the `.` and
+/// `..` segments without touching the file system. A URL parser would resolve them in the
+/// URI, and break the benchmark page and its flame graph.
+///
+/// Outside of a git repository, it returns the whole path.
 pub fn get_git_relative_path<P>(abs_path: P) -> PathBuf
 where
     P: AsRef<Path>,
 {
-    if let Ok(canonicalized_abs_path) = abs_path.as_ref().canonicalize() {
-        // `repo_path` is still canonicalized as it is a subpath of `canonicalized_abs_path`
-        if let Ok(repo_path) = get_parent_git_repo_path(&canonicalized_abs_path) {
-            canonicalized_abs_path
-                .strip_prefix(repo_path)
-                .expect("Repository path is malformed.")
-                .to_path_buf()
-        } else {
-            canonicalized_abs_path
-        }
-    } else {
-        abs_path.as_ref().to_path_buf()
+    let abs_path = abs_path.as_ref();
+    let path = abs_path
+        .canonicalize()
+        .unwrap_or_else(|_| normalize_path(abs_path));
+    match get_parent_git_repo_path(&path) {
+        // `repo_path` is an ancestor of `path`, so the prefix always matches
+        Ok(repo_path) => path
+            .strip_prefix(repo_path)
+            .expect("Repository path is malformed.")
+            .to_path_buf(),
+        Err(_) => path,
+    }
+}
+
+/// Returns the path of a `file!()` path relative to the root of its git repository, for the
+/// benchmark URI.
+///
+/// This makes the URI independent of where the Cargo workspace sits in the repository.
+pub fn get_git_relative_file_path(file: &str) -> String {
+    get_git_relative_path(workspace_file_path(file))
+        .to_string_lossy()
+        .into_owned()
+}
+
+/// Returns the path on disk of a `file!()` path.
+///
+/// `file!()` is relative to the Cargo workspace root, which cargo-codspeed exports in
+/// `CODSPEED_CARGO_WORKSPACE_ROOT`. Without this variable, it returns `file` as is.
+fn workspace_file_path(file: &str) -> PathBuf {
+    match std::env::var_os("CODSPEED_CARGO_WORKSPACE_ROOT") {
+        Some(workspace_root) => PathBuf::from(workspace_root).join(file),
+        None => PathBuf::from(file),
     }
 }
 
@@ -54,36 +81,17 @@ pub fn build_uri(segments: &[&str]) -> String {
 /// rather than this helper.
 #[track_caller]
 pub fn caller_file_path() -> String {
-    let caller = std::panic::Location::caller();
-    match std::env::var("CODSPEED_CARGO_WORKSPACE_ROOT") {
-        Ok(workspace_root) => PathBuf::from(workspace_root)
-            .join(caller.file())
-            .to_string_lossy()
-            .into_owned(),
-        Err(_) => caller.file().to_string(),
-    }
+    workspace_file_path(std::panic::Location::caller().file())
+        .to_string_lossy()
+        .into_owned()
 }
 
-/// Removes the `.` and `..` segments of a `file!()` path, for the benchmark
-/// URI. It returns paths without such segments unchanged.
+/// Removes the `.` and `..` segments of a path, without touching the file system.
 ///
-/// rustc keeps these segments when a module comes from `#[path = "../x.rs"]`
-/// or a target from `[[bench]] path = "../x.rs"`. In a URI, a URL parser
-/// resolves them, so the benchmark page and its flame graph break.
-///
-/// It doesn't touch the file system. A `..` segment removes the segment
-/// before it, so leading `..` segments stay.
-pub fn normalize_file_path(file: &str) -> Cow<'_, str> {
-    // Splits the string: `Path::components` hides the `.` segments not at the start
-    let has_dot_segment = file
-        .split(std::path::is_separator)
-        .any(|segment| segment == "." || segment == "..");
-    if !has_dot_segment {
-        return Cow::Borrowed(file);
-    }
-
+/// A `..` segment removes the segment before it, so leading `..` segments stay.
+fn normalize_path(path: &Path) -> PathBuf {
     let mut components: Vec<Component> = Vec::new();
-    for component in Path::new(file).components() {
+    for component in path.components() {
         match component {
             Component::CurDir => {}
             Component::ParentDir => match components.last() {
@@ -97,13 +105,7 @@ pub fn normalize_file_path(file: &str) -> Cow<'_, str> {
             _ => components.push(component),
         }
     }
-    Cow::Owned(
-        components
-            .iter()
-            .collect::<PathBuf>()
-            .to_string_lossy()
-            .into_owned(),
-    )
+    components.iter().collect()
 }
 
 /// Fixes spaces around `::` created by stringify!($function).
@@ -186,17 +188,41 @@ mod tests {
     }
 
     #[test]
-    fn test_normalize_file_path_removes_dot_segments() {
+    fn test_get_git_relative_path_resolves_dot_segments() {
+        let dir = tempdir().unwrap();
+        fs::create_dir(dir.path().join(".git")).unwrap();
+        let src_dir = dir.path().join("rust").join("src");
+        fs::create_dir_all(&src_dir).unwrap();
+        fs::write(src_dir.join("x.rs"), "").unwrap();
+
+        // The file exists: the path is canonicalized
+        let existing = dir.path().join("rust/benches/../src/./x.rs");
+        assert_eq!(
+            get_git_relative_path(existing),
+            PathBuf::from("rust/src/x.rs")
+        );
+        // The file doesn't exist: the path is normalized
+        let missing = dir.path().join("rust/benches/../src/./missing.rs");
+        assert_eq!(
+            get_git_relative_path(missing),
+            PathBuf::from("rust/src/missing.rs")
+        );
+    }
+
+    #[test]
+    fn test_normalize_path_removes_dot_segments() {
         let cases = [
             ("crates/p/benches/../src/x.rs", "crates/p/src/x.rs"),
             ("crates/p/./benches/x.rs", "crates/p/benches/x.rs"),
             ("./benches/x.rs", "benches/x.rs"),
             ("benches/../../shared/x.rs", "../shared/x.rs"),
             ("../../x.rs", "../../x.rs"),
+            ("benches/bench.rs", "benches/bench.rs"),
+            ("a/.../b.rs", "a/.../b.rs"),
         ];
         for (file, expected) in cases {
             assert_eq!(
-                Path::new(normalize_file_path(file).as_ref()),
+                normalize_path(Path::new(file)),
                 Path::new(expected),
                 "{file}"
             );
@@ -205,19 +231,12 @@ mod tests {
 
     #[cfg(unix)]
     #[test]
-    fn test_normalize_file_path_keeps_absolute_paths_absolute() {
+    fn test_normalize_path_keeps_absolute_paths_absolute() {
         assert_eq!(
-            normalize_file_path("/home/ci/ws/a/../b.rs"),
-            "/home/ci/ws/b.rs"
+            normalize_path(Path::new("/home/ci/ws/a/../b.rs")),
+            Path::new("/home/ci/ws/b.rs")
         );
-        assert_eq!(normalize_file_path("/../x.rs"), "/x.rs");
-    }
-
-    #[test]
-    fn test_normalize_file_path_keeps_paths_without_dot_segments() {
-        for file in ["benches/bench.rs", "a//b.rs", "a/.../b.rs", "a/..b.rs"] {
-            assert!(matches!(normalize_file_path(file), Cow::Borrowed(f) if f == file));
-        }
+        assert_eq!(normalize_path(Path::new("/../x.rs")), Path::new("/x.rs"));
     }
 
     /// COD-2324: empty segments (no file/macro group when `criterion_group!` is bypassed)
